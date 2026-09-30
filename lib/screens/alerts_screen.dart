@@ -40,6 +40,9 @@ class AlertSettingsEditor extends StatelessWidget {
   final AlertSettings value;
   final void Function(AlertSettings) onChanged;
 
+  /// Larghezza di un interruttore Material 3: l'ora si centra sotto di lui.
+  static const _switchWidth = 52.0;
+
   static String time(int minutes) =>
       '${(minutes ~/ 60).toString().padLeft(2, '0')}:${(minutes % 60).toString().padLeft(2, '0')}';
 
@@ -74,11 +77,20 @@ class AlertSettingsEditor extends StatelessWidget {
           value: on,
           onChanged: toggle,
         ),
+        // Stessa geometria dello SwitchListTile sopra: uno spazio al posto dell'icona e l'ora
+        // centrata sotto l'interruttore, così testo e valori stanno in colonna.
         if (on && at != null)
           ListTile(
-            contentPadding: const EdgeInsets.fromLTRB(72, 0, 16, 0),
-            title: const Text('Ora'),
-            trailing: Text(time(at), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+            leading: const SizedBox(width: 24),
+            title: Text('Ora', style: TextStyle(fontSize: 15, color: p.ink2)),
+            trailing: SizedBox(
+              width: _switchWidth,
+              child: Text(
+                time(at),
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+              ),
+            ),
             onTap: () => pick(at, setAt!),
           ),
         if (on && extra != null) extra,
@@ -103,8 +115,8 @@ class AlertSettingsEditor extends StatelessWidget {
             at: value.briefingAt,
             setAt: (m) => onChanged(value.copyWith(briefingAt: m)),
             extra: SwitchListTile(
-              contentPadding: const EdgeInsets.fromLTRB(72, 0, 16, 0),
-              title: const Text('Solo nei giorni sopra la tua soglia'),
+              secondary: const SizedBox(width: 24),
+              title: Text('Solo nei giorni sopra la tua soglia', style: TextStyle(fontSize: 15, color: p.ink2)),
               value: value.briefingOnlyAbove,
               onChanged: (v) => onChanged(value.copyWith(briefingOnlyAbove: v)),
             ),

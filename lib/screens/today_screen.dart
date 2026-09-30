@@ -11,9 +11,9 @@ import '../theme/palette.dart';
 import '../utils/format.dart';
 import '../widgets/allergen_card.dart';
 import '../widgets/level_widgets.dart';
-import 'alerts_screen.dart';
 import 'allergen_detail_screen.dart';
 import 'log_entry_screen.dart';
+import 'notifications_screen.dart';
 import 'place_search_screen.dart';
 
 class TodayScreen extends StatelessWidget {
@@ -73,10 +73,10 @@ class TodayScreen extends StatelessWidget {
                 ),
                 if (s.loading) const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
                 IconButton(
-                  tooltip: 'Avvisi',
+                  tooltip: 'Avvisi ricevuti',
                   icon: const Icon(Icons.notifications_outlined),
                   onPressed: () =>
-                      Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const AlertsScreen())),
+                      Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const NotificationsScreen())),
                 ),
               ],
             ),
@@ -437,52 +437,95 @@ class _Air extends StatelessWidget {
   }
 }
 
-class _Others extends StatelessWidget {
+/// Pollini che non segui: chiusa di default, si apre al tocco.
+class _Others extends StatefulWidget {
   const _Others({required this.statuses, required this.onTap});
 
   final List<AllergenStatus> statuses;
   final void Function(AllergenStatus) onTap;
 
   @override
+  State<_Others> createState() => _OthersState();
+}
+
+class _OthersState extends State<_Others> {
+  bool _open = false;
+
+  @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final statuses = widget.statuses;
+    final onTap = widget.onTap;
     if (statuses.isEmpty) return const SizedBox.shrink();
+    final notable = statuses.where((s) => s.level >= Level.moderate).length;
     return SectionCard(
       gap: 4,
       children: [
-        Text('Altri pollini in zona', style: Theme.of(context).textTheme.titleLarge),
-        Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: Text('Non li segui, ma sono nell’aria.', style: TextStyle(fontSize: 13, color: p.ink3)),
-        ),
-        for (final s in statuses)
-          InkWell(
-            onTap: () => onTap(s),
+        Semantics(
+          button: true,
+          expanded: _open,
+          child: InkWell(
+            onTap: () => setState(() => _open = !_open),
             borderRadius: BorderRadius.circular(12),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(minHeight: 52),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
               child: Row(
                 children: [
-                  AllergenGlyph(s.allergen, size: 36),
-                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(s.allergen.name, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                        Text('Altri pollini in zona', style: Theme.of(context).textTheme.titleLarge),
+                        const SizedBox(height: 2),
                         Text(
-                          _othersNote(s, context.read<AppState>().area, DateTime.now()),
-                          style: TextStyle(fontSize: 12, color: p.ink3),
+                          notable == 0
+                              ? '${statuses.length} pollini, nessuno oltre il livello basso'
+                              : '${statuses.length} pollini, $notable da moderato in su',
+                          style: TextStyle(fontSize: 13, color: p.ink3),
                         ),
                       ],
                     ),
                   ),
-                  LevelPill(s.level, small: true),
+                  AnimatedRotation(
+                    turns: _open ? 0.5 : 0,
+                    duration: const Duration(milliseconds: 200),
+                    child: Icon(Icons.expand_more, color: p.ink2),
+                  ),
                 ],
               ),
             ),
           ),
+        ),
+        if (_open) const SizedBox(height: 4),
+        if (_open)
+          for (final s in statuses)
+            InkWell(
+              onTap: () => onTap(s),
+              borderRadius: BorderRadius.circular(12),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: 52),
+                child: Row(
+                  children: [
+                    AllergenGlyph(s.allergen, size: 36),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(s.allergen.name, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                          Text(
+                            _othersNote(s, context.read<AppState>().area, DateTime.now()),
+                            style: TextStyle(fontSize: 12, color: p.ink3),
+                          ),
+                        ],
+                      ),
+                    ),
+                    LevelPill(s.level, small: true),
+                  ],
+                ),
+              ),
+            ),
       ],
     );
   }
