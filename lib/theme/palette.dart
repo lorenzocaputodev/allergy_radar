@@ -30,6 +30,8 @@ class AppPalette extends ThemeExtension<AppPalette> {
     required this.riskFill,
     required this.riskText,
     required this.riskOnFill,
+    required this.symFill,
+    required this.symOnFill,
   });
 
   final Color bg, card, ink, ink2, ink3, line, track, chip, glyphBg;
@@ -37,6 +39,9 @@ class AppPalette extends ThemeExtension<AppPalette> {
 
   /// Indicizzati per [Level.index].
   final List<Color> riskFill, riskText, riskOnFill;
+
+  /// Scala dei sintomi (0 nessuno … 3 forti): separata da quella dei pollini.
+  final List<Color> symFill, symOnFill;
 
   Color fill(Level l) => riskFill[l.index];
   Color text(Level l) => riskText[l.index];
@@ -62,6 +67,8 @@ class AppPalette extends ThemeExtension<AppPalette> {
     riskFill: [Color(0xFFE4E1D7), Color(0xFFEFD27F), Color(0xFFE59A48), Color(0xFFC4502B), Color(0xFF7A2338)],
     riskText: [Color(0xFF5C6661), Color(0xFF76580A), Color(0xFF94470A), Color(0xFFA63A1B), Color(0xFF7A2338)],
     riskOnFill: [Color(0xFF46514B), Color(0xFF2A2006), Color(0xFF2A1605), Color(0xFFFFFFFF), Color(0xFFFFFFFF)],
+    symFill: [Color(0xFFECEEE8), Color(0xFFCFE0D6), Color(0xFF86B5A0), Color(0xFF2F6B58)],
+    symOnFill: [Color(0xFF46514B), Color(0xFF17201C), Color(0xFF17201C), Color(0xFFFFFFFF)],
   );
 
   static const dark = AppPalette(
@@ -84,6 +91,8 @@ class AppPalette extends ThemeExtension<AppPalette> {
     riskFill: [Color(0xFF2C3632), Color(0xFFE3C46E), Color(0xFFE0913F), Color(0xFFD0613A), Color(0xFFB23A55)],
     riskText: [Color(0xFF9AA49E), Color(0xFFEBCB6E), Color(0xFFF0A860), Color(0xFFF2825E), Color(0xFFF08CA2)],
     riskOnFill: [Color(0xFFB9C2BC), Color(0xFF2A2006), Color(0xFF2A1605), Color(0xFFFFFFFF), Color(0xFFFFFFFF)],
+    symFill: [Color(0xFF232B28), Color(0xFF2E4A3F), Color(0xFF4F8A73), Color(0xFF8FD1B6)],
+    symOnFill: [Color(0xFFB9C2BC), Color(0xFFECEFEA), Color(0xFFFFFFFF), Color(0xFF0E1A15)],
   );
 
   @override

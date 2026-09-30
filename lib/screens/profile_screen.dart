@@ -4,9 +4,11 @@ import 'package:provider/provider.dart';
 import '../models/allergen.dart';
 import '../models/station.dart';
 import '../state/app_state.dart';
+import '../state/diary_state.dart';
 import '../theme/palette.dart';
 import '../widgets/level_widgets.dart';
 import 'allergen_detail_screen.dart';
+import 'log_entry_screen.dart';
 import 'place_search_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -15,6 +17,7 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
+    final diary = context.watch<DiaryState>();
     final p = context.palette;
     final measuring = state.snapshot?.measuringStation;
     final nearest = state.snapshot?.nearestStation;
@@ -73,6 +76,27 @@ class ProfileScreen extends StatelessWidget {
                 MaterialPageRoute<void>(builder: (_) => AllergenDetailScreen(allergenId: a.id)),
               ),
             ),
+        ]),
+        label('Farmaci'),
+        group([
+          for (final m in diary.medications)
+            ListTile(
+              leading: const Icon(Icons.medication_outlined),
+              title: Text(m),
+              trailing: IconButton(
+                tooltip: 'Rimuovi $m',
+                icon: const Icon(Icons.close),
+                onPressed: () => diary.removeMedication(m),
+              ),
+            ),
+          ListTile(
+            leading: const Icon(Icons.add),
+            title: const Text('Aggiungi un farmaco'),
+            onTap: () async {
+              final name = await askMedication(context);
+              if (name != null) await diary.addMedication(name);
+            },
+          ),
         ]),
         label('Fonti e privacy'),
         SectionCard(
