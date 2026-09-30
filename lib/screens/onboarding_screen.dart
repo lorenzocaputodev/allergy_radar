@@ -9,6 +9,7 @@ import '../state/app_state.dart';
 import '../theme/palette.dart';
 import '../widgets/level_widgets.dart';
 import '../widgets/place_search.dart';
+import '../widgets/radar_mark.dart';
 import 'alerts_screen.dart';
 
 /// Primo avvio: benvenuto, allergeni, luogo, avvisi, riepilogo.
@@ -160,7 +161,7 @@ class _Welcome extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Icon(Icons.radar, size: 40, color: p.pineText),
+                  RadarMark(size: 40, color: p.pineText),
                   const SizedBox(width: 10),
                   const Flexible(
                     child: Text(
