@@ -1,0 +1,124 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../models/place.dart';
+import '../services/open_meteo_client.dart';
+import '../theme/palette.dart';
+
+/// Campo di ricerca città con risultati (geocoding Open-Meteo, solo Italia).
+class PlaceSearch extends StatefulWidget {
+  const PlaceSearch({super.key, required this.onSelected, this.selected, this.autofocus = false});
+
+  final void Function(Place) onSelected;
+  final Place? selected;
+  final bool autofocus;
+
+  @override
+  State<PlaceSearch> createState() => _PlaceSearchState();
+}
+
+class _PlaceSearchState extends State<PlaceSearch> {
+  Timer? _debounce;
+  List<Place> _results = const [];
+  String? _error;
+  bool _loading = false;
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    super.dispose();
+  }
+
+  void _onChanged(String q) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 400), () => _search(q.trim()));
+  }
+
+  Future<void> _search(String q) async {
+    if (q.length < 2) {
+      setState(() => _results = const []);
+      return;
+    }
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final r = await context.read<OpenMeteoClient>().searchPlaces(q);
+      if (mounted) setState(() => _results = r);
+    } on Object {
+      if (mounted) setState(() => _error = 'Ricerca non riuscita. Controlla la connessione.');
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        TextField(
+          autofocus: widget.autofocus,
+          onChanged: _onChanged,
+          textInputAction: TextInputAction.search,
+          decoration: InputDecoration(
+            labelText: 'Cerca una città',
+            prefixIcon: const Icon(Icons.search),
+            suffixIcon: _loading
+                ? const Padding(padding: EdgeInsets.all(14), child: CircularProgressIndicator(strokeWidth: 2))
+                : null,
+            filled: true,
+            fillColor: p.card,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: p.line)),
+          ),
+        ),
+        const SizedBox(height: 8),
+        if (_error != null)
+          Padding(
+            padding: const EdgeInsets.all(8),
+            child: Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+          ),
+        for (final r in _results)
+          ListTile(
+            leading: const Icon(Icons.place_outlined),
+            title: Text(r.name, style: const TextStyle(fontWeight: FontWeight.w600)),
+            subtitle: r.region == null ? null : Text(r.region!),
+            trailing: r.cacheKey == widget.selected?.cacheKey ? Icon(Icons.check, color: p.pineText) : null,
+            onTap: () => widget.onSelected(r),
+          ),
+      ],
+    );
+  }
+}
+
+/// Nota su area delle previsioni e privacy della posizione.
+class PlacePrivacyNote extends StatelessWidget {
+  const PlacePrivacyNote({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(color: p.chip, borderRadius: BorderRadius.circular(16)),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.info_outline, color: p.ink2, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Le previsioni coprono un’area di circa 11 km. A Open-Meteo inviamo solo coordinate '
+              'arrotondate a circa 1 km, a ISPRA solo il codice della stazione.',
+              style: TextStyle(fontSize: 13, height: 1.45, color: p.ink2),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

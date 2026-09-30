@@ -1,7 +1,7 @@
 name: allergy_radar
 description: "App Flutter per seguire pollini e sintomi di allergia nella propria zona."
 publish_to: 'none'
-version: 0.1.0+1
+version: 0.2.0+2
 
 environment:
   sdk: ^3.13.4

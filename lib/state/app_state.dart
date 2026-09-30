@@ -19,6 +19,7 @@ class AppState extends ChangeNotifier {
   static const _kFollowed = 'followed';
   static const _kThresholds = 'thresholds';
   static const _kCache = 'cache';
+  static const _kOnboarded = 'onboarded';
 
   /// Sotto quest'età i dati in cache non vengono richiesti di nuovo.
   static const freshFor = Duration(hours: 1);
@@ -26,6 +27,9 @@ class AppState extends ChangeNotifier {
   Place place = Place.lecce;
   Set<String> followed = {Allergens.grass.id, Allergens.parietaria.id};
   Map<String, Level> personal = {};
+
+  /// Primo avvio completato: luogo e allergeni scelti.
+  bool onboarded = false;
 
   PollenSnapshot? snapshot;
   bool loading = false;
@@ -52,6 +56,7 @@ class AppState extends ChangeNotifier {
   bool get isStale => snapshot == null || DateTime.now().difference(snapshot!.fetchedAt) > freshFor;
 
   Future<void> init() async {
+    onboarded = _prefs.getBool(_kOnboarded) ?? false;
     final p = _prefs.getString(_kPlace);
     if (p != null) place = Place.fromJson(jsonDecode(p) as Map<String, dynamic>);
     final f = _prefs.getStringList(_kFollowed);
@@ -70,7 +75,15 @@ class AppState extends ChangeNotifier {
       }
     }
     notifyListeners();
-    if (isStale) await refresh();
+    if (onboarded && isStale) await refresh();
+  }
+
+  Future<void> completeOnboarding(Place p, Set<String> allergens) async {
+    followed = {...allergens};
+    await _prefs.setStringList(_kFollowed, followed.toList());
+    onboarded = true;
+    await _prefs.setBool(_kOnboarded, true);
+    await setPlace(p);
   }
 
   Future<void> refresh() async {

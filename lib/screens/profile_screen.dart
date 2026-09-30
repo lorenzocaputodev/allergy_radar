@@ -127,7 +127,7 @@ class ProfileScreen extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         Text(
-          'Allergy Radar 0.1 · L’app informa, non sostituisce il medico.\n'
+          'Allergy Radar 0.2 · L’app informa, non sostituisce il medico.\n'
           'Dati © Copernicus/CAMS via Open-Meteo (CC BY 4.0) · POLLnet-SNPA/ISPRA (CC BY 4.0).',
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 12, height: 1.5, color: p.ink3),
