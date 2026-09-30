@@ -62,6 +62,8 @@ void main() {
     }
     final card = find.widgetWithText(AllergenCard, 'Parietaria');
     await tester.scrollUntilVisible(card, 200, scrollable: find.byType(Scrollable).first);
+    await tester.ensureVisible(card);
+    await tester.pumpAndSettle();
     await tester.tap(card);
     await tester.pumpAndSettle();
     expect(find.text('Perché è una stima'), findsOneWidget);
@@ -102,7 +104,33 @@ void main() {
     expect(find.text('Oggi: sintomi forti'), findsOneWidget);
     await tester.tap(find.byTooltip('Andamento e confronti'));
     await tester.pumpAndSettle();
-    expect(find.textContaining('Servono almeno 14 giorni'), findsOneWidget);
+    expect(find.text('Ancora 13 giorni'), findsOneWidget);
+  });
+
+  testWidgets('campanella e schermate del Profilo', (tester) async {
+    await pumpApp(tester);
+    await tester.tap(find.byTooltip('Avvisi ricevuti'));
+    await tester.pumpAndSettle();
+    expect(find.text('Nessun avviso, per ora'), findsOneWidget);
+    tester.state<NavigatorState>(find.byType(Navigator).first).pop();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Profilo').last);
+    await tester.pumpAndSettle();
+    for (final (entry, title) in [
+      ('I miei allergeni', 'I miei allergeni'),
+      ('Farmaci', 'Farmaci'),
+      ('Avvisi', 'Avvisi'),
+      ('Fonti e privacy', 'Fonti e privacy'),
+    ]) {
+      final tile = find.widgetWithText(ListTile, entry);
+      await tester.scrollUntilVisible(tile, 200, scrollable: find.byType(Scrollable).first);
+      await tester.tap(tile);
+      await tester.pumpAndSettle();
+      expect(find.widgetWithText(AppBar, title), findsOneWidget);
+      tester.state<NavigatorState>(find.byType(Navigator).first).pop();
+      await tester.pumpAndSettle();
+    }
   });
 
   testWidgets('primo avvio: allergeni, luogo, poi Oggi', (tester) async {
