@@ -23,8 +23,9 @@ dependencies:
   flutter_local_notifications: ^19.5.0
   workmanager: ^0.9.0+3
 
-  # Posizione approssimativa
+  # Posizione approssimativa e nome del comune (Geocoder di Android)
   geolocator: ^14.1.1
+  geocoding: ^5.0.0
 
   # File: backup, CSV e PDF
   file_selector: ^1.1.0

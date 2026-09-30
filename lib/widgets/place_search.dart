@@ -27,6 +27,9 @@ class _PlaceSearchState extends State<PlaceSearch> {
   bool _loading = false;
   bool _locating = false;
 
+  /// Luogo trovato con il GPS, in attesa di conferma.
+  Place? _found;
+
   @override
   void dispose() {
     _debounce?.cancel();
@@ -61,10 +64,11 @@ class _PlaceSearchState extends State<PlaceSearch> {
     setState(() {
       _locating = true;
       _error = null;
+      _found = null;
     });
     try {
       final place = await LocationService.current();
-      if (mounted) widget.onSelected(place);
+      if (mounted) setState(() => _found = place);
     } on LocationException catch (e) {
       if (mounted) setState(() => _error = e.message);
     } on Object {
@@ -92,6 +96,10 @@ class _PlaceSearchState extends State<PlaceSearch> {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           ),
         ),
+        if (_found case final found?) ...[
+          const SizedBox(height: 10),
+          _FoundPlace(place: found, onUse: () => widget.onSelected(found)),
+        ],
         const SizedBox(height: 12),
         TextField(
           autofocus: widget.autofocus,
@@ -130,6 +138,52 @@ class _PlaceSearchState extends State<PlaceSearch> {
   }
 }
 
+/// Conferma del luogo trovato con il GPS: si vede cosa ha capito l'app prima di usarlo.
+class _FoundPlace extends StatelessWidget {
+  const _FoundPlace({required this.place, required this.onUse});
+
+  final Place place;
+  final VoidCallback onUse;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    final named = place.name != LocationService.fallbackName;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+      decoration: BoxDecoration(color: p.pineSoft, borderRadius: BorderRadius.circular(16)),
+      child: Row(
+        children: [
+          Icon(Icons.my_location, color: p.pineText),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  named ? 'Trovato: ${place.name}' : 'Posizione trovata',
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  named ? '${place.region ?? 'Italia'} · precisione circa 1 km' : 'Nome del comune non disponibile',
+                  style: TextStyle(fontSize: 13, color: p.ink2),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          FilledButton(
+            onPressed: onUse,
+            style: FilledButton.styleFrom(minimumSize: const Size(0, 44)),
+            child: const Text('Usa'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// Nota su area delle previsioni e privacy della posizione.
 class PlacePrivacyNote extends StatelessWidget {
   const PlacePrivacyNote({super.key});
@@ -147,8 +201,7 @@ class PlacePrivacyNote extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Le previsioni coprono un’area di circa 11 km. A Open-Meteo inviamo solo coordinate '
-              'arrotondate a circa 1 km, a ISPRA solo il codice della stazione.',
+              'I dati valgono per un’area di circa 11 km. La posizione esce dal telefono solo arrotondata.',
               style: TextStyle(fontSize: 13, height: 1.45, color: p.ink2),
             ),
           ),
