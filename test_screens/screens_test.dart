@@ -123,7 +123,7 @@ void main() {
     );
   });
 
-  for (final (tab, h) in [('Diario', 915.0), ('Calendario', 1150.0), ('Profilo', 2700.0)]) {
+  for (final (tab, h) in [('Diario', 915.0), ('Calendario', 1150.0), ('Profilo', 1500.0)]) {
     testWidgets('tab $tab', (tester) async {
       await shot(
         tester,
