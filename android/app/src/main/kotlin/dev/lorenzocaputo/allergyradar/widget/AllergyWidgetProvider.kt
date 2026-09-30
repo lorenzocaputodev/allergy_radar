@@ -73,7 +73,6 @@ class AllergyWidgetProvider : AppWidgetProvider() {
                 views.setTextViewText(R.id.widget_updated, updatedAt(data.optString("updated")))
                 views.setTextViewText(R.id.widget_level, data.optString("levelLabel"))
                 views.setTextColor(R.id.widget_level, text[level])
-                // Tanti segmenti accesi quanto il livello; «Molto alto» li accende tutti.
                 views.setViewVisibility(R.id.widget_bar, View.VISIBLE)
                 SEGMENTS.forEachIndexed { i, segId ->
                     views.setInt(segId, "setColorFilter", if (i < level) fill[level] else fill[0])

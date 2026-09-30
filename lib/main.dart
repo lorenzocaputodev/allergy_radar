@@ -28,7 +28,6 @@ Future<void> main() async {
   final state = AppState(repo, prefs);
   final diary = DiaryState(prefs);
 
-  // Ogni volta che arrivano dati nuovi, il widget sulla Home si aggiorna.
   PollenSnapshot? shown;
   state.addListener(() {
     if (state.snapshot == null || identical(state.snapshot, shown)) return;

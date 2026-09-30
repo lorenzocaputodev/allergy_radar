@@ -45,7 +45,6 @@ class LevelPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    // Larghezza minima uguale per tutti i livelli: in colonna le pillole restano allineate.
     return Container(
       height: small ? 24 : 28,
       constraints: BoxConstraints(minWidth: small ? 88 : 100),

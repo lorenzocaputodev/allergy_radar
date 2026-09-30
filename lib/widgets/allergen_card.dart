@@ -47,7 +47,6 @@ class AllergenCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  // Larghezza massima fissa, non Flexible: così parola e valore stanno sempre sul bordo destro.
                   ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 150),
                     child: Column(

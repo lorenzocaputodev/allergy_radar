@@ -51,7 +51,6 @@ class ReportPdf {
     final today = DiaryEntry.day(now);
     final from = today.subtract(const Duration(days: days - 1));
     final entries = diary.between(from, now);
-    // Periodo reale: dalla prima voce, se il diario è più giovane di 90 giorni.
     final start = entries.isEmpty ? from : entries.first.date;
     final span = today.difference(start).inDays + 1;
     final medDays = <String, int>{};

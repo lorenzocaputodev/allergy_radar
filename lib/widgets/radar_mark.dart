@@ -44,10 +44,8 @@ class RadarPainter extends CustomPainter {
     const c = Offset(24, 24);
     canvas.drawCircle(c, 20 - stroke / 2, line);
     if (inner) canvas.drawCircle(c, 11, line);
-    // Lancetta a 45°, fino a metà strada tra i due cerchi.
     canvas.drawLine(c, const Offset(34.2, 13.8), line);
     canvas.drawCircle(c, 3.5, fill);
-    // Eco: un punto nella corona, lontano dalla lancetta.
     canvas.drawCircle(const Offset(11.3, 31.4), 1.8, fill);
   }
 

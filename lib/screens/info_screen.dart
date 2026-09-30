@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../theme/palette.dart';
 import '../widgets/level_widgets.dart';
 
-/// Da dove arrivano i dati e cosa esce dal telefono.
 class InfoScreen extends StatelessWidget {
   const InfoScreen({super.key});
 

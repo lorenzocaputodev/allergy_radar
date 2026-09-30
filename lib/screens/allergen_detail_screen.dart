@@ -229,7 +229,6 @@ class _Bars extends StatelessWidget {
           child: Stack(
             children: [
               _barRow(p, max),
-              // Riferimento sopra le barre: da qui il livello è «moderato».
               Positioned(
                 left: 0,
                 right: 0,

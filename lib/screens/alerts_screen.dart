@@ -77,8 +77,6 @@ class AlertSettingsEditor extends StatelessWidget {
           value: on,
           onChanged: toggle,
         ),
-        // Stessa geometria dello SwitchListTile sopra: uno spazio al posto dell'icona e l'ora
-        // centrata sotto l'interruttore, così testo e valori stanno in colonna.
         if (on && at != null)
           ListTile(
             leading: const SizedBox(width: 24),

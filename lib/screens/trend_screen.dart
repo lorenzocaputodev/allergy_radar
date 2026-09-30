@@ -96,7 +96,11 @@ class _Progress extends StatelessWidget {
     return SectionCard(
       children: [
         Text(
-          enough ? 'Servono giorni diversi' : need - logged == 1 ? 'Ancora 1 giorno' : 'Ancora ${need - logged} giorni',
+          enough
+              ? 'Servono giorni diversi'
+              : need - logged == 1
+              ? 'Ancora 1 giorno'
+              : 'Ancora ${need - logged} giorni',
           style: Theme.of(context).textTheme.titleLarge,
         ),
         Text(

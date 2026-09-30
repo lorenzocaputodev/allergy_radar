@@ -6,7 +6,6 @@ import '../theme/palette.dart';
 import '../widgets/settings_group.dart';
 import 'log_entry_screen.dart';
 
-/// Farmaci proposti nel diario.
 class MedicationsScreen extends StatelessWidget {
   const MedicationsScreen({super.key});
 
