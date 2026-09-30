@@ -204,12 +204,13 @@ Future<void> _exportPdf(BuildContext context) {
 
 Future<void> _exportCsv(BuildContext context) {
   final diary = context.read<DiaryState>();
+  final followed = context.read<AppState>().followedAllergens;
   final now = DateTime.now();
   return _report(
     context,
     () => FileService.saveText(
       'allergy-radar-diario-${_stamp(now)}.csv',
-      Backup.diaryCsv(diary.entries),
+      Backup.diaryCsv(diary.entries, followed: followed),
       mime: 'text/csv',
     ),
     'CSV salvato.',

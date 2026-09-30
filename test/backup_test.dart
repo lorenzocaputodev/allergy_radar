@@ -49,10 +49,14 @@ void main() {
   });
 
   test('CSV: intestazione, separatore e campi con «;» tra virgolette', () async {
-    final csv = Backup.diaryCsv(DiaryState(await SharedPreferences.getInstance()).entries);
-    final lines = csv.trim().split('\n');
-    expect(lines.first, startsWith('data;naso;occhi;gola;respiro;intensita_giorno;'));
-    expect(lines.first, contains('Parietaria'));
+    final csv = Backup.diaryCsv(
+      DiaryState(await SharedPreferences.getInstance()).entries,
+      followed: [Allergens.parietaria, Allergens.grass],
+    );
+    expect(csv, startsWith('﻿'), reason: 'BOM per Excel');
+    final lines = csv.substring(1).trim().split('\n');
+    expect(lines.first, startsWith('data;naso (0-3);occhi (0-3);gola (0-3);respiro (0-3);intensità (0-3);'));
+    expect(lines.first, contains('nota;Parietaria;Graminacee;Olivo'), reason: 'prima gli allergeni seguiti');
     expect(lines[1], startsWith('2026-09-29;2;0;0;0;2;no;Cetirizina;;"finestre; aperte"'));
   });
 

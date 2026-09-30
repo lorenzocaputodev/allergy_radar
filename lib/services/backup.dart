@@ -73,8 +73,10 @@ class Backup {
     return entries;
   }
 
-  /// Diario in CSV (separatore «;», come si aspetta Excel in italiano).
-  static String diaryCsv(List<DiaryEntry> entries) {
+  /// Diario in CSV: separatore «;» e BOM UTF-8, come si aspetta Excel in italiano.
+  /// Colonne dei pollini: prima gli allergeni seguiti, poi gli altri.
+  static String diaryCsv(List<DiaryEntry> entries, {List<Allergen> followed = const []}) {
+    final allergens = [...followed, ...Allergens.all.where((a) => !followed.contains(a))];
     String cell(Object? v) {
       final s = '${v ?? ''}';
       return s.contains(RegExp('[;"\n]')) ? '"${s.replaceAll('"', '""')}"' : s;
@@ -84,16 +86,16 @@ class Backup {
     final rows = <List<Object?>>[
       [
         'data',
-        'naso',
-        'occhi',
-        'gola',
-        'respiro',
-        'intensita_giorno',
-        'sonno_disturbato',
+        'naso (0-3)',
+        'occhi (0-3)',
+        'gola (0-3)',
+        'respiro (0-3)',
+        'intensità (0-3)',
+        'sonno disturbato',
         'farmaci',
-        'ore_aperto',
+        'ore all’aperto',
         'nota',
-        for (final a in Allergens.all) a.name,
+        for (final a in allergens) a.name,
       ],
       for (final e in entries.reversed)
         [
@@ -103,13 +105,13 @@ class Backup {
           e.throat,
           e.breath,
           e.severity,
-          e.badSleep ? 'si' : 'no',
+          e.badSleep ? 'sì' : 'no',
           e.meds.join(', '),
           e.outdoor == null ? '' : outdoor[e.outdoor!],
           e.note,
-          for (final a in Allergens.all) e.pollen[a.id] == null ? '' : Level.fromIndex(e.pollen[a.id]!).label,
+          for (final a in allergens) e.pollen[a.id] == null ? '' : Level.fromIndex(e.pollen[a.id]!).label,
         ],
     ];
-    return '${rows.map((r) => r.map(cell).join(';')).join('\n')}\n';
+    return '﻿${rows.map((r) => r.map(cell).join(';')).join('\n')}\n';
   }
 }
