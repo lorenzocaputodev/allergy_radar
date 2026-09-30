@@ -32,11 +32,11 @@ L’app è in sviluppo e non c’è ancora una versione pubblicata. Quando uscir
 - 🏷️ Ogni valore dice se è una **previsione**, una **misura** o una **stima**
 - 🔎 Dettaglio di ogni allergene con andamento, stagione e soglia personale
 - 📓 Diario dei sintomi da 10 secondi, con farmaci, sonno e ore all’aperto
-- 📈 Andamento degli ultimi 30 giorni e confronto tra sintomi e pollini
+- 📈 Andamento: per ogni allergene, se stai peggio quando sale, e giorno per giorno
 - 🗓️ Calendario stagionale per **Nord**, **Centro** e **Sud e Isole**
-- 📍 Luogo da ricerca città o dalla posizione approssimativa del telefono
+- 📍 Luogo da ricerca città o dalla posizione approssimativa, con il nome del comune
 - 📲 Widget Android per la schermata Home
-- 🔔 Avvisi, proposti già al primo avvio
+- 🔔 Avvisi, proposti già al primo avvio, e l’elenco di quelli ricevuti
 - 📄 PDF per l’allergologo, diario in CSV, backup e ripristino
 - 🎨 Tema **scuro / chiaro / sistema**
 - 🔒 Dati salvati localmente sul dispositivo
@@ -130,7 +130,7 @@ flutter run
 
 - Nessun account richiesto
 - Nessun backend: l’app usa solo i dati aperti di Open-Meteo e ISPRA
-- Posizione solo approssimativa, e solo se la chiedi tu
+- Posizione solo approssimativa, e solo se la chiedi tu; il nome del comune lo ricava il telefono
 - Dati salvati localmente sul dispositivo
 
 Previsioni © Copernicus/CAMS tramite Open-Meteo e misure della rete POLLnet-SNPA di ISPRA, entrambe con licenza CC BY 4.0.
