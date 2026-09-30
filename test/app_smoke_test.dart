@@ -17,14 +17,14 @@ void main() {
   setUp(() => WidgetController.hitTestWarningShouldBeFatal = true);
 
   // Telefono stretto: fa emergere gli overflow.
-  Future<void> pumpApp(WidgetTester tester, {Brightness brightness = Brightness.light}) async {
+  Future<void> pumpApp(WidgetTester tester, {Brightness brightness = Brightness.light, bool onboarded = true}) async {
     tester.view.physicalSize = const Size(360, 780) * 3;
     tester.view.devicePixelRatio = 3;
     tester.platformDispatcher.platformBrightnessTestValue = brightness;
     addTearDown(tester.view.reset);
     addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
 
-    SharedPreferences.setMockInitialValues({});
+    SharedPreferences.setMockInitialValues({'onboarded': onboarded});
     final prefs = await SharedPreferences.getInstance();
     final repo = repository(DateTime(2026, 9, 30, 10));
     final state = AppState(repo, prefs);
@@ -103,5 +103,31 @@ void main() {
     await tester.tap(find.byTooltip('Andamento e confronti'));
     await tester.pumpAndSettle();
     expect(find.textContaining('Servono almeno 14 giorni'), findsOneWidget);
+  });
+
+  testWidgets('primo avvio: allergeni, luogo, poi Oggi', (tester) async {
+    await pumpApp(tester, onboarded: false);
+    expect(find.text('Sappi prima cosa c’è nell’aria.'), findsOneWidget);
+    await tester.tap(find.text('Inizia'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('A cosa sei allergico?'), findsOneWidget);
+    await tester.tap(find.text('Continua · 2 scelti'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), 'Lecce');
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 100)));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(ListTile, 'Lecce').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Continua con Lecce'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Tutto pronto'), findsOneWidget);
+    await tester.tap(find.text('Vai a Oggi'));
+    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 100)));
+    await tester.pumpAndSettle();
+    expect(find.text('LA TUA GIORNATA'), findsOneWidget);
   });
 }

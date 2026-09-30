@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'data/pollen_repository.dart';
 import 'models/station.dart';
 import 'screens/home_shell.dart';
+import 'screens/onboarding_screen.dart';
 import 'services/open_meteo_client.dart';
 import 'services/pollnet_client.dart';
 import 'state/app_state.dart';
@@ -48,6 +49,9 @@ class AllergyRadarApp extends StatelessWidget {
         locale: const Locale('it'),
         supportedLocales: const [Locale('it')],
         localizationsDelegates: GlobalMaterialLocalizations.delegates,
-        home: const HomeShell(),
+        home: Selector<AppState, bool>(
+          selector: (_, s) => s.onboarded,
+          builder: (_, onboarded, _) => onboarded ? const HomeShell() : const OnboardingScreen(),
+        ),
       );
 }

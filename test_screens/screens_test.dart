@@ -9,6 +9,7 @@ import 'package:allergy_radar/models/place.dart';
 import 'package:allergy_radar/screens/allergen_detail_screen.dart';
 import 'package:allergy_radar/screens/home_shell.dart';
 import 'package:allergy_radar/screens/log_entry_screen.dart';
+import 'package:allergy_radar/screens/onboarding_screen.dart';
 import 'package:allergy_radar/screens/trend_screen.dart';
 import 'package:allergy_radar/screens/place_search_screen.dart';
 import 'package:allergy_radar/services/open_meteo_client.dart';
@@ -38,8 +39,9 @@ void main() {
     await _font('MaterialIcons', ['C:/development/flutter/bin/cache/artifacts/material_fonts/materialicons-regular.otf']);
   });
 
-  Future<AppState> state(Place place, DateTime now, {bool diary = false}) async {
+  Future<AppState> state(Place place, DateTime now, {bool diary = false, bool onboarded = true}) async {
     SharedPreferences.setMockInitialValues({
+      'onboarded': onboarded,
       'place': '{"name":"${place.name}","region":null,"lat":${place.lat},"lon":${place.lon}}',
       if (diary) 'diary': jsonEncode(_sampleDiary()),
     });
@@ -132,10 +134,23 @@ void main() {
     await shot(tester, '08_registra', LogEntryScreen(date: DateTime.now()), s: await state(Place.lecce, lecceNow), height: 1450);
   });
 
+  testWidgets('benvenuto', (tester) async {
+    await shot(tester, '10_benvenuto', const OnboardingScreen(), s: await state(Place.lecce, lecceNow, onboarded: false));
+  });
+
+  testWidgets('scelta allergeni', (tester) async {
+    await shot(tester, '11_allergeni', const OnboardingScreen(), s: await state(Place.lecce, lecceNow, onboarded: false),
+        before: () async {
+      await tester.tap(find.text('Inizia'));
+      await tester.pumpAndSettle();
+    });
+  });
+
   testWidgets('andamento', (tester) async {
     await shot(tester, '09_andamento', const TrendScreen(), s: await state(Place.lecce, lecceNow, diary: true), height: 1100);
   });
 }
+
 
 /// Un mese di diario inventato, con sintomi che salgono insieme alla Parietaria.
 List<Map<String, dynamic>> _sampleDiary() {
