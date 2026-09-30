@@ -122,7 +122,6 @@ flutter run
 - `lib/widgets/` → componenti UI riutilizzabili
 - `lib/theme/` → colori e temi
 - `android/app/src/main/kotlin/dev/lorenzocaputo/allergyradar/widget/` → implementazione nativa del widget Android
-- `docs/` → documentazione tecnica: architettura, fonti dei dati, sviluppo, design e decisioni
 
 ---
 

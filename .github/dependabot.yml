@@ -4,7 +4,7 @@ updates:
   # Niente aggiornamenti di versione automatici: con pub Dependabot ha ignorato sia la regola
   # sui salti di versione maggiore sia i tetti espliciti (flutter_local_notifications 19 -> 22,
   # che cambia l'API e rompe la build). Restano gli aggiornamenti di sicurezza; il resto si
-  # aggiorna a mano con `flutter pub outdated` e i test (docs/development.md, ADR 0009).
+  # aggiorna a mano con `flutter pub outdated` e i test.
   - package-ecosystem: pub
     directory: /
     schedule:
