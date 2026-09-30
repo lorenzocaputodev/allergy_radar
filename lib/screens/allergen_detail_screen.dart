@@ -58,14 +58,11 @@ class AllergenDetailScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            switch (s.kind) {
-                              DataKind.forecast => 'Oggi, media del giorno',
-                              DataKind.measured => 'Ultima misura, ${Fmt.shortDate(s.date!)}',
-                              DataKind.estimate => 'Stima per ${Fmt.month(now.month)}',
-                            },
-                            style: TextStyle(fontSize: 13, color: p.ink3),
-                          ),
+                          Text(switch (s.kind) {
+                            DataKind.forecast => 'Oggi, media del giorno',
+                            DataKind.measured => 'Ultima misura, ${Fmt.shortDate(s.date!)}',
+                            DataKind.estimate => 'Stima per ${Fmt.month(now.month)}',
+                          }, style: TextStyle(fontSize: 13, color: p.ink3)),
                           const SizedBox(height: 4),
                           LevelWord(s.level, size: 36),
                         ],
@@ -73,13 +70,22 @@ class AllergenDetailScreen extends StatelessWidget {
                     ),
                     if (s.value != null)
                       Text.rich(
-                        TextSpan(children: [
-                          TextSpan(
-                            text: Fmt.number(s.value!),
-                            style: const TextStyle(fontFamily: AppFonts.display, fontSize: 36, fontWeight: FontWeight.w600),
-                          ),
-                          TextSpan(text: '  granuli/m³', style: TextStyle(fontSize: 14, color: p.ink2)),
-                        ]),
+                        TextSpan(
+                          children: [
+                            TextSpan(
+                              text: Fmt.number(s.value!),
+                              style: const TextStyle(
+                                fontFamily: AppFonts.display,
+                                fontSize: 36,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            TextSpan(
+                              text: '  granuli/m³',
+                              style: TextStyle(fontSize: 14, color: p.ink2),
+                            ),
+                          ],
+                        ),
                       ),
                   ],
                 ),
@@ -95,16 +101,24 @@ class AllergenDetailScreen extends StatelessWidget {
                     ])
                       Expanded(
                         child: Text.rich(
-                          TextSpan(children: [
-                            TextSpan(text: '${l.label}\n', style: TextStyle(fontWeight: FontWeight.w700, color: p.text(l))),
-                            TextSpan(text: range),
-                          ]),
+                          TextSpan(
+                            children: [
+                              TextSpan(
+                                text: '${l.label}\n',
+                                style: TextStyle(fontWeight: FontWeight.w700, color: p.text(l)),
+                              ),
+                              TextSpan(text: range),
+                            ],
+                          ),
                           style: TextStyle(fontSize: 11, height: 1.3, color: p.ink3),
                         ),
                       ),
                   ],
                 ),
-                Align(alignment: Alignment.centerLeft, child: SourceChip(s.kind, detail: Fmt.sourceDetail(s, now))),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: SourceChip(s.kind, detail: Fmt.sourceDetail(s, now)),
+                ),
               ],
             ),
             const SizedBox(height: 14),
@@ -112,7 +126,12 @@ class AllergenDetailScreen extends StatelessWidget {
               SectionCard(
                 children: [
                   Text('Ora per ora', style: Theme.of(context).textTheme.titleLarge),
-                  _Bars(values: s.hourly.where((h) => h.date.hour % 2 == 0).toList(), label: (d) => '${d.date.hour}', height: 110, thresholds: t),
+                  _Bars(
+                    values: s.hourly.where((h) => h.date.hour % 2 == 0).toList(),
+                    label: (d) => '${d.date.hour}',
+                    height: 110,
+                    thresholds: t,
+                  ),
                 ],
               ),
               const SizedBox(height: 14),
@@ -120,10 +139,14 @@ class AllergenDetailScreen extends StatelessWidget {
             if (s.series.length > 1)
               SectionCard(
                 children: [
-                  Text(s.kind == DataKind.forecast ? 'Prossimi giorni' : 'Ultimi giorni misurati',
-                      style: Theme.of(context).textTheme.titleLarge),
+                  Text(
+                    s.kind == DataKind.forecast ? 'Prossimi giorni' : 'Ultimi giorni misurati',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
                   _Bars(
-                    values: s.kind == DataKind.forecast ? s.series : s.series.skip(s.series.length > 14 ? s.series.length - 14 : 0).toList(),
+                    values: s.kind == DataKind.forecast
+                        ? s.series
+                        : s.series.skip(s.series.length > 14 ? s.series.length - 14 : 0).toList(),
                     label: (d) => s.kind == DataKind.forecast ? Fmt.weekday(d.date, now) : '${d.date.day}',
                     height: 140,
                     thresholds: t,
@@ -138,11 +161,13 @@ class AllergenDetailScreen extends StatelessWidget {
                     children: [
                       Icon(Icons.info_outline, color: p.ink),
                       const SizedBox(width: 10),
-                      Expanded(child: Text('Perché non c’è la previsione?', style: Theme.of(context).textTheme.titleLarge)),
+                      Expanded(
+                        child: Text('Perché non c’è la previsione?', style: Theme.of(context).textTheme.titleLarge),
+                      ),
                     ],
                   ),
                   Text(
-                    _whyText(s, state.snapshot?.nearestStation, now),
+                    _whyText(s, state.snapshot?.nearestStation, state.area, now),
                     style: TextStyle(fontSize: 14, height: 1.5, color: p.ink2),
                   ),
                 ],
@@ -152,9 +177,9 @@ class AllergenDetailScreen extends StatelessWidget {
           SectionCard(
             children: [
               Text('Stagione', style: Theme.of(context).textTheme.titleLarge),
-              SeasonStrip(a.calendar, month: now.month),
+              SeasonStrip(a.calendarFor(state.area), month: now.month),
               Text(
-                'Livello medio di ogni mese: 10 stazioni POLLnet del Sud, 2016–2025.',
+                'Livello medio di ogni mese nelle stazioni POLLnet dell’area ${state.area.label}, 2016–2025.',
                 style: TextStyle(fontSize: 13, color: p.ink3),
               ),
             ],
@@ -163,8 +188,10 @@ class AllergenDetailScreen extends StatelessWidget {
           SectionCard(
             children: [
               Text('La tua soglia', style: Theme.of(context).textTheme.titleLarge),
-              Text('Da quale livello ti dà fastidio. Decide «La tua giornata» e, più avanti, gli avvisi.',
-                  style: TextStyle(fontSize: 14, color: p.ink2)),
+              Text(
+                'Da quale livello ti dà fastidio. Decide «La tua giornata» e, più avanti, gli avvisi.',
+                style: TextStyle(fontSize: 14, color: p.ink2),
+              ),
               SegmentedButton<Level>(
                 segments: const [
                   ButtonSegment(value: Level.low, label: Text('Basso')),
@@ -220,7 +247,13 @@ class _Bars extends StatelessWidget {
         Row(
           children: [
             for (final v in values) ...[
-              Expanded(child: Text(label(v), textAlign: TextAlign.center, style: TextStyle(fontSize: 11, color: p.ink3))),
+              Expanded(
+                child: Text(
+                  label(v),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 11, color: p.ink3),
+                ),
+              ),
               if (v != values.last) const SizedBox(width: 5),
             ],
           ],
@@ -241,32 +274,32 @@ class _Bars extends StatelessWidget {
   }
 
   Widget _barRow(AppPalette p, double max) => Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          for (final v in values) ...[
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Text(Fmt.number(v.value), style: TextStyle(fontSize: 10, color: p.ink3)),
-                  const SizedBox(height: 2),
-                  Container(
-                    height: (v.value / max * height).clamp(3, height),
-                    decoration: BoxDecoration(
-                      color: v.level == Level.none ? p.track : p.fill(v.level),
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(6), bottom: Radius.circular(2)),
-                    ),
-                  ),
-                ],
+    crossAxisAlignment: CrossAxisAlignment.end,
+    children: [
+      for (final v in values) ...[
+        Expanded(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Text(Fmt.number(v.value), style: TextStyle(fontSize: 10, color: p.ink3)),
+              const SizedBox(height: 2),
+              Container(
+                height: (v.value / max * height).clamp(3, height),
+                decoration: BoxDecoration(
+                  color: v.level == Level.none ? p.track : p.fill(v.level),
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(6), bottom: Radius.circular(2)),
+                ),
               ),
-            ),
-            if (v != values.last) const SizedBox(width: 5),
-          ],
-        ],
-      );
+            ],
+          ),
+        ),
+        if (v != values.last) const SizedBox(width: 5),
+      ],
+    ],
+  );
 }
 
-String _whyText(AllergenStatus s, NearStation? nearest, DateTime now) {
+String _whyText(AllergenStatus s, NearStation? nearest, Area area, DateTime now) {
   if (s.kind == DataKind.measured) {
     return 'I modelli europei non calcolano questo polline. Mostriamo la misura della stazione POLLnet più vicina: '
         'esce ogni giorno, con qualche giorno di ritardo.';
@@ -277,6 +310,6 @@ String _whyText(AllergenStatus s, NearStation? nearest, DateTime now) {
   final station = nearest != null
       ? 'La stazione più vicina (${nearest.station.name}, ${nearest.km.round()} km) non pubblica dati recenti.'
       : 'Non c’è una stazione di misura entro ${StationDirectory.maxKm.round()} km.';
-  return '$model $station Il livello è la media storica di ${Fmt.month(now.month)} nelle stazioni del Sud: '
+  return '$model $station Il livello è la media storica di ${Fmt.month(now.month)} nelle stazioni dell’area ${area.label}: '
       'indica la stagione, non il giorno. Il diario dei sintomi ti dirà quanto conta per te.';
 }

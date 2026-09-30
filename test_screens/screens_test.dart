@@ -6,12 +6,13 @@ import 'dart:io';
 
 import 'package:allergy_radar/models/diary_entry.dart';
 import 'package:allergy_radar/models/place.dart';
+import 'package:allergy_radar/screens/alerts_screen.dart';
 import 'package:allergy_radar/screens/allergen_detail_screen.dart';
 import 'package:allergy_radar/screens/home_shell.dart';
 import 'package:allergy_radar/screens/log_entry_screen.dart';
 import 'package:allergy_radar/screens/onboarding_screen.dart';
-import 'package:allergy_radar/screens/trend_screen.dart';
 import 'package:allergy_radar/screens/place_search_screen.dart';
+import 'package:allergy_radar/screens/trend_screen.dart';
 import 'package:allergy_radar/services/open_meteo_client.dart';
 import 'package:allergy_radar/state/app_state.dart';
 import 'package:allergy_radar/state/diary_state.dart';
@@ -34,9 +35,15 @@ Future<void> _font(String family, List<String> files) async {
 
 void main() {
   setUpAll(() async {
-    await _font('Figtree', [for (final w in [400, 500, 600, 700]) 'assets/fonts/Figtree-$w.ttf']);
-    await _font('Fraunces', [for (final w in [400, 500, 600]) 'assets/fonts/Fraunces-$w.ttf']);
-    await _font('MaterialIcons', ['C:/development/flutter/bin/cache/artifacts/material_fonts/materialicons-regular.otf']);
+    await _font('Figtree', [
+      for (final w in [400, 500, 600, 700]) 'assets/fonts/Figtree-$w.ttf',
+    ]);
+    await _font('Fraunces', [
+      for (final w in [400, 500, 600]) 'assets/fonts/Fraunces-$w.ttf',
+    ]);
+    await _font('MaterialIcons', [
+      'C:/development/flutter/bin/cache/artifacts/material_fonts/materialicons-regular.otf',
+    ]);
   });
 
   Future<AppState> state(Place place, DateTime now, {bool diary = false, bool onboarded = true}) async {
@@ -63,18 +70,16 @@ void main() {
     addTearDown(tester.view.reset);
     await tester.runAsync(s.init);
     final prefs = await SharedPreferences.getInstance();
-    await tester.pumpWidget(MultiProvider(
-      providers: [
-        Provider.value(value: OpenMeteoClient(fakeHttp())),
-        ChangeNotifierProvider.value(value: s),
-        ChangeNotifierProvider(create: (_) => DiaryState(prefs)),
-      ],
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.of(b),
-        home: home,
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          Provider.value(value: OpenMeteoClient(fakeHttp())),
+          ChangeNotifierProvider.value(value: s),
+          ChangeNotifierProvider(create: (_) => DiaryState(prefs)),
+        ],
+        child: MaterialApp(debugShowCheckedModeBanner: false, theme: AppTheme.of(b), home: home),
       ),
-    ));
+    );
     await tester.pumpAndSettle();
     if (before != null) await before();
     await expectLater(find.byType(MaterialApp), matchesGoldenFile('out/$name.png'));
@@ -97,22 +102,39 @@ void main() {
 
   for (final (id, place, now) in [('parietaria', Place.lecce, lecceNow), ('grass', Place.lecce, lecceNow)]) {
     testWidgets('dettaglio $id', (tester) async {
-      await shot(tester, '03_dettaglio_$id', AllergenDetailScreen(allergenId: id), s: await state(place, now), height: 1700);
+      await shot(
+        tester,
+        '03_dettaglio_$id',
+        AllergenDetailScreen(allergenId: id),
+        s: await state(place, now),
+        height: 1700,
+      );
     });
   }
 
   testWidgets('dettaglio parietaria misurata', (tester) async {
-    await shot(tester, '04_dettaglio_parietaria_bologna', const AllergenDetailScreen(allergenId: 'parietaria'),
-        s: await state(bologna, bolognaNow), height: 1700);
+    await shot(
+      tester,
+      '04_dettaglio_parietaria_bologna',
+      const AllergenDetailScreen(allergenId: 'parietaria'),
+      s: await state(bologna, bolognaNow),
+      height: 1700,
+    );
   });
 
-  for (final (tab, h) in [('Diario', 915.0), ('Calendario', 1150.0), ('Profilo', 1900.0)]) {
+  for (final (tab, h) in [('Diario', 915.0), ('Calendario', 1150.0), ('Profilo', 2700.0)]) {
     testWidgets('tab $tab', (tester) async {
-      await shot(tester, '05_${tab.toLowerCase()}', const HomeShell(), s: await state(Place.lecce, lecceNow), height: h,
-          before: () async {
-        await tester.tap(find.text(tab).last);
-        await tester.pumpAndSettle();
-      });
+      await shot(
+        tester,
+        '05_${tab.toLowerCase()}',
+        const HomeShell(),
+        s: await state(Place.lecce, lecceNow),
+        height: h,
+        before: () async {
+          await tester.tap(find.text(tab).last);
+          await tester.pumpAndSettle();
+        },
+      );
     });
   }
 
@@ -122,35 +144,66 @@ void main() {
 
   for (final (tab, h) in [('Diario', 1700.0)]) {
     testWidgets('diario pieno', (tester) async {
-      await shot(tester, '07_diario_pieno', const HomeShell(), s: await state(Place.lecce, lecceNow, diary: true), height: h,
-          before: () async {
-        await tester.tap(find.text(tab).last);
-        await tester.pumpAndSettle();
-      });
+      await shot(
+        tester,
+        '07_diario_pieno',
+        const HomeShell(),
+        s: await state(Place.lecce, lecceNow, diary: true),
+        height: h,
+        before: () async {
+          await tester.tap(find.text(tab).last);
+          await tester.pumpAndSettle();
+        },
+      );
     });
   }
 
   testWidgets('registra', (tester) async {
-    await shot(tester, '08_registra', LogEntryScreen(date: DateTime.now()), s: await state(Place.lecce, lecceNow), height: 1450);
+    await shot(
+      tester,
+      '08_registra',
+      LogEntryScreen(date: DateTime.now()),
+      s: await state(Place.lecce, lecceNow),
+      height: 1450,
+    );
   });
 
   testWidgets('benvenuto', (tester) async {
-    await shot(tester, '10_benvenuto', const OnboardingScreen(), s: await state(Place.lecce, lecceNow, onboarded: false));
+    await shot(
+      tester,
+      '10_benvenuto',
+      const OnboardingScreen(),
+      s: await state(Place.lecce, lecceNow, onboarded: false),
+    );
   });
 
   testWidgets('scelta allergeni', (tester) async {
-    await shot(tester, '11_allergeni', const OnboardingScreen(), s: await state(Place.lecce, lecceNow, onboarded: false),
-        before: () async {
-      await tester.tap(find.text('Inizia'));
-      await tester.pumpAndSettle();
-    });
+    await shot(
+      tester,
+      '11_allergeni',
+      const OnboardingScreen(),
+      s: await state(Place.lecce, lecceNow, onboarded: false),
+      before: () async {
+        await tester.tap(find.text('Inizia'));
+        await tester.pumpAndSettle();
+      },
+    );
+  });
+
+  testWidgets('avvisi', (tester) async {
+    await shot(tester, '12_avvisi', const AlertsScreen(), s: await state(Place.lecce, lecceNow), height: 1000);
   });
 
   testWidgets('andamento', (tester) async {
-    await shot(tester, '09_andamento', const TrendScreen(), s: await state(Place.lecce, lecceNow, diary: true), height: 1100);
+    await shot(
+      tester,
+      '09_andamento',
+      const TrendScreen(),
+      s: await state(Place.lecce, lecceNow, diary: true),
+      height: 1100,
+    );
   });
 }
-
 
 /// Un mese di diario inventato, con sintomi che salgono insieme alla Parietaria.
 List<Map<String, dynamic>> _sampleDiary() {
@@ -158,17 +211,27 @@ List<Map<String, dynamic>> _sampleDiary() {
   final out = <Map<String, dynamic>>[];
   for (var i = 1; i < 30; i++) {
     if (i % 9 == 0) continue; // qualche giorno dimenticato
-    final par = i < 10 ? 3 : i < 20 ? 2 : 1;
-    final sym = par == 3 ? (i.isEven ? 3 : 2) : par == 2 ? 1 : (i.isEven ? 1 : 0);
-    out.add(DiaryEntry(
-      date: today.subtract(Duration(days: i)),
-      nose: sym,
-      eyes: sym > 0 ? sym - 1 : 0,
-      throat: i % 3 == 0 ? 1 : 0,
-      badSleep: sym == 3,
-      meds: sym >= 2 ? const ['Antistaminico'] : const [],
-      pollen: {'parietaria': par, 'grass': 1},
-    ).toJson());
+    final par = i < 10
+        ? 3
+        : i < 20
+        ? 2
+        : 1;
+    final sym = par == 3
+        ? (i.isEven ? 3 : 2)
+        : par == 2
+        ? 1
+        : (i.isEven ? 1 : 0);
+    out.add(
+      DiaryEntry(
+        date: today.subtract(Duration(days: i)),
+        nose: sym,
+        eyes: sym > 0 ? sym - 1 : 0,
+        throat: i % 3 == 0 ? 1 : 0,
+        badSleep: sym == 3,
+        meds: sym >= 2 ? const ['Antistaminico'] : const [],
+        pollen: {'parietaria': par, 'grass': 1},
+      ).toJson(),
+    );
   }
   return out;
 }

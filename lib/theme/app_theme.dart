@@ -29,13 +29,14 @@ abstract final class AppTheme {
       surfaceTint: Colors.transparent,
     );
 
-    final base = ThemeData(brightness: brightness).textTheme.apply(
-          fontFamily: AppFonts.sans,
-          bodyColor: p.ink,
-          displayColor: p.ink,
-        );
-    TextStyle display(TextStyle? s, double size, FontWeight w) =>
-        (s ?? const TextStyle()).copyWith(fontFamily: AppFonts.display, fontSize: size, fontWeight: w, letterSpacing: -0.4);
+    final base = ThemeData(brightness: brightness).textTheme
+        .apply(fontFamily: AppFonts.sans, bodyColor: p.ink, displayColor: p.ink);
+    TextStyle display(TextStyle? s, double size, FontWeight w) => (s ?? const TextStyle()).copyWith(
+      fontFamily: AppFonts.display,
+      fontSize: size,
+      fontWeight: w,
+      letterSpacing: -0.4,
+    );
 
     return ThemeData(
       useMaterial3: true,
@@ -56,7 +57,12 @@ abstract final class AppTheme {
         scrolledUnderElevation: 0,
         centerTitle: false,
         systemOverlayStyle: isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
-        titleTextStyle: TextStyle(fontFamily: AppFonts.display, fontSize: 22, fontWeight: FontWeight.w500, color: p.ink),
+        titleTextStyle: TextStyle(
+          fontFamily: AppFonts.display,
+          fontSize: 22,
+          fontWeight: FontWeight.w500,
+          color: p.ink,
+        ),
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: p.card,

@@ -17,12 +17,13 @@ class AllergenCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = context.palette;
     final a = status.allergen;
-    final value = status.value == null
-        ? 'stima di ${Fmt.month(today.month)}'
-        : Fmt.grains(status.value!);
+    final value = status.value == null ? 'stima di ${Fmt.month(today.month)}' : Fmt.grains(status.value!);
     return Material(
       color: p.card,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: BorderSide(color: p.line)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: p.line),
+      ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
@@ -52,7 +53,11 @@ class AllergenCard extends StatelessWidget {
                       children: [
                         LevelWord(status.level),
                         const SizedBox(height: 3),
-                        Text(value, textAlign: TextAlign.end, style: TextStyle(fontSize: 13, color: p.ink2)),
+                        Text(
+                          value,
+                          textAlign: TextAlign.end,
+                          style: TextStyle(fontSize: 13, color: p.ink2),
+                        ),
                       ],
                     ),
                   ),
@@ -68,7 +73,10 @@ class AllergenCard extends StatelessWidget {
                 children: [
                   SourceChip(status.kind, detail: Fmt.sourceDetail(status, today)),
                   if (aboveThreshold)
-                    Text('Sopra la tua soglia', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: p.text(status.level))),
+                    Text(
+                      'Sopra la tua soglia',
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: p.text(status.level)),
+                    ),
                 ],
               ),
             ],

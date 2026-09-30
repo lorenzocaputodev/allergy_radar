@@ -16,8 +16,21 @@ dependencies:
   provider: ^6.1.5+1
   shared_preferences: ^2.5.5
 
-  # Rete
+  # Dati: Open-Meteo e ISPRA
   http: ^1.6.0
+
+  # Avvisi in background
+  flutter_local_notifications: ^19.5.0
+  workmanager: ^0.9.0+3
+
+  # Posizione approssimativa
+  geolocator: ^14.1.1
+
+  # File: backup, CSV e PDF
+  file_selector: ^1.1.0
+  flutter_file_dialog: ^3.3.3
+  path_provider: ^2.1.6
+  pdf: ^3.12.0
 
   # Utility
   intl: ^0.20.2
@@ -26,6 +39,15 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.13.1
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path_android: "assets/launcher/icon_legacy.png"
+  adaptive_icon_foreground: "assets/launcher/icon_foreground.png"
+  adaptive_icon_background: "#1F5A4A"
+  min_sdk_android: 21
 
 flutter:
   uses-material-design: true

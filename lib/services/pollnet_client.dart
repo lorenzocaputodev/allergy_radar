@@ -19,7 +19,8 @@ class PollnetClient {
         'version': '2.0.0',
         'request': 'GetFeature',
         'typeName': 'om:Concentrazione_pollini_spore',
-        'cql_filter': "STAT_ID=$stationId and PART_ID IN (${partIds.join(',')}) "
+        'cql_filter':
+            "STAT_ID=$stationId and PART_ID IN (${partIds.join(',')}) "
             "and REMA_DATE between '${_day.format(from)}' and '${_day.format(to)}'",
         'outputFormat': 'csv',
       });

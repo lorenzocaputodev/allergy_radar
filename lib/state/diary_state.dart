@@ -37,37 +37,48 @@ class DiaryInsight {
 
 class DiaryState extends ChangeNotifier {
   DiaryState(this._prefs) {
-    final raw = _prefs.getString(_kEntries);
+    _read();
+  }
+
+  final SharedPreferences _prefs;
+
+  static const kEntries = 'diary';
+  static const kMeds = 'medications';
+  static const backupKeys = [kEntries, kMeds];
+  static const defaultMedications = ['Antistaminico', 'Spray nasale', 'Collirio'];
+
+  /// Servono almeno questi giorni registrati per un confronto.
+  static const minDaysForInsight = 14;
+
+  final Map<String, DiaryEntry> _entries = {};
+  List<String> medications = defaultMedications;
+
+  void _read() {
+    _entries.clear();
+    final raw = _prefs.getString(kEntries);
     if (raw != null) {
       for (final e in (jsonDecode(raw) as List).cast<Map<String, dynamic>>()) {
         final entry = DiaryEntry.fromJson(e);
         _entries[entry.key] = entry;
       }
     }
-    final meds = _prefs.getStringList(_kMeds);
-    if (meds != null) medications = meds;
+    medications = _prefs.getStringList(kMeds) ?? defaultMedications;
   }
 
-  final SharedPreferences _prefs;
-
-  static const _kEntries = 'diary';
-  static const _kMeds = 'medications';
-
-  /// Servono almeno questi giorni registrati per un confronto.
-  static const minDaysForInsight = 14;
-
-  final Map<String, DiaryEntry> _entries = {};
-  List<String> medications = ['Antistaminico', 'Spray nasale', 'Collirio'];
+  /// Rilegge tutto dalle preferenze, per esempio dopo un ripristino.
+  void reload() {
+    _read();
+    notifyListeners();
+  }
 
   DiaryEntry? entryFor(DateTime d) => _entries[DiaryEntry.keyOf(d)];
 
   /// Dal più recente.
   List<DiaryEntry> get entries => _entries.values.toList()..sort((a, b) => b.date.compareTo(a.date));
 
-  List<DiaryEntry> between(DateTime from, DateTime to) => entries
-      .where((e) => !e.date.isBefore(DiaryEntry.day(from)) && !e.date.isAfter(DiaryEntry.day(to)))
-      .toList()
-    ..sort((a, b) => a.date.compareTo(b.date));
+  List<DiaryEntry> between(DateTime from, DateTime to) =>
+      entries.where((e) => !e.date.isBefore(DiaryEntry.day(from)) && !e.date.isAfter(DiaryEntry.day(to))).toList()
+        ..sort((a, b) => a.date.compareTo(b.date));
 
   Future<void> save(DiaryEntry e) async {
     _entries[e.key] = e;
@@ -86,17 +97,16 @@ class DiaryState extends ChangeNotifier {
     if (n.isEmpty || medications.contains(n)) return;
     medications = [...medications, n];
     notifyListeners();
-    await _prefs.setStringList(_kMeds, medications);
+    await _prefs.setStringList(kMeds, medications);
   }
 
   Future<void> removeMedication(String name) async {
     medications = medications.where((m) => m != name).toList();
     notifyListeners();
-    await _prefs.setStringList(_kMeds, medications);
+    await _prefs.setStringList(kMeds, medications);
   }
 
-  Future<void> _persist() =>
-      _prefs.setString(_kEntries, jsonEncode(_entries.values.map((e) => e.toJson()).toList()));
+  Future<void> _persist() => _prefs.setString(kEntries, jsonEncode(_entries.values.map((e) => e.toJson()).toList()));
 
   /// Sintomi con l'allergene da moderato in su contro sotto, negli ultimi [days] giorni.
   /// Null se i dati non bastano.

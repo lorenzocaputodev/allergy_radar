@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../models/place.dart';
+import '../services/location_service.dart';
 import '../services/open_meteo_client.dart';
 import '../theme/palette.dart';
 
@@ -24,6 +25,7 @@ class _PlaceSearchState extends State<PlaceSearch> {
   List<Place> _results = const [];
   String? _error;
   bool _loading = false;
+  bool _locating = false;
 
   @override
   void dispose() {
@@ -55,12 +57,42 @@ class _PlaceSearchState extends State<PlaceSearch> {
     }
   }
 
+  Future<void> _useLocation() async {
+    setState(() {
+      _locating = true;
+      _error = null;
+    });
+    try {
+      final place = await LocationService.current();
+      if (mounted) widget.onSelected(place);
+    } on LocationException catch (e) {
+      if (mounted) setState(() => _error = e.message);
+    } on Object {
+      if (mounted) setState(() => _error = 'Posizione non disponibile. Cerca una città.');
+    } finally {
+      if (mounted) setState(() => _locating = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        OutlinedButton.icon(
+          onPressed: _locating ? null : _useLocation,
+          icon: _locating
+              ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+              : const Icon(Icons.my_location),
+          label: const Text('Usa la mia posizione'),
+          style: OutlinedButton.styleFrom(
+            minimumSize: const Size.fromHeight(52),
+            backgroundColor: p.card,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          ),
+        ),
+        const SizedBox(height: 12),
         TextField(
           autofocus: widget.autofocus,
           onChanged: _onChanged,
@@ -73,7 +105,10 @@ class _PlaceSearchState extends State<PlaceSearch> {
                 : null,
             filled: true,
             fillColor: p.card,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: p.line)),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(color: p.line),
+            ),
           ),
         ),
         const SizedBox(height: 8),

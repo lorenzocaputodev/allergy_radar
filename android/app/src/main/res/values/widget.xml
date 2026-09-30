@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Allergy Radar</string>
+    <string name="widget_caption">La tua giornata</string>
+    <string name="widget_empty">Apri l\'app</string>
+    <string name="widget_description">Livello dei pollini di oggi per i tuoi allergeni</string>
+
+    <color name="widget_surface">#FFFFFFFF</color>
+    <color name="widget_ink">#FF17201C</color>
+    <color name="widget_muted">#FF5C6661</color>
+
+    <style name="WidgetRow">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:textColor">@color/widget_ink</item>
+        <item name="android:textSize">13sp</item>
+    </style>
+</resources>

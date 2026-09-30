@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
+import 'area.dart';
 import 'level.dart';
+
+export 'area.dart';
 
 enum DataKind { forecast, measured, estimate }
 
@@ -29,9 +32,11 @@ class Allergen {
 
   final Thresholds thresholds;
 
-  /// Livello tipico per mese (0–3), da gennaio a dicembre: mediana delle medie mensili
-  /// di 10 stazioni POLLnet del Sud, 2016–2025. Rigenerabile con tool/build_calendar.mjs.
-  final List<int> calendar;
+  /// Livello tipico per mese (0–3), da gennaio a dicembre, per area: mediana delle medie
+  /// mensili delle stazioni POLLnet dell'area, 2016–2025. Si rigenera con tool/build_calendar.mjs.
+  final Map<Area, List<int>> calendar;
+
+  List<int> calendarFor(Area area) => calendar[area]!;
 
   bool get hasForecast => openMeteoKeys.isNotEmpty;
 }
@@ -45,7 +50,11 @@ abstract final class Allergens {
     openMeteoKeys: ['grass_pollen'],
     pollnetId: 1352,
     thresholds: Thresholds(0.5, 10, 30),
-    calendar: [0, 1, 1, 2, 3, 2, 1, 1, 1, 1, 0, 0],
+    calendar: {
+      Area.north: [0, 0, 1, 3, 3, 3, 2, 1, 1, 1, 0, 0],
+      Area.centre: [0, 0, 1, 2, 3, 3, 2, 1, 1, 1, 0, 0],
+      Area.south: [0, 1, 1, 2, 3, 2, 1, 1, 1, 1, 1, 0],
+    },
   );
 
   static const parietaria = Allergen(
@@ -55,7 +64,11 @@ abstract final class Allergens {
     icon: Icons.local_florist_outlined,
     pollnetId: 1362,
     thresholds: Thresholds(2, 20, 70),
-    calendar: [1, 1, 2, 3, 3, 2, 2, 1, 1, 1, 1, 1],
+    calendar: {
+      Area.north: [0, 0, 0, 2, 2, 2, 2, 2, 2, 1, 0, 0],
+      Area.centre: [0, 1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 0],
+      Area.south: [1, 2, 2, 3, 3, 2, 2, 1, 1, 1, 1, 1],
+    },
   );
 
   static const olive = Allergen(
@@ -66,7 +79,11 @@ abstract final class Allergens {
     openMeteoKeys: ['olive_pollen'],
     pollnetId: 1391,
     thresholds: Thresholds(0.5, 5, 25),
-    calendar: [0, 0, 0, 2, 3, 3, 1, 0, 0, 0, 0, 0],
+    calendar: {
+      Area.north: [0, 0, 0, 1, 2, 2, 0, 0, 0, 0, 0, 0],
+      Area.centre: [0, 0, 0, 1, 3, 3, 1, 0, 0, 0, 0, 0],
+      Area.south: [0, 0, 0, 2, 3, 3, 1, 0, 0, 0, 0, 0],
+    },
   );
 
   static const cypress = Allergen(
@@ -76,7 +93,11 @@ abstract final class Allergens {
     icon: Icons.park_outlined,
     pollnetId: 1330,
     thresholds: Thresholds(4, 30, 90),
-    calendar: [1, 3, 3, 2, 1, 0, 0, 0, 0, 0, 1, 1],
+    calendar: {
+      Area.north: [1, 3, 3, 2, 1, 1, 0, 0, 0, 0, 0, 0],
+      Area.centre: [2, 3, 3, 3, 1, 1, 0, 0, 0, 0, 0, 1],
+      Area.south: [1, 3, 3, 2, 1, 0, 0, 0, 0, 0, 1, 1],
+    },
   );
 
   static const oak = Allergen(
@@ -86,7 +107,11 @@ abstract final class Allergens {
     icon: Icons.nature_outlined,
     pollnetId: 1384,
     thresholds: Thresholds(1, 20, 40),
-    calendar: [0, 0, 0, 3, 3, 1, 1, 0, 0, 0, 0, 0],
+    calendar: {
+      Area.north: [0, 0, 1, 3, 2, 1, 0, 0, 0, 0, 0, 0],
+      Area.centre: [0, 0, 1, 3, 3, 3, 1, 0, 0, 0, 0, 0],
+      Area.south: [0, 0, 1, 3, 3, 1, 1, 0, 0, 0, 0, 0],
+    },
   );
 
   static const plantago = Allergen(
@@ -96,7 +121,11 @@ abstract final class Allergens {
     icon: Icons.grain,
     pollnetId: 1350,
     thresholds: Thresholds(0.1, 0.4, 2),
-    calendar: [0, 0, 2, 2, 3, 3, 3, 2, 2, 0, 0, 0],
+    calendar: {
+      Area.north: [0, 0, 0, 1, 3, 3, 3, 3, 2, 0, 0, 0],
+      Area.centre: [0, 0, 1, 2, 3, 3, 3, 3, 2, 1, 0, 0],
+      Area.south: [0, 0, 2, 3, 3, 3, 3, 2, 2, 1, 0, 0],
+    },
   );
 
   static const mugwort = Allergen(
@@ -107,7 +136,11 @@ abstract final class Allergens {
     openMeteoKeys: ['mugwort_pollen'],
     pollnetId: 1379,
     thresholds: Thresholds(0.1, 5, 25),
-    calendar: [0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0],
+    calendar: {
+      Area.north: [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0],
+      Area.centre: [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0],
+      Area.south: [0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0],
+    },
   );
 
   static const ragweed = Allergen(
@@ -118,7 +151,11 @@ abstract final class Allergens {
     openMeteoKeys: ['ragweed_pollen'],
     pollnetId: 1378,
     thresholds: Thresholds(0.1, 5, 25),
-    calendar: [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0],
+    calendar: {
+      Area.north: [0, 0, 0, 0, 0, 0, 1, 2, 2, 1, 0, 0],
+      Area.centre: [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0],
+      Area.south: [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0],
+    },
   );
 
   static const birch = Allergen(
@@ -129,7 +166,11 @@ abstract final class Allergens {
     openMeteoKeys: ['birch_pollen', 'alder_pollen'],
     pollnetId: 1323,
     thresholds: Thresholds(0.5, 16, 50),
-    calendar: [0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    calendar: {
+      Area.north: [1, 2, 2, 1, 1, 1, 0, 0, 0, 0, 0, 0],
+      Area.centre: [1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0],
+      Area.south: [0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    },
   );
 
   static const alternaria = Allergen(
@@ -139,7 +180,11 @@ abstract final class Allergens {
     icon: Icons.bubble_chart_outlined,
     pollnetId: 1364,
     thresholds: Thresholds(1, 10, 100),
-    calendar: [1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 1],
+    calendar: {
+      Area.north: [1, 1, 1, 2, 2, 3, 3, 3, 3, 3, 2, 1],
+      Area.centre: [1, 1, 1, 1, 2, 3, 3, 3, 3, 2, 2, 1],
+      Area.south: [1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 1],
+    },
   );
 
   static const all = [grass, parietaria, olive, cypress, oak, plantago, mugwort, ragweed, birch, alternaria];

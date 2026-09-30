@@ -124,6 +124,10 @@ void main() {
     await tester.tap(find.text('Continua con Lecce'));
     await tester.pumpAndSettle();
 
+    expect(find.text('Quando vuoi saperlo?'), findsOneWidget);
+    await tester.tap(find.text('Non ora'));
+    await tester.pumpAndSettle();
+
     expect(find.text('Tutto pronto'), findsOneWidget);
     await tester.tap(find.text('Vai a Oggi'));
     await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 100)));

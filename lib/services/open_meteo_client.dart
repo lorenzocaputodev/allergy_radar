@@ -14,12 +14,12 @@ class OpenMeteoClient {
   static const airKeys = ['ozone', 'pm2_5', 'dust'];
 
   Uri forecastUri(Place p) => Uri.https('air-quality-api.open-meteo.com', '/v1/air-quality', {
-        'latitude': p.roundedLat.toStringAsFixed(2),
-        'longitude': p.roundedLon.toStringAsFixed(2),
-        'hourly': [...Allergens.openMeteoKeys, ...airKeys].join(','),
-        'timezone': 'Europe/Rome',
-        'forecast_days': '5',
-      });
+    'latitude': p.roundedLat.toStringAsFixed(2),
+    'longitude': p.roundedLon.toStringAsFixed(2),
+    'hourly': [...Allergens.openMeteoKeys, ...airKeys].join(','),
+    'timezone': 'Europe/Rome',
+    'forecast_days': '5',
+  });
 
   Future<String> fetchForecast(Place p) async {
     final res = await _http.get(forecastUri(p)).timeout(const Duration(seconds: 20));

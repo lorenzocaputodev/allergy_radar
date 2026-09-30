@@ -58,43 +58,42 @@ class DiaryEntry {
     bool clearOutdoor = false,
     String? note,
     Map<String, int>? pollen,
-  }) =>
-      DiaryEntry(
-        date: date,
-        nose: nose ?? this.nose,
-        eyes: eyes ?? this.eyes,
-        throat: throat ?? this.throat,
-        breath: breath ?? this.breath,
-        badSleep: badSleep ?? this.badSleep,
-        meds: meds ?? this.meds,
-        outdoor: clearOutdoor ? null : (outdoor ?? this.outdoor),
-        note: note ?? this.note,
-        pollen: pollen ?? this.pollen,
-      );
+  }) => DiaryEntry(
+    date: date,
+    nose: nose ?? this.nose,
+    eyes: eyes ?? this.eyes,
+    throat: throat ?? this.throat,
+    breath: breath ?? this.breath,
+    badSleep: badSleep ?? this.badSleep,
+    meds: meds ?? this.meds,
+    outdoor: clearOutdoor ? null : (outdoor ?? this.outdoor),
+    note: note ?? this.note,
+    pollen: pollen ?? this.pollen,
+  );
 
   Map<String, dynamic> toJson() => {
-        'date': key,
-        'nose': nose,
-        'eyes': eyes,
-        'throat': throat,
-        'breath': breath,
-        'badSleep': badSleep,
-        'meds': meds,
-        'outdoor': outdoor,
-        'note': note,
-        'pollen': pollen,
-      };
+    'date': key,
+    'nose': nose,
+    'eyes': eyes,
+    'throat': throat,
+    'breath': breath,
+    'badSleep': badSleep,
+    'meds': meds,
+    'outdoor': outdoor,
+    'note': note,
+    'pollen': pollen,
+  };
 
   factory DiaryEntry.fromJson(Map<String, dynamic> j) => DiaryEntry(
-        date: DateTime.parse(j['date'] as String),
-        nose: j['nose'] as int? ?? 0,
-        eyes: j['eyes'] as int? ?? 0,
-        throat: j['throat'] as int? ?? 0,
-        breath: j['breath'] as int? ?? 0,
-        badSleep: j['badSleep'] as bool? ?? false,
-        meds: (j['meds'] as List?)?.cast<String>() ?? const [],
-        outdoor: j['outdoor'] as int?,
-        note: j['note'] as String? ?? '',
-        pollen: (j['pollen'] as Map?)?.map((k, v) => MapEntry(k as String, v as int)) ?? const {},
-      );
+    date: DateTime.parse(j['date'] as String),
+    nose: j['nose'] as int? ?? 0,
+    eyes: j['eyes'] as int? ?? 0,
+    throat: j['throat'] as int? ?? 0,
+    breath: j['breath'] as int? ?? 0,
+    badSleep: j['badSleep'] as bool? ?? false,
+    meds: (j['meds'] as List?)?.cast<String>() ?? const [],
+    outdoor: j['outdoor'] as int?,
+    note: j['note'] as String? ?? '',
+    pollen: (j['pollen'] as Map?)?.map((k, v) => MapEntry(k as String, v as int)) ?? const {},
+  );
 }
