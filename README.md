@@ -11,7 +11,7 @@
 
 ## 📲 Scarica l’app
 
-Vuoi solo installarla? Scarica l’APK dall’**[ultima versione pubblicata](https://github.com/lorenzocaputodev/allergy_radar/releases/latest)** e aprilo dal telefono: Android ti chiederà di consentire l’installazione di app scaricate dal browser.
+L’app è in sviluppo e non c’è ancora una versione pubblicata. Quando uscirà, l’APK sarà nella pagina delle **[release](https://github.com/lorenzocaputodev/allergy_radar/releases)**; per ora si compila dal sorgente, come spiegato più sotto.
 
 ## 📸 Schermate
 
@@ -78,7 +78,6 @@ Prerequisiti, con le versioni su cui la build è verificata:
 La catena di build usa Gradle 8.14.5, AGP 8.13.2 e Kotlin 2.2.21, volutamente
 entro la linea 8.x di AGP.
 
-Le versioni pubblicate finora sono firmate con la chiave di debug.
 Senza `android/key.properties`, `flutter build apk --release` usa la chiave di debug.
 
 `android/gradle.properties` dimensiona il daemon Gradle a 2 GB di heap: su
