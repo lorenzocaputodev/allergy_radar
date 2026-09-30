@@ -1,58 +1,129 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/widget_background"
-    android:orientation="vertical"
-    android:padding="14dp">
+    android:padding="16dp">
 
-    <TextView
-        android:id="@+id/widget_place"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:ellipsize="end"
-        android:maxLines="1"
-        android:textColor="@color/widget_muted"
-        android:textSize="12sp" />
+        android:layout_gravity="center_vertical"
+        android:orientation="vertical">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        android:text="@string/widget_caption"
-        android:textColor="@color/widget_muted"
-        android:textSize="11sp" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
 
-    <TextView
-        android:id="@+id/widget_level"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:fontFamily="serif"
-        android:maxLines="1"
-        android:textColor="@color/widget_ink"
-        android:textSize="26sp"
-        android:textStyle="bold" />
+            <TextView
+                android:id="@+id/widget_place"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="@color/widget_muted"
+                android:textSize="12sp" />
 
-    <TextView
-        android:id="@+id/widget_row1"
-        style="@style/WidgetRow"
-        android:layout_marginTop="6dp" />
+            <TextView
+                android:id="@+id/widget_updated"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:maxLines="1"
+                android:textColor="@color/widget_muted"
+                android:textSize="12sp" />
+        </LinearLayout>
 
-    <TextView
-        android:id="@+id/widget_row2"
-        style="@style/WidgetRow" />
+        <TextView
+            android:id="@+id/widget_level"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@color/widget_ink"
+            android:textSize="28sp"
+            android:textStyle="bold" />
 
-    <TextView
-        android:id="@+id/widget_row3"
-        style="@style/WidgetRow" />
+        <LinearLayout
+            android:id="@+id/widget_bar"
+            android:layout_width="match_parent"
+            android:layout_height="6dp"
+            android:layout_marginTop="6dp"
+            android:orientation="horizontal">
 
-    <TextView
-        android:id="@+id/widget_updated"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        android:maxLines="1"
-        android:textColor="@color/widget_muted"
-        android:textSize="10sp" />
-</LinearLayout>
+            <ImageView
+                android:id="@+id/widget_seg1"
+                style="@style/WidgetSegment" />
+
+            <ImageView
+                android:id="@+id/widget_seg2"
+                style="@style/WidgetSegment"
+                android:layout_marginStart="4dp" />
+
+            <ImageView
+                android:id="@+id/widget_seg3"
+                style="@style/WidgetSegment"
+                android:layout_marginStart="4dp" />
+
+            <ImageView
+                android:id="@+id/widget_seg4"
+                style="@style/WidgetSegment"
+                android:layout_marginStart="4dp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/widget_row1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/widget_row1_name"
+                style="@style/WidgetRowName" />
+
+            <TextView
+                android:id="@+id/widget_row1_level"
+                style="@style/WidgetRowLevel" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/widget_row2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/widget_row2_name"
+                style="@style/WidgetRowName" />
+
+            <TextView
+                android:id="@+id/widget_row2_level"
+                style="@style/WidgetRowLevel" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/widget_row3"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/widget_row3_name"
+                style="@style/WidgetRowName" />
+
+            <TextView
+                android:id="@+id/widget_row3_level"
+                style="@style/WidgetRowLevel" />
+        </LinearLayout>
+    </LinearLayout>
+</FrameLayout>

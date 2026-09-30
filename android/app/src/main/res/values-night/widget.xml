@@ -3,4 +3,5 @@
     <color name="widget_surface">#FF1B221F</color>
     <color name="widget_ink">#FFECEFEA</color>
     <color name="widget_muted">#FF9AA49E</color>
+    <color name="widget_track">#FF2C3632</color>
 </resources>
