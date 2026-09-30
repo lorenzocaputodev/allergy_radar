@@ -50,6 +50,8 @@ dart format lib test test_screens
 
 - Conventional Commits in italiano: `feat:`, `fix:`, `refactor:`, `docs:`, `build:`, `ci:`, `chore:`, `test:`.
   Oggetto breve e senza numeri di versione, tranne `chore: porta la versione a X.Y.Z`.
+- Autore dei commit: solo Lorenzo Caputo. Mai righe `Co-Authored-By`, né menzioni di Claude o dell'AI nei
+  commit, nelle PR o nelle release.
 - Repository privato `lorenzocaputodev/allergy_radar`. Non fare push, tag o release senza richiesta esplicita.
 - Procedura di release: `docs/development.md#release`.
 - Mai committare `android/key.properties` né keystore.

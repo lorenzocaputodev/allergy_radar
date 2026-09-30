@@ -62,6 +62,8 @@ aggiorna il percorso.
 
 - `.github/workflows/ci.yml`: su Windows `pub get --enforce-lockfile`, `analyze`, `test`; su Ubuntu build APK di debug con JDK 21.
 - `.github/dependabot.yml`: pacchetti Dart ogni settimana (solo minor e patch; per i pacchetti 0.x solo patch), Actions ogni mese. Gradle, AGP e Kotlin si aggiornano a mano.
+- Ogni dipendenza diretta ha un tetto esplicito (`versions: ['>=N.0.0']`) oltre alla regola generica sulle versioni maggiori: da sola non ha fermato `flutter_local_notifications` 19 → 22 in una PR raggruppata. Aggiungendo una dipendenza, aggiungi anche il suo tetto.
+- Una PR di Dependabot si unisce solo con la CI verde; un salto di versione maggiore si fa a mano, con i test.
 
 ## Release
 
@@ -82,6 +84,6 @@ aggiorna il percorso.
 
 ## Convenzioni
 
-- Commit: Conventional Commits in italiano, oggetto breve, niente versioni tranne nel commit dedicato. Corpo per spiegare il perché quando serve.
+- Commit: Conventional Commits in italiano, oggetto breve, niente versioni tranne nel commit dedicato. Corpo per spiegare il perché quando serve. Autore solo Lorenzo Caputo: niente `Co-Authored-By` né menzioni dell'AI.
 - Codice: 120 colonne, commenti in italiano solo per il perché, testi dell'interfaccia in italiano naturale.
 - Prima di ogni commit: `flutter analyze` e i test dell'area toccata. Dopo modifiche visive: gli screenshot della schermata.
