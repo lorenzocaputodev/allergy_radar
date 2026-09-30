@@ -17,6 +17,7 @@ import 'package:allergy_radar/services/open_meteo_client.dart';
 import 'package:allergy_radar/state/app_state.dart';
 import 'package:allergy_radar/state/diary_state.dart';
 import 'package:allergy_radar/theme/app_theme.dart';
+import 'package:allergy_radar/widgets/radar_mark.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -202,6 +203,75 @@ void main() {
       s: await state(Place.lecce, lecceNow, diary: true),
       height: 1100,
     );
+  });
+
+  // ===== Immagini del README =====
+  // Schermate a misura di telefono e banner: poi tool/readme_images.py le converte.
+  for (final (name, tab) in [('oggi', 'Oggi'), ('diario', 'Diario'), ('calendario', 'Calendario')]) {
+    testWidgets('readme $name', (tester) async {
+      await shot(
+        tester,
+        'readme_$name',
+        const HomeShell(),
+        s: await state(Place.lecce, lecceNow, diary: true),
+        before: () async {
+          await tester.tap(find.text(tab).last);
+          await tester.pumpAndSettle();
+        },
+      );
+    });
+  }
+
+  testWidgets('readme andamento', (tester) async {
+    await shot(tester, 'readme_andamento', const TrendScreen(), s: await state(Place.lecce, lecceNow, diary: true));
+  });
+
+  testWidgets('readme banner', (tester) async {
+    tester.view.physicalSize = const Size(1280, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      MaterialApp(
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.of(Brightness.light),
+        home: const Material(
+          color: Color(0xFF1F5A4A),
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 110),
+            child: Row(
+              children: [
+                RadarMark(size: 250, color: Colors.white),
+                SizedBox(width: 70),
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Allergy Radar',
+                        style: TextStyle(
+                          fontFamily: 'Fraunces',
+                          fontSize: 84,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                      SizedBox(height: 14),
+                      Text(
+                        'Pollini della tua zona e i tuoi sintomi,\ncon la fonte sempre in vista.',
+                        style: TextStyle(fontFamily: 'Figtree', fontSize: 32, height: 1.35, color: Color(0xFFE1ECE6)),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await expectLater(find.byType(MaterialApp), matchesGoldenFile('out/readme_banner.png'));
   });
 }
 
