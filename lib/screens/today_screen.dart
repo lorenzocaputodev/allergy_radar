@@ -4,12 +4,15 @@ import 'package:provider/provider.dart';
 import '../models/allergen.dart';
 import '../models/level.dart';
 import '../models/pollen_snapshot.dart';
+import '../models/diary_entry.dart';
 import '../state/app_state.dart';
+import '../state/diary_state.dart';
 import '../theme/palette.dart';
 import '../utils/format.dart';
 import '../widgets/allergen_card.dart';
 import '../widgets/level_widgets.dart';
 import 'allergen_detail_screen.dart';
+import 'log_entry_screen.dart';
 import 'place_search_screen.dart';
 
 class TodayScreen extends StatelessWidget {
@@ -98,7 +101,7 @@ class TodayScreen extends StatelessWidget {
                   onTap: () => openDetail(st),
                 ),
               ),
-            const SizedBox(height: 4),
+            const Padding(padding: EdgeInsets.fromLTRB(16, 4, 16, 14), child: _DiaryCta()),
             Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: _Forecast(state: s, today: now)),
             const SizedBox(height: 14),
             Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: _Air(air: snap.air)),
@@ -419,4 +422,58 @@ String _othersNote(AllergenStatus s, DateTime today) {
   if (s.level == Level.none && s.allergen.calendar[today.month - 1] == 0) return 'Fuori stagione';
   if (s.value != null) return Fmt.grains(s.value!);
   return SourceChip.label(s.kind);
+}
+
+class _DiaryCta extends StatelessWidget {
+  const _DiaryCta();
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    final today = DiaryEntry.day(DateTime.now());
+    final diary = context.watch<DiaryState>();
+    final e = diary.entryFor(today);
+    final yesterday = diary.entryFor(today.subtract(const Duration(days: 1)));
+    final sub = e != null
+        ? 'Oggi: sintomi ${DiaryEntry.severityNames[e.severity].toLowerCase()} · tocca per modificare'
+        : yesterday != null
+            ? 'Registra i sintomi in 10 secondi · ieri: ${DiaryEntry.severityNames[yesterday.severity].toLowerCase()}'
+            : 'Registra i sintomi in 10 secondi';
+    return Material(
+      color: p.pineSoft,
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute<void>(builder: (_) => LogEntryScreen(date: today), fullscreenDialog: true),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(color: p.pine, shape: BoxShape.circle),
+                child: Icon(e == null ? Icons.add : Icons.check, color: p.onPine),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(e == null ? 'Come stai oggi?' : 'Diario di oggi fatto',
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 2),
+                    Text(sub, style: TextStyle(fontSize: 13, color: p.ink2)),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right, color: p.ink2),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

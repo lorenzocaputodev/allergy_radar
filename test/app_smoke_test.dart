@@ -1,8 +1,10 @@
 import 'package:allergy_radar/main.dart';
 import 'package:allergy_radar/models/level.dart';
 import 'package:allergy_radar/screens/allergen_detail_screen.dart';
+import 'package:allergy_radar/screens/log_entry_screen.dart';
 import 'package:allergy_radar/services/open_meteo_client.dart';
 import 'package:allergy_radar/state/app_state.dart';
+import 'package:allergy_radar/state/diary_state.dart';
 import 'package:allergy_radar/widgets/allergen_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -28,13 +30,16 @@ void main() {
     final state = AppState(repo, prefs);
     await tester.runAsync(state.init);
 
-    await tester.pumpWidget(MultiProvider(
-      providers: [
-        Provider.value(value: OpenMeteoClient(fakeHttp())),
-        ChangeNotifierProvider.value(value: state),
-      ],
-      child: const AllergyRadarApp(),
-    ));
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          Provider.value(value: OpenMeteoClient(fakeHttp())),
+          ChangeNotifierProvider.value(value: state),
+          ChangeNotifierProvider(create: (_) => DiaryState(prefs)),
+        ],
+        child: const AllergyRadarApp(),
+      ),
+    );
     await tester.pumpAndSettle();
   }
 
@@ -70,5 +75,33 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.descendant(of: high, matching: find.text('Alto')));
     await tester.pumpAndSettle();
+  });
+
+  testWidgets('diario: registrare i sintomi di oggi', (tester) async {
+    await pumpApp(tester);
+    await tester.tap(find.text('Diario').last);
+    await tester.pumpAndSettle();
+    expect(find.text('Oggi non hai ancora registrato'), findsOneWidget);
+
+    await tester.tap(find.text('Registra'));
+    await tester.pumpAndSettle();
+    expect(find.text('Come stai oggi?'), findsOneWidget);
+    await tester.tap(find.text('Forte').first); // naso
+    await tester.pump();
+    final save = find.text('Salva');
+    await tester.scrollUntilVisible(
+      save,
+      300,
+      scrollable: find.descendant(of: find.byType(LogEntryScreen), matching: find.byType(Scrollable)).first,
+    );
+    await tester.ensureVisible(save);
+    await tester.pumpAndSettle();
+    await tester.tap(save);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Oggi: sintomi forti'), findsOneWidget);
+    await tester.tap(find.byTooltip('Andamento e confronti'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Servono almeno 14 giorni'), findsOneWidget);
   });
 }

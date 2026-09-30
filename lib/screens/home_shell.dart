@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../theme/palette.dart';
 import 'calendar_screen.dart';
+import 'diary_screen.dart';
 import 'profile_screen.dart';
 import 'today_screen.dart';
 
@@ -22,7 +22,7 @@ class _HomeShellState extends State<HomeShell> {
         bottom: false,
         child: IndexedStack(
           index: _tab,
-          children: const [TodayScreen(), _DiaryPlaceholder(), CalendarScreen(), ProfileScreen()],
+          children: const [TodayScreen(), DiaryScreen(), CalendarScreen(), ProfileScreen()],
         ),
       ),
       bottomNavigationBar: NavigationBar(
@@ -38,34 +38,6 @@ class _HomeShellState extends State<HomeShell> {
           ),
           NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person), label: 'Profilo'),
         ],
-      ),
-    );
-  }
-}
-
-class _DiaryPlaceholder extends StatelessWidget {
-  const _DiaryPlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.palette;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.book_outlined, size: 40, color: p.ink3),
-            const SizedBox(height: 12),
-            Text('Diario', style: Theme.of(context).textTheme.headlineSmall),
-            const SizedBox(height: 8),
-            Text(
-              'Il diario dei sintomi arriva nella prossima versione.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: p.ink2),
-            ),
-          ],
-        ),
       ),
     );
   }

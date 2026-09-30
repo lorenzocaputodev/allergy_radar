@@ -11,6 +11,7 @@ import 'screens/home_shell.dart';
 import 'services/open_meteo_client.dart';
 import 'services/pollnet_client.dart';
 import 'state/app_state.dart';
+import 'state/diary_state.dart';
 import 'theme/app_theme.dart';
 
 Future<void> main() async {
@@ -27,6 +28,7 @@ Future<void> main() async {
       providers: [
         Provider.value(value: openMeteo),
         ChangeNotifierProvider.value(value: state),
+        ChangeNotifierProvider(create: (_) => DiaryState(prefs)),
       ],
       child: const AllergyRadarApp(),
     ),
