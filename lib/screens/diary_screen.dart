@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../models/allergen.dart';
 import '../models/diary_entry.dart';
 import '../models/level.dart';
+import '../state/app_state.dart';
 import '../state/diary_state.dart';
 import '../theme/palette.dart';
 import '../utils/format.dart';
@@ -120,7 +121,11 @@ class _DiaryScreenState extends State<DiaryScreen> {
           for (final e in diary.entries.take(5))
             Padding(
               padding: const EdgeInsets.only(bottom: 10),
-              child: _EntryCard(entry: e, onTap: () => _open(e.date)),
+              child: _EntryCard(
+                entry: e,
+                followed: context.watch<AppState>().followedAllergens,
+                onTap: () => _open(e.date),
+              ),
             ),
         ] else
           Container(
@@ -307,6 +312,7 @@ class _Legend extends StatelessWidget {
               ),
               const SizedBox(width: 6),
               Text(DiaryEntry.severityNames[i], style: TextStyle(fontSize: 12, color: p.ink2)),
+              if (i > 0) ...[const SizedBox(width: 4), SeverityDots(i, color: p.ink3, size: 5)],
             ],
           ),
         Row(
@@ -363,9 +369,12 @@ class _Stat extends StatelessWidget {
 }
 
 class _EntryCard extends StatelessWidget {
-  const _EntryCard({required this.entry, required this.onTap});
+  const _EntryCard({required this.entry, required this.followed, required this.onTap});
 
   final DiaryEntry entry;
+
+  /// Solo gli allergeni seguiti: gli altri sono salvati nella voce ma qui confonderebbero.
+  final List<Allergen> followed;
   final VoidCallback onTap;
 
   static const _names = ['No', 'lieve', 'medio', 'forte'];
@@ -381,29 +390,24 @@ class _EntryCard extends StatelessWidget {
       if (e.breath > 0) 'Respiro ${_names[e.breath]}',
       if (e.badSleep) 'Sonno disturbato',
     ];
-    final worst =
-        e.pollen.entries
-            .where((x) => Allergens.byId(x.key) != null && x.value >= Level.moderate.index)
-            .map((x) => (Allergens.byId(x.key)!, Level.fromIndex(x.value)))
-            .toList()
-          ..sort((a, b) => b.$2.index.compareTo(a.$2.index));
+    final pollen = [
+      for (final a in followed)
+        if (e.pollen[a.id] case final l?) '${a.name} ${Level.fromIndex(l).label.toLowerCase()}',
+    ];
 
-    Widget chip(IconData i, String t) => Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(color: p.chip, borderRadius: BorderRadius.circular(999)),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(i, size: 14, color: p.ink2),
-          const SizedBox(width: 5),
-          Flexible(
-            child: Text(
-              t,
-              style: TextStyle(fontSize: 12, color: p.ink2),
-              overflow: TextOverflow.ellipsis,
+    Widget line(String label, String text) => Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Text.rich(
+        TextSpan(
+          children: [
+            TextSpan(
+              text: '$label  ',
+              style: TextStyle(fontWeight: FontWeight.w700, color: p.ink3),
             ),
-          ),
-        ],
+            TextSpan(text: text),
+          ],
+        ),
+        style: TextStyle(fontSize: 14, height: 1.35, color: p.ink2),
       ),
     );
 
@@ -434,27 +438,27 @@ class _EntryCard extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 10),
                     alignment: Alignment.center,
                     decoration: BoxDecoration(color: p.symFill[e.severity], borderRadius: BorderRadius.circular(999)),
-                    child: Text(
-                      'Sintomi ${DiaryEntry.severityNames[e.severity].toLowerCase()}',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: p.symOnFill[e.severity]),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (e.severity > 0) ...[
+                          SeverityDots(e.severity, color: p.symOnFill[e.severity]),
+                          const SizedBox(width: 6),
+                        ],
+                        Text(
+                          'Sintomi ${DiaryEntry.severityNames[e.severity].toLowerCase()}',
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: p.symOnFill[e.severity]),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
-              Text(parts.isEmpty ? 'Nessun sintomo' : parts.join(' · '), style: TextStyle(fontSize: 14, color: p.ink2)),
-              if (e.meds.isNotEmpty || worst.isNotEmpty || e.note.isNotEmpty) ...[
-                const SizedBox(height: 10),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 6,
-                  children: [
-                    if (e.meds.isNotEmpty) chip(Icons.medication_outlined, e.meds.join(', ')),
-                    for (final (a, l) in worst.take(2)) chip(Icons.eco_outlined, '${a.name} ${l.label.toLowerCase()}'),
-                    if (e.note.isNotEmpty) chip(Icons.notes, e.note),
-                  ],
-                ),
-              ],
+              const SizedBox(height: 4),
+              line('Sintomi', parts.isEmpty ? 'nessuno' : parts.join(' · ')),
+              if (e.meds.isNotEmpty) line('Farmaci', e.meds.join(', ')),
+              if (pollen.isNotEmpty) line('Pollini', pollen.join(' · ')),
+              if (e.note.isNotEmpty) line('Nota', e.note),
             ],
           ),
         ),

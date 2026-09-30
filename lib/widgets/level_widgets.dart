@@ -219,3 +219,33 @@ class SeasonStrip extends StatelessWidget {
     );
   }
 }
+
+/// Intensità dei sintomi come 1, 2 o 3 pallini pieni su 3: il livello non dipende solo dal colore.
+class SeverityDots extends StatelessWidget {
+  const SeverityDots(this.severity, {super.key, required this.color, this.size = 6});
+
+  final int severity;
+  final Color color;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) => ExcludeSemantics(
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (var i = 1; i <= 3; i++) ...[
+          if (i > 1) SizedBox(width: size / 2),
+          Container(
+            width: size,
+            height: size,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: i <= severity ? color : null,
+              border: Border.all(color: color, width: 1.2),
+            ),
+          ),
+        ],
+      ],
+    ),
+  );
+}
