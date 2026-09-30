@@ -92,7 +92,7 @@ class ProfileScreen extends StatelessWidget {
             _Source(
               icon: Icons.calendar_month_outlined,
               title: 'Stime',
-              text: 'Quando non c’è né previsione né misura, il livello viene dal calendario stagionale ed è sempre marcato come stima.',
+              text: 'Quando non c’è né previsione né misura, il livello è la media storica del mese in 10 stazioni del Sud (2016–2025). È sempre marcato come stima.',
             ),
             _Source(
               icon: Icons.lock_outline,

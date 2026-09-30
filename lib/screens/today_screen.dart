@@ -173,7 +173,7 @@ class _Hero extends StatelessWidget {
     if (above.isNotEmpty && below.isNotEmpty) {
       summary += ' ${below.map((s) => '${s.allergen.name}: ${s.level.label.toLowerCase()}').join(', ')}.';
     }
-    final estimated = above.any((s) => s.kind == DataKind.estimate);
+    final estimated = followed.any((s) => s.kind == DataKind.estimate);
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -200,7 +200,7 @@ class _Hero extends StatelessWidget {
             if (estimated) ...[
               const SizedBox(height: 10),
               Text(
-                'Parte del livello è una stima dal calendario: non ci sono stazioni di misura vicine.',
+                'Parte del livello è una media storica del mese: non ci sono stazioni di misura attive vicine.',
                 style: TextStyle(fontSize: 13, color: p.onHero.withValues(alpha: 0.85)),
               ),
             ],
