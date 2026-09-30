@@ -90,7 +90,7 @@ class CalendarScreen extends StatelessWidget {
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(4, 0, 4, 14),
-          child: Text('Quando fioriscono, al Sud', style: TextStyle(fontSize: 14, color: p.ink3)),
+          child: Text('Quando fioriscono al Sud, mese per mese', style: TextStyle(fontSize: 14, color: p.ink3)),
         ),
         SectionCard(
           padding: const EdgeInsets.fromLTRB(12, 16, 12, 16),
@@ -129,7 +129,7 @@ class CalendarScreen extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         Text(
-          'Calendario indicativo, da medie storiche. Il dato di oggi è nella scheda Oggi.',
+          'Livello medio di ogni mese nelle stazioni POLLnet del Sud (Campania, Molise, Abruzzo, Calabria, Sicilia), 2016–2025. Il dato di oggi è nella scheda Oggi.',
           style: TextStyle(fontSize: 13, color: p.ink3),
         ),
       ],

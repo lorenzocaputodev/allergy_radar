@@ -31,6 +31,6 @@ abstract final class Fmt {
         DataKind.forecast => 'oggi',
         DataKind.measured =>
           '${s.station!.station.name}, ${s.station!.km.round()} km · ${s.date == null ? '' : shortDate(s.date!)}',
-        DataKind.estimate => 'dal calendario',
+        DataKind.estimate => 'media storica',
       };
 }

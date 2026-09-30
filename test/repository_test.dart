@@ -26,7 +26,7 @@ void main() {
 
     final par = snap[Allergens.parietaria.id]!;
     expect(par.kind, DataKind.estimate);
-    expect(par.level, Level.high); // settembre nel calendario
+    expect(par.level, Level.low); // settembre: media storica 9,4 granuli/m³
     expect(par.value, isNull);
 
     // Brindisi è entro 60 km ma non pubblica più: interrogata, poi scartata.
@@ -55,7 +55,7 @@ void main() {
     final repo = repository(DateTime(2026, 10, 5, 10));
     final snap = repo.build(await repo.fetch(bologna));
     expect(snap[Allergens.parietaria.id]!.kind, DataKind.estimate);
-    expect(snap[Allergens.parietaria.id]!.level, Level.moderate); // ottobre
+    expect(snap[Allergens.parietaria.id]!.level, Level.low); // ottobre: media storica 8,5 granuli/m³
   });
 
   test('ISPRA giù: la previsione arriva lo stesso', () async {

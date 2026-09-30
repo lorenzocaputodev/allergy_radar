@@ -142,9 +142,7 @@ class AllergenDetailScreen extends StatelessWidget {
                     ],
                   ),
                   Text(
-                    s.kind == DataKind.measured
-                        ? 'I modelli europei non calcolano questo polline. Mostriamo la misura della stazione POLLnet più vicina: esce ogni giorno, con qualche giorno di ritardo.'
-                        : 'I modelli europei non calcolano questo polline e non c’è una stazione di misura attiva entro ${StationDirectory.maxKm.round()} km. Il livello è una stima dal calendario stagionale: il diario dei sintomi ti dirà quanto conta per te.',
+                    _whyText(s, state.snapshot?.nearestStation, now),
                     style: TextStyle(fontSize: 14, height: 1.5, color: p.ink2),
                   ),
                 ],
@@ -155,7 +153,10 @@ class AllergenDetailScreen extends StatelessWidget {
             children: [
               Text('Stagione', style: Theme.of(context).textTheme.titleLarge),
               SeasonStrip(a.calendar, month: now.month),
-              Text('Calendario indicativo per il Sud Italia.', style: TextStyle(fontSize: 13, color: p.ink3)),
+              Text(
+                'Livello medio di ogni mese: 10 stazioni POLLnet del Sud, 2016–2025.',
+                style: TextStyle(fontSize: 13, color: p.ink3),
+              ),
             ],
           ),
           const SizedBox(height: 14),
@@ -263,4 +264,19 @@ class _Bars extends StatelessWidget {
           ],
         ],
       );
+}
+
+String _whyText(AllergenStatus s, NearStation? nearest, DateTime now) {
+  if (s.kind == DataKind.measured) {
+    return 'I modelli europei non calcolano questo polline. Mostriamo la misura della stazione POLLnet più vicina: '
+        'esce ogni giorno, con qualche giorno di ritardo.';
+  }
+  final model = s.allergen.hasForecast
+      ? 'La previsione non è disponibile in questo momento.'
+      : 'I modelli europei non calcolano questo polline.';
+  final station = nearest != null
+      ? 'La stazione più vicina (${nearest.station.name}, ${nearest.km.round()} km) non pubblica dati recenti.'
+      : 'Non c’è una stazione di misura entro ${StationDirectory.maxKm.round()} km.';
+  return '$model $station Il livello è la media storica di ${Fmt.month(now.month)} nelle stazioni del Sud: '
+      'indica la stagione, non il giorno. Il diario dei sintomi ti dirà quanto conta per te.';
 }
