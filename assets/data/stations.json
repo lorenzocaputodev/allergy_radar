@@ -83,7 +83,7 @@
   "id": 82,
   "code": "AO2",
   "name": "Aosta - St. Christophe",
-  "region": "Valle d'Aosta ",
+  "region": "Valle d'Aosta",
   "lat": 45.74219,
   "lon": 7.35698
  },
@@ -91,7 +91,7 @@
   "id": 83,
   "code": "AO3",
   "name": "Cogne - Gimillan",
-  "region": "Valle d'Aosta ",
+  "region": "Valle d'Aosta",
   "lat": 45.61576,
   "lon": 7.35601
  },
@@ -510,14 +510,6 @@
   "region": "Veneto",
   "lat": 45.40418,
   "lon": 11.88799
- },
- {
-  "id": 168,
-  "code": "ISPRA_01",
-  "name": "Stazione TEST ISPRA",
-  "region": "ISPRA",
-  "lat": 72.58011,
-  "lon": -38.46373
  },
  {
   "id": 191,

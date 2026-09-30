@@ -77,9 +77,12 @@ void main() {
     });
 
     test('filtro CQL con date e codici', () {
-      final uri = PollnetClient(fakeHttp()).concentrationsUri(118, [1362, 1330], DateTime(2026, 9, 1), DateTime(2026, 9, 30));
-      expect(uri.queryParameters['cql_filter'],
-          "STAT_ID=118 and PART_ID IN (1362,1330) and REMA_DATE between '2026-09-01' and '2026-09-30'");
+      final uri = PollnetClient(fakeHttp())
+          .concentrationsUri(118, [1362, 1330], DateTime(2026, 9, 1), DateTime(2026, 9, 30));
+      expect(
+        uri.queryParameters['cql_filter'],
+        "STAT_ID=118 and PART_ID IN (1362,1330) and REMA_DATE between '2026-09-01' and '2026-09-30'",
+      );
       expect(uri.queryParameters['outputFormat'], 'csv');
     });
   });
@@ -91,6 +94,14 @@ void main() {
       final near = dir.near(Place.lecce);
       expect(near.map((n) => n.station.name), ['Brindisi']);
       expect(near.single.km, closeTo(38, 2));
+    });
+
+    test('area del calendario dalla stazione più vicina', () {
+      expect(dir.areaOf(Place.lecce), Area.south);
+      expect(dir.areaOf(const Place(name: 'Milano', lat: 45.46, lon: 9.19)), Area.north);
+      expect(dir.areaOf(const Place(name: 'Roma', lat: 41.9, lon: 12.5)), Area.centre);
+      expect(dir.areaOf(const Place(name: 'Cagliari', lat: 39.22, lon: 9.12)), Area.south);
+      expect(dir.stations.where((s) => s.region == 'ISPRA'), isEmpty, reason: 'niente stazione di test');
     });
 
     test('Bologna: la prima è Bologna', () {

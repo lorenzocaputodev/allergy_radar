@@ -8,11 +8,11 @@ void main() {
   final today = DateTime(2026, 9, 30);
 
   DiaryEntry entry(int daysAgo, int symptom, int parietaria) => DiaryEntry(
-        date: today.subtract(Duration(days: daysAgo)),
-        nose: symptom,
-        eyes: symptom,
-        pollen: {Allergens.parietaria.id: parietaria},
-      );
+    date: today.subtract(Duration(days: daysAgo)),
+    nose: symptom,
+    eyes: symptom,
+    pollen: {Allergens.parietaria.id: parietaria},
+  );
 
   group('DiaryEntry', () {
     test('punteggio e classe del giorno', () {

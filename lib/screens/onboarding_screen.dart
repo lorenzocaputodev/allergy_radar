@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../models/alert_settings.dart';
 import '../models/allergen.dart';
 import '../models/place.dart';
+import '../services/alerts_service.dart';
 import '../state/app_state.dart';
 import '../theme/palette.dart';
 import '../widgets/level_widgets.dart';
 import '../widgets/place_search.dart';
+import 'alerts_screen.dart';
 
-/// Primo avvio: benvenuto, allergeni, luogo, riepilogo.
+/// Primo avvio: benvenuto, allergeni, luogo, avvisi, riepilogo.
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
 
@@ -20,6 +23,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   int _step = 0;
   final Set<String> _allergens = {Allergens.grass.id, Allergens.parietaria.id};
   Place? _place;
+  AlertSettings _alerts = const AlertSettings();
 
   void _next() => setState(() => _step++);
   void _back() => setState(() => _step--);
@@ -69,15 +73,45 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           const PlacePrivacyNote(),
         ],
       ),
-      _ => _Step(
+      3 => _Step(
         step: 3,
+        title: 'Quando vuoi saperlo?',
+        subtitle: 'Pochi avvisi, ma utili. Li cambi quando vuoi dal Profilo.',
+        onBack: _back,
+        action: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            FilledButton(
+              onPressed: () async {
+                if (_alerts.anyEnabled) await AlertsService.requestPermission();
+                _next();
+              },
+              child: Text(_alerts.anyEnabled ? 'Attiva gli avvisi' : 'Continua senza avvisi'),
+            ),
+            TextButton(
+              onPressed: () {
+                _alerts = AlertSettings.off;
+                _next();
+              },
+              child: const Text('Non ora'),
+            ),
+          ],
+        ),
+        children: [AlertSettingsEditor(value: _alerts, onChanged: (a) => setState(() => _alerts = a))],
+      ),
+      _ => _Step(
+        step: 4,
         title: 'Tutto pronto',
         onBack: _back,
         action: FilledButton(
-          onPressed: () => context.read<AppState>().completeOnboarding(_place!, _allergens),
+          onPressed: () async {
+            await context.read<AppState>().completeOnboarding(_place!, _allergens, _alerts);
+            await AlertsService.sync(_alerts);
+          },
           child: const Text('Vai a Oggi'),
         ),
-        children: [_Summary(place: _place!, allergens: _allergens)],
+        children: [_Summary(place: _place!, allergens: _allergens, alerts: _alerts)],
       ),
     };
     return Scaffold(body: SafeArea(child: page));
@@ -205,7 +239,7 @@ class _Step extends StatelessWidget {
               Expanded(
                 child: Row(
                   children: [
-                    for (var i = 1; i <= 3; i++) ...[
+                    for (var i = 1; i <= 4; i++) ...[
                       if (i > 1) const SizedBox(width: 6),
                       Expanded(
                         child: Container(
@@ -221,7 +255,7 @@ class _Step extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              Text('$step di 3', style: TextStyle(fontSize: 13, color: p.ink3)),
+              Text('$step di 4', style: TextStyle(fontSize: 13, color: p.ink3)),
             ],
           ),
         ),
@@ -304,15 +338,22 @@ class _Hint extends StatelessWidget {
 }
 
 class _Summary extends StatelessWidget {
-  const _Summary({required this.place, required this.allergens});
+  const _Summary({required this.place, required this.allergens, required this.alerts});
 
   final Place place;
   final Set<String> allergens;
+  final AlertSettings alerts;
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
     final names = Allergens.all.where((a) => allergens.contains(a.id)).map((a) => a.name).join(', ');
+    final t = AlertSettingsEditor.time;
+    final alertsText = [
+      if (alerts.briefing) 'briefing alle ${t(alerts.briefingAt)}',
+      if (alerts.tomorrow) 'domani peggiora alle ${t(alerts.tomorrowAt)}',
+      if (alerts.diary) 'diario alle ${t(alerts.diaryAt)}',
+    ].join(', ');
     Widget row(IconData i, String k, String v) => Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(
@@ -340,6 +381,8 @@ class _Summary extends StatelessWidget {
             row(Icons.place_outlined, 'Zona', place.name),
             const Divider(),
             row(Icons.eco_outlined, 'Allergeni', names),
+            const Divider(),
+            row(Icons.notifications_outlined, 'Avvisi', alertsText.isEmpty ? 'Spenti' : alertsText),
           ],
         ),
         const SizedBox(height: 14),

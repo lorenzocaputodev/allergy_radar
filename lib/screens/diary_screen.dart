@@ -29,7 +29,8 @@ class _DiaryScreenState extends State<DiaryScreen> {
   }
 
   void _open(DateTime d) =>
-      Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => LogEntryScreen(date: d), fullscreenDialog: true));
+      Navigator.of(context)
+          .push(MaterialPageRoute<void>(builder: (_) => LogEntryScreen(date: d), fullscreenDialog: true));
 
   @override
   Widget build(BuildContext context) {
@@ -63,9 +64,13 @@ class _DiaryScreenState extends State<DiaryScreen> {
             ),
           ],
         ),
-        _TodayCard(entry: todayEntry, onOpen: () => _open(today), onNoSymptoms: () {
-          diary.save(DiaryEntry(date: today));
-        }),
+        _TodayCard(
+          entry: todayEntry,
+          onOpen: () => _open(today),
+          onNoSymptoms: () {
+            diary.save(DiaryEntry(date: today));
+          },
+        ),
         const SizedBox(height: 14),
         SectionCard(
           children: [
@@ -86,7 +91,9 @@ class _DiaryScreenState extends State<DiaryScreen> {
                 IconButton(
                   tooltip: 'Mese successivo',
                   icon: const Icon(Icons.chevron_right),
-                  onPressed: isCurrentMonth ? null : () => setState(() => _month = DateTime(_month.year, _month.month + 1)),
+                  onPressed: isCurrentMonth
+                      ? null
+                      : () => setState(() => _month = DateTime(_month.year, _month.month + 1)),
                 ),
               ],
             ),
@@ -111,7 +118,10 @@ class _DiaryScreenState extends State<DiaryScreen> {
             child: Text('Ultimi giorni', style: Theme.of(context).textTheme.titleLarge),
           ),
           for (final e in diary.entries.take(5))
-            Padding(padding: const EdgeInsets.only(bottom: 10), child: _EntryCard(entry: e, onTap: () => _open(e.date))),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: _EntryCard(entry: e, onTap: () => _open(e.date)),
+            ),
         ] else
           Container(
             padding: const EdgeInsets.all(20),
@@ -156,12 +166,16 @@ class _TodayCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            e == null ? 'Oggi non hai ancora registrato' : 'Oggi: sintomi ${DiaryEntry.severityNames[e.severity].toLowerCase()}',
+            e == null
+                ? 'Oggi non hai ancora registrato'
+                : 'Oggi: sintomi ${DiaryEntry.severityNames[e.severity].toLowerCase()}',
             style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 4),
           Text(
-            e == null ? 'Bastano 10 secondi: servono a capire quali pollini ti danno fastidio.' : 'Puoi modificarlo fino a stasera.',
+            e == null
+                ? 'Bastano 10 secondi: servono a capire quali pollini ti danno fastidio.'
+                : 'Puoi modificarlo fino a stasera.',
             style: TextStyle(fontSize: 14, color: p.ink2),
           ),
           const SizedBox(height: 14),
@@ -211,7 +225,12 @@ class _MonthGrid extends StatelessWidget {
     final offset = DateTime(month.year, month.month).weekday - 1;
     final cells = <Widget>[
       for (final d in ['L', 'M', 'M', 'G', 'V', 'S', 'D'])
-        Center(child: Text(d, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: p.ink3))),
+        Center(
+          child: Text(
+            d,
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: p.ink3),
+          ),
+        ),
       for (var i = 0; i < offset; i++) const SizedBox.shrink(),
       for (var d = 1; d <= days; d++) _dayCell(context, DateTime(month.year, month.month, d)),
     ];
@@ -250,8 +269,8 @@ class _MonthGrid extends StatelessWidget {
             border: isToday
                 ? Border.all(color: p.pine, width: 2)
                 : c == null && !future
-                    ? Border.all(color: p.line, width: 1.5)
-                    : null,
+                ? Border.all(color: p.line, width: 1.5)
+                : null,
           ),
           child: Text(
             '${d.day}',
@@ -281,7 +300,11 @@ class _Legend extends StatelessWidget {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(width: 14, height: 14, decoration: BoxDecoration(color: p.symFill[i], borderRadius: BorderRadius.circular(4))),
+              Container(
+                width: 14,
+                height: 14,
+                decoration: BoxDecoration(color: p.symFill[i], borderRadius: BorderRadius.circular(4)),
+              ),
               const SizedBox(width: 6),
               Text(DiaryEntry.severityNames[i], style: TextStyle(fontSize: 12, color: p.ink2)),
             ],
@@ -292,7 +315,10 @@ class _Legend extends StatelessWidget {
             Container(
               width: 14,
               height: 14,
-              decoration: BoxDecoration(borderRadius: BorderRadius.circular(4), border: Border.all(color: p.ink3)),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(color: p.ink3),
+              ),
             ),
             const SizedBox(width: 6),
             Text('Non registrato', style: TextStyle(fontSize: 12, color: p.ink2)),
@@ -315,11 +341,18 @@ class _Stat extends StatelessWidget {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(color: p.card, borderRadius: BorderRadius.circular(16), border: Border.all(color: p.line)),
+        decoration: BoxDecoration(
+          color: p.card,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: p.line),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(value, style: const TextStyle(fontFamily: AppFonts.display, fontSize: 26, fontWeight: FontWeight.w600)),
+            Text(
+              value,
+              style: const TextStyle(fontFamily: AppFonts.display, fontSize: 26, fontWeight: FontWeight.w600),
+            ),
             const SizedBox(height: 4),
             Text(label, style: TextStyle(fontSize: 12, height: 1.35, color: p.ink3)),
           ],
@@ -348,28 +381,38 @@ class _EntryCard extends StatelessWidget {
       if (e.breath > 0) 'Respiro ${_names[e.breath]}',
       if (e.badSleep) 'Sonno disturbato',
     ];
-    final worst = e.pollen.entries
-        .where((x) => Allergens.byId(x.key) != null && x.value >= Level.moderate.index)
-        .map((x) => (Allergens.byId(x.key)!, Level.fromIndex(x.value)))
-        .toList()
-      ..sort((a, b) => b.$2.index.compareTo(a.$2.index));
+    final worst =
+        e.pollen.entries
+            .where((x) => Allergens.byId(x.key) != null && x.value >= Level.moderate.index)
+            .map((x) => (Allergens.byId(x.key)!, Level.fromIndex(x.value)))
+            .toList()
+          ..sort((a, b) => b.$2.index.compareTo(a.$2.index));
 
     Widget chip(IconData i, String t) => Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          decoration: BoxDecoration(color: p.chip, borderRadius: BorderRadius.circular(999)),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(i, size: 14, color: p.ink2),
-              const SizedBox(width: 5),
-              Flexible(child: Text(t, style: TextStyle(fontSize: 12, color: p.ink2), overflow: TextOverflow.ellipsis)),
-            ],
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(color: p.chip, borderRadius: BorderRadius.circular(999)),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(i, size: 14, color: p.ink2),
+          const SizedBox(width: 5),
+          Flexible(
+            child: Text(
+              t,
+              style: TextStyle(fontSize: 12, color: p.ink2),
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
-        );
+        ],
+      ),
+    );
 
     return Material(
       color: p.card,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: BorderSide(color: p.line)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: p.line),
+      ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
@@ -381,7 +424,10 @@ class _EntryCard extends StatelessWidget {
               Row(
                 children: [
                   Expanded(
-                    child: Text(Fmt.longDate(e.date), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                    child: Text(
+                      Fmt.longDate(e.date),
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                    ),
                   ),
                   Container(
                     height: 26,

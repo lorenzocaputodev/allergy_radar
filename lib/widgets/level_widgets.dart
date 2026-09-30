@@ -68,15 +68,15 @@ class LevelWord extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Text(
-        level.label,
-        style: TextStyle(
-          fontFamily: AppFonts.display,
-          fontSize: size,
-          height: 1.05,
-          fontWeight: FontWeight.w600,
-          color: context.palette.text(level),
-        ),
-      );
+    level.label,
+    style: TextStyle(
+      fontFamily: AppFonts.display,
+      fontSize: size,
+      height: 1.05,
+      fontWeight: FontWeight.w600,
+      color: context.palette.text(level),
+    ),
+  );
 }
 
 /// Da dove arriva il dato: obbligatorio accanto a ogni valore.
@@ -87,16 +87,16 @@ class SourceChip extends StatelessWidget {
   final String? detail;
 
   static String label(DataKind k) => switch (k) {
-        DataKind.forecast => 'Previsione',
-        DataKind.measured => 'Misurato',
-        DataKind.estimate => 'Stima',
-      };
+    DataKind.forecast => 'Previsione',
+    DataKind.measured => 'Misurato',
+    DataKind.estimate => 'Stima',
+  };
 
-  static IconData icon(DataKind k) => switch (k) {
-        DataKind.forecast => Icons.layers_outlined,
-        DataKind.measured => Icons.sensors,
-        DataKind.estimate => Icons.calendar_month_outlined,
-      };
+  static IconData _icon(DataKind k) => switch (k) {
+    DataKind.forecast => Icons.layers_outlined,
+    DataKind.measured => Icons.sensors,
+    DataKind.estimate => Icons.calendar_month_outlined,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -107,14 +107,19 @@ class SourceChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon(kind), size: 15, color: p.ink2),
+          Icon(_icon(kind), size: 15, color: p.ink2),
           const SizedBox(width: 6),
           Flexible(
             child: Text.rich(
-              TextSpan(children: [
-                TextSpan(text: label(kind), style: const TextStyle(fontWeight: FontWeight.w700)),
-                if (detail != null) TextSpan(text: ' · $detail'),
-              ]),
+              TextSpan(
+                children: [
+                  TextSpan(
+                    text: label(kind),
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  if (detail != null) TextSpan(text: ' · $detail'),
+                ],
+              ),
               style: TextStyle(fontSize: 12, color: p.ink2),
               overflow: TextOverflow.ellipsis,
             ),
@@ -163,10 +168,7 @@ class SectionCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          for (var i = 0; i < children.length; i++) ...[
-            if (i > 0) SizedBox(height: gap),
-            children[i],
-          ],
+          for (var i = 0; i < children.length; i++) ...[if (i > 0) SizedBox(height: gap), children[i]],
         ],
       ),
     );

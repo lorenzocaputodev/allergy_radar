@@ -1,14 +1,16 @@
-// Ricava il calendario stagionale dagli storici POLLnet (ISPRA, CC BY 4.0).
+// Ricava i calendari stagionali per area dagli storici POLLnet (ISPRA, CC BY 4.0).
 //
-//   node tool/build_calendar.mjs            (Node 18+)
+//   node tool/build_calendar.mjs > tool/calendar.txt      (Node 18+)
 //
-// Per ogni allergene: media giornaliera per mese su ogni stazione, poi mediana
-// tra le stazioni, classificata con le soglie POLLnet (0 assente … 3 alto).
-// Stampa gli array da copiare in lib/models/allergen.dart.
+// Per ogni area e allergene: media giornaliera per mese su ogni stazione, poi
+// mediana tra le stazioni, classificata con le soglie POLLnet (0 assente … 3 alto).
+// Stampa le mappe da copiare in lib/models/allergen.dart.
 
-const STATIONS = {
-  192: 'Agrigento', 165: 'Siracusa', 191: 'Palermo', 144: 'Trapani', 138: 'Caserta',
-  137: 'Benevento', 131: 'Napoli', 154: 'Termoli', 89: 'Pescara', 156: 'Reggio Calabria',
+// Stazioni di pianura o costa, con storici lunghi.
+const AREAS = {
+  north: [197, 148, 91, 118, 122, 120, 166, 152, 55, 84, 104, 126],
+  centre: [69, 195, 80, 163, 193, 157, 162, 140, 159, 70],
+  south: [192, 165, 191, 144, 138, 137, 131, 154, 89, 156, 164, 158],
 };
 const ALLERGENS = {
   grass: [1352, 0.5, 10, 30], parietaria: [1362, 2, 20, 70], olive: [1391, 0.5, 5, 25],
@@ -19,26 +21,32 @@ const ALLERGENS = {
 const FROM = '2016-01-01';
 const TO = '2025-12-31';
 
-async function series(station, part) {
+async function monthlyMeans(station, part) {
   const cql = `STAT_ID=${station} and PART_ID=${part} and REMA_DATE between '${FROM}' and '${TO}'`;
   const url = 'https://sdi.isprambiente.it/geoserver/om/ows?service=WFS&version=2.0.0&request=GetFeature'
     + `&typeName=om:Concentrazione_pollini_spore&outputFormat=csv&cql_filter=${encodeURIComponent(cql)}`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`ISPRA ${res.status}`);
-  const [head, ...rows] = (await res.text()).trim().split(/\r?\n/).map((l) => l.split(','));
-  const iv = head.indexOf('REMA_CONCENTRATION');
-  const id = head.indexOf('REMA_DATE');
-  const sum = Array(12).fill(0);
-  const n = Array(12).fill(0);
-  for (const r of rows) {
-    if (r[iv] === '') continue;
-    const m = Number(r[id].slice(5, 7)) - 1;
-    sum[m] += Number(r[iv]);
-    n[m]++;
+  for (let attempt = 0; ; attempt++) {
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`ISPRA ${res.status}`);
+      const [head, ...rows] = (await res.text()).trim().split(/\r?\n/).map((l) => l.split(','));
+      const iv = head.indexOf('REMA_CONCENTRATION');
+      const id = head.indexOf('REMA_DATE');
+      const sum = Array(12).fill(0);
+      const n = Array(12).fill(0);
+      for (const r of rows) {
+        if (r[iv] === '') continue;
+        const m = Number(r[id].slice(5, 7)) - 1;
+        sum[m] += Number(r[iv]);
+        n[m]++;
+      }
+      // Copertura minima: almeno 20 giorni misurati in 10 mesi su 12.
+      if (n.filter((x) => x >= 20).length < 10) return null;
+      return sum.map((s, i) => (n[i] ? s / n[i] : null));
+    } catch (e) {
+      if (attempt >= 2) throw e;
+    }
   }
-  // Copertura minima: almeno 20 giorni misurati in 10 mesi su 12.
-  if (n.filter((x) => x >= 20).length < 10) return null;
-  return sum.map((s, i) => (n[i] ? s / n[i] : null));
 }
 
 const median = (v) => {
@@ -49,8 +57,14 @@ const median = (v) => {
 };
 
 for (const [name, [part, low, moderate, high]] of Object.entries(ALLERGENS)) {
-  const perStation = (await Promise.all(Object.keys(STATIONS).map((s) => series(s, part)))).filter(Boolean);
-  const means = Array.from({ length: 12 }, (_, m) => median(perStation.map((s) => s[m])));
-  const cal = means.map((v) => (v < low ? 0 : v < moderate ? 1 : v < high ? 2 : 3));
-  console.log(`${name.padEnd(11)} calendar: [${cal.join(', ')}],  // ${perStation.length} stazioni; medie ${means.map((v) => v.toFixed(1)).join(' ')}`);
+  const lines = [];
+  for (const [area, stations] of Object.entries(AREAS)) {
+    const series = [];
+    for (const s of stations) series.push(await monthlyMeans(s, part));
+    const ok = series.filter(Boolean);
+    const means = Array.from({ length: 12 }, (_, m) => median(ok.map((s) => s[m])));
+    const cal = means.map((v) => (v < low ? 0 : v < moderate ? 1 : v < high ? 2 : 3));
+    lines.push(`      Area.${area}: [${cal.join(', ')}], // ${ok.length} stazioni; ${means.map((v) => v.toFixed(1)).join(' ')}`);
+  }
+  console.log(`${name}:\n${lines.join('\n')}`);
 }

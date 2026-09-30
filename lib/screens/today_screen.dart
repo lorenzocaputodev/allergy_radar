@@ -2,15 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../models/allergen.dart';
+import '../models/diary_entry.dart';
 import '../models/level.dart';
 import '../models/pollen_snapshot.dart';
-import '../models/diary_entry.dart';
 import '../state/app_state.dart';
 import '../state/diary_state.dart';
 import '../theme/palette.dart';
 import '../utils/format.dart';
 import '../widgets/allergen_card.dart';
 import '../widgets/level_widgets.dart';
+import 'alerts_screen.dart';
 import 'allergen_detail_screen.dart';
 import 'log_entry_screen.dart';
 import 'place_search_screen.dart';
@@ -25,9 +26,9 @@ class TodayScreen extends StatelessWidget {
     final snap = s.snapshot;
     final now = DateTime.now();
 
-    void openDetail(AllergenStatus st) => Navigator.of(context).push(
-          MaterialPageRoute<void>(builder: (_) => AllergenDetailScreen(allergenId: st.allergen.id)),
-        );
+    void openDetail(AllergenStatus st) =>
+        Navigator.of(context)
+            .push(MaterialPageRoute<void>(builder: (_) => AllergenDetailScreen(allergenId: st.allergen.id)));
 
     return RefreshIndicator(
       onRefresh: s.refresh,
@@ -38,37 +39,45 @@ class TodayScreen extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(8, 12, 12, 0),
             child: Row(
               children: [
-                Flexible(
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(14),
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute<void>(builder: (_) => const PlaceSearchScreen()),
-                    ),
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(minHeight: 48),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.place_outlined, color: p.ink),
-                            const SizedBox(width: 6),
-                            Flexible(
-                              child: Text(
-                                s.place.name,
-                                overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context).textTheme.headlineSmall,
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(14),
+                      onTap: () =>
+                          Navigator.of(context)
+                              .push(MaterialPageRoute<void>(builder: (_) => const PlaceSearchScreen())),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(minHeight: 48),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.place_outlined, color: p.ink),
+                              const SizedBox(width: 6),
+                              Flexible(
+                                child: Text(
+                                  s.place.name,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context).textTheme.headlineSmall,
+                                ),
                               ),
-                            ),
-                            Icon(Icons.expand_more, color: p.ink),
-                          ],
+                              Icon(Icons.expand_more, color: p.ink),
+                            ],
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
                 if (s.loading) const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+                IconButton(
+                  tooltip: 'Avvisi',
+                  icon: const Icon(Icons.notifications_outlined),
+                  onPressed: () =>
+                      Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const AlertsScreen())),
+                ),
               ],
             ),
           ),
@@ -81,7 +90,10 @@ class TodayScreen extends StatelessWidget {
           ),
           if (s.error != null) _Banner(message: s.error!),
           if (snap == null && s.error == null)
-            const Padding(padding: EdgeInsets.all(48), child: Center(child: CircularProgressIndicator()))
+            const Padding(
+              padding: EdgeInsets.all(48),
+              child: Center(child: CircularProgressIndicator()),
+            )
           else if (snap != null) ...[
             _Hero(state: s),
             const SizedBox(height: 14),
@@ -102,9 +114,15 @@ class TodayScreen extends StatelessWidget {
                 ),
               ),
             const Padding(padding: EdgeInsets.fromLTRB(16, 4, 16, 14), child: _DiaryCta()),
-            Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: _Forecast(state: s, today: now)),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: _Forecast(state: s, today: now),
+            ),
             const SizedBox(height: 14),
-            Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: _Air(air: snap.air)),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: _Air(air: snap.air),
+            ),
             const SizedBox(height: 14),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -124,9 +142,9 @@ class _SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.fromLTRB(20, 6, 20, 10),
-        child: Text(text, style: Theme.of(context).textTheme.titleLarge),
-      );
+    padding: const EdgeInsets.fromLTRB(20, 6, 20, 10),
+    child: Text(text, style: Theme.of(context).textTheme.titleLarge),
+  );
 }
 
 class _Banner extends StatelessWidget {
@@ -136,19 +154,21 @@ class _Banner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
-        child: Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(color: const Color(0xFF2B3430), borderRadius: BorderRadius.circular(16)),
-          child: Row(
-            children: [
-              const Icon(Icons.wifi_off, color: Colors.white),
-              const SizedBox(width: 12),
-              Expanded(child: Text(message, style: const TextStyle(color: Colors.white, fontSize: 14))),
-            ],
+    padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+    child: Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(color: const Color(0xFF2B3430), borderRadius: BorderRadius.circular(16)),
+      child: Row(
+        children: [
+          const Icon(Icons.wifi_off, color: Colors.white),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(message, style: const TextStyle(color: Colors.white, fontSize: 14)),
           ),
-        ),
-      );
+        ],
+      ),
+    ),
+  );
 }
 
 class _Hero extends StatelessWidget {
@@ -189,12 +209,23 @@ class _Hero extends StatelessWidget {
           children: [
             Text(
               'LA TUA GIORNATA',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 0.8, color: p.onHero.withValues(alpha: 0.85)),
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.8,
+                color: p.onHero.withValues(alpha: 0.85),
+              ),
             ),
             const SizedBox(height: 6),
             Text(
               level.label,
-              style: TextStyle(fontFamily: AppFonts.display, fontSize: 44, height: 1, fontWeight: FontWeight.w600, color: p.onHero),
+              style: TextStyle(
+                fontFamily: AppFonts.display,
+                fontSize: 44,
+                height: 1,
+                fontWeight: FontWeight.w600,
+                color: p.onHero,
+              ),
             ),
             const SizedBox(height: 14),
             RiskBar(level, track: p.heroTrack),
@@ -245,7 +276,11 @@ class _Forecast extends StatelessWidget {
                   child: Text(
                     Fmt.weekday(d, today),
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 13, color: p.ink2, fontWeight: d == days.first ? FontWeight.w700 : FontWeight.w500),
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: p.ink2,
+                      fontWeight: d == days.first ? FontWeight.w700 : FontWeight.w500,
+                    ),
                   ),
                 ),
             ],
@@ -253,15 +288,20 @@ class _Forecast extends StatelessWidget {
         for (final s in withForecast)
           Row(
             children: [
-              SizedBox(width: 96, child: Text(s.allergen.name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600))),
-              for (final d in days)
-                Expanded(child: _DayCell(value: s.series.where((x) => x.date == d).firstOrNull)),
+              SizedBox(
+                width: 96,
+                child: Text(s.allergen.name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+              ),
+              for (final d in days) Expanded(child: _DayCell(value: s.series.where((x) => x.date == d).firstOrNull)),
             ],
           ),
         for (final s in without)
           Row(
             children: [
-              SizedBox(width: 96, child: Text(s.allergen.name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600))),
+              SizedBox(
+                width: 96,
+                child: Text(s.allergen.name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+              ),
               Expanded(
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -270,10 +310,19 @@ class _Forecast extends StatelessWidget {
                     border: Border.all(color: p.line, width: 1.5),
                   ),
                   child: Text.rich(
-                    TextSpan(children: [
-                      TextSpan(text: s.kind == DataKind.measured ? 'Nessuna previsione. Ultima misura: ' : 'Nessuna previsione. Stima: '),
-                      TextSpan(text: s.level.label, style: TextStyle(fontWeight: FontWeight.w700, color: p.text(s.level))),
-                    ]),
+                    TextSpan(
+                      children: [
+                        TextSpan(
+                          text: s.kind == DataKind.measured
+                              ? 'Nessuna previsione. Ultima misura: '
+                              : 'Nessuna previsione. Stima: ',
+                        ),
+                        TextSpan(
+                          text: s.level.label,
+                          style: TextStyle(fontWeight: FontWeight.w700, color: p.text(s.level)),
+                        ),
+                      ],
+                    ),
                     style: TextStyle(fontSize: 13, color: p.ink2, height: 1.35),
                   ),
                 ),
@@ -301,11 +350,17 @@ class _DayCell extends StatelessWidget {
           child: Container(
             width: 30,
             height: 30,
-            decoration: BoxDecoration(color: v == null ? p.track : p.fill(v.level), borderRadius: BorderRadius.circular(9)),
+            decoration: BoxDecoration(
+              color: v == null ? p.track : p.fill(v.level),
+              borderRadius: BorderRadius.circular(9),
+            ),
           ),
         ),
         const SizedBox(height: 4),
-        Text(v == null ? '–' : Fmt.number(v.value), style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: p.ink2)),
+        Text(
+          v == null ? '–' : Fmt.number(v.value),
+          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: p.ink2),
+        ),
       ],
     );
   }
@@ -329,9 +384,21 @@ class _Air extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(name, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 12, color: p.ink3)),
+              Text(
+                name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 12, color: p.ink3),
+              ),
               const SizedBox(height: 6),
-              Text(label, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: level == null ? p.ink3 : p.text(level))),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: level == null ? p.ink3 : p.text(level),
+                ),
+              ),
               const SizedBox(height: 6),
               Text(v == null ? '' : '${v.round()} $unit', style: TextStyle(fontSize: 12, color: p.ink2)),
             ],
@@ -347,7 +414,10 @@ class _Air extends StatelessWidget {
           children: [
             Text('Aria', style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 2),
-            Text('Ozono, polveri fini e sabbia del Sahara peggiorano i sintomi da polline.', style: TextStyle(fontSize: 13, color: p.ink3)),
+            Text(
+              'Ozono, polveri fini e sabbia del Sahara peggiorano i sintomi da polline.',
+              style: TextStyle(fontSize: 13, color: p.ink3),
+            ),
           ],
         ),
         IntrinsicHeight(
@@ -402,7 +472,7 @@ class _Others extends StatelessWidget {
                       children: [
                         Text(s.allergen.name, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
                         Text(
-                          _othersNote(s, DateTime.now()),
+                          _othersNote(s, context.read<AppState>().area, DateTime.now()),
                           style: TextStyle(fontSize: 12, color: p.ink3),
                         ),
                       ],
@@ -418,8 +488,8 @@ class _Others extends StatelessWidget {
   }
 }
 
-String _othersNote(AllergenStatus s, DateTime today) {
-  if (s.level == Level.none && s.allergen.calendar[today.month - 1] == 0) return 'Fuori stagione';
+String _othersNote(AllergenStatus s, Area area, DateTime today) {
+  if (s.level == Level.none && s.allergen.calendarFor(area)[today.month - 1] == 0) return 'Fuori stagione';
   if (s.value != null) return Fmt.grains(s.value!);
   return SourceChip.label(s.kind);
 }
@@ -437,16 +507,16 @@ class _DiaryCta extends StatelessWidget {
     final sub = e != null
         ? 'Oggi: sintomi ${DiaryEntry.severityNames[e.severity].toLowerCase()} · tocca per modificare'
         : yesterday != null
-            ? 'Registra i sintomi in 10 secondi · ieri: ${DiaryEntry.severityNames[yesterday.severity].toLowerCase()}'
-            : 'Registra i sintomi in 10 secondi';
+        ? 'Registra i sintomi in 10 secondi · ieri: ${DiaryEntry.severityNames[yesterday.severity].toLowerCase()}'
+        : 'Registra i sintomi in 10 secondi';
     return Material(
       color: p.pineSoft,
       borderRadius: BorderRadius.circular(20),
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
-        onTap: () => Navigator.of(context).push(
-          MaterialPageRoute<void>(builder: (_) => LogEntryScreen(date: today), fullscreenDialog: true),
-        ),
+        onTap: () =>
+            Navigator.of(context)
+                .push(MaterialPageRoute<void>(builder: (_) => LogEntryScreen(date: today), fullscreenDialog: true)),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Row(
@@ -462,8 +532,10 @@ class _DiaryCta extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(e == null ? 'Come stai oggi?' : 'Diario di oggi fatto',
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                    Text(
+                      e == null ? 'Come stai oggi?' : 'Diario di oggi fatto',
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                    ),
                     const SizedBox(height: 2),
                     Text(sub, style: TextStyle(fontSize: 13, color: p.ink2)),
                   ],

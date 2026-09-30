@@ -1,10 +1,18 @@
 import 'dart:convert';
 
+import 'area.dart';
 import 'place.dart';
 
 /// Stazione della rete POLLnet.
 class Station {
-  const Station({required this.id, required this.code, required this.name, required this.region, required this.lat, required this.lon});
+  const Station({
+    required this.id,
+    required this.code,
+    required this.name,
+    required this.region,
+    required this.lat,
+    required this.lon,
+  });
 
   final int id;
   final String code;
@@ -14,15 +22,15 @@ class Station {
   final double lon;
 
   factory Station.fromJson(Map<String, dynamic> j) => Station(
-        id: j['id'] as int,
-        code: j['code'] as String,
-        name: j['name'] as String,
-        region: j['region'] as String,
-        lat: (j['lat'] as num).toDouble(),
-        lon: (j['lon'] as num).toDouble(),
-      );
+    id: j['id'] as int,
+    code: j['code'] as String,
+    name: j['name'] as String,
+    region: j['region'] as String,
+    lat: (j['lat'] as num).toDouble(),
+    lon: (j['lon'] as num).toDouble(),
+  );
 
-  Map<String, dynamic> toJson() => {'id': id, 'code': code, 'name': name, 'region': region, 'lat': lat, 'lon': lon};
+  Area get area => Area.ofRegion(region);
 }
 
 class NearStation {
@@ -43,11 +51,13 @@ class StationDirectory {
   /// Oltre questa distanza il polline misurato non rappresenta più la zona.
   static const maxKm = 60.0;
 
+  /// Area del calendario: quella della stazione più vicina, a qualunque distanza.
+  Area areaOf(Place p) => near(p, maxKm: double.infinity).firstOrNull?.station.area ?? Area.south;
+
   /// Stazioni entro [maxKm], dalla più vicina.
   List<NearStation> near(Place p, {double maxKm = maxKm}) {
-    final list = [
-      for (final s in stations) NearStation(s, distanceKm(p.lat, p.lon, s.lat, s.lon)),
-    ]..sort((a, b) => a.km.compareTo(b.km));
+    final list = [for (final s in stations) NearStation(s, distanceKm(p.lat, p.lon, s.lat, s.lon))]
+      ..sort((a, b) => a.km.compareTo(b.km));
     return list.where((n) => n.km <= maxKm).toList();
   }
 }

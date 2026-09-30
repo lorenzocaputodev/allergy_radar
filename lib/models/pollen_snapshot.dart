@@ -50,10 +50,29 @@ class AirStatus {
   final double? dustMax;
 
   // Fasce ispirate all'indice europeo EAQI, adattate alla scala 0–4.
-  static Level ozoneLevel(double v) => v < 100 ? Level.low : v < 130 ? Level.moderate : v < 240 ? Level.high : Level.veryHigh;
-  static Level pm25Level(double v) => v < 10 ? Level.low : v < 25 ? Level.moderate : v < 50 ? Level.high : Level.veryHigh;
-  static Level dustLevel(double v) =>
-      v < 20 ? Level.none : v < 50 ? Level.low : v < 100 ? Level.moderate : v < 200 ? Level.high : Level.veryHigh;
+  static Level ozoneLevel(double v) => v < 100
+      ? Level.low
+      : v < 130
+      ? Level.moderate
+      : v < 240
+      ? Level.high
+      : Level.veryHigh;
+  static Level pm25Level(double v) => v < 10
+      ? Level.low
+      : v < 25
+      ? Level.moderate
+      : v < 50
+      ? Level.high
+      : Level.veryHigh;
+  static Level dustLevel(double v) => v < 20
+      ? Level.none
+      : v < 50
+      ? Level.low
+      : v < 100
+      ? Level.moderate
+      : v < 200
+      ? Level.high
+      : Level.veryHigh;
 }
 
 class PollenSnapshot {
@@ -62,6 +81,7 @@ class PollenSnapshot {
     required this.fetchedAt,
     required this.statuses,
     required this.air,
+    required this.area,
     this.measuringStation,
     this.nearestStation,
   });
@@ -70,6 +90,9 @@ class PollenSnapshot {
   final DateTime fetchedAt;
   final Map<String, AllergenStatus> statuses;
   final AirStatus air;
+
+  /// Area del calendario usata per le stime.
+  final Area area;
 
   /// Stazione da cui arrivano le misure: entro il raggio e con dati recenti.
   final NearStation? measuringStation;

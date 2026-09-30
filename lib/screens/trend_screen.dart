@@ -60,8 +60,10 @@ class _TrendScreenState extends State<TrendScreen> {
                 children: [
                   Text('Ultimi $_days giorni', style: Theme.of(context).textTheme.titleLarge),
                   const SizedBox(height: 2),
-                  Text('$logged giorni registrati. I pollini sono quelli salvati con ogni voce.',
-                      style: TextStyle(fontSize: 13, color: p.ink3)),
+                  Text(
+                    '$logged giorni registrati. I pollini sono quelli salvati con ogni voce.',
+                    style: TextStyle(fontSize: 13, color: p.ink3),
+                  ),
                 ],
               ),
               _label(context, '${a.name}, livello del giorno'),
@@ -125,7 +127,10 @@ class _TrendScreenState extends State<TrendScreen> {
           if (insight == null)
             Container(
               padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), border: Border.all(color: p.line, width: 1.5)),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: p.line, width: 1.5),
+              ),
               child: Text(
                 'Servono almeno ${DiaryState.minDaysForInsight} giorni registrati negli ultimi $_days, con giorni sia sopra sia '
                 'sotto il livello moderato di ${a.name}, per un confronto. Finora: $logged.',
@@ -139,15 +144,21 @@ class _TrendScreenState extends State<TrendScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('COSA EMERGE',
-                      style: TextStyle(
-                          fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 0.8, color: p.onHero.withValues(alpha: 0.85))),
+                  Text(
+                    'COSA EMERGE',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.8,
+                      color: p.onHero.withValues(alpha: 0.85),
+                    ),
+                  ),
                   const SizedBox(height: 8),
                   Text(
                     insight.clear
                         ? (insight.highMean > insight.lowMean
-                            ? 'I tuoi sintomi salgono quando ${a.name} è da moderato in su.'
-                            : 'Con ${a.name} alto non stai peggio: forse non è lui a darti fastidio.')
+                              ? 'I tuoi sintomi salgono quando ${a.name} è da moderato in su.'
+                              : 'Con ${a.name} alto non stai peggio: forse non è lui a darti fastidio.')
                         : 'Per ora nessuna differenza netta con ${a.name}.',
                     style: TextStyle(fontFamily: AppFonts.display, fontSize: 21, height: 1.3, color: p.onHero),
                   ),
@@ -183,26 +194,28 @@ class _TrendScreenState extends State<TrendScreen> {
     return best;
   }
 
-  Widget _label(BuildContext context, String s) =>
-      Text(s, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: context.palette.ink2));
+  Widget _label(BuildContext context, String s) => Text(
+    s,
+    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: context.palette.ink2),
+  );
 
   Widget _strip(List<DateTime> days, Color? Function(DateTime) color, AppPalette p) => Row(
-        children: [
-          for (final d in days) ...[
-            Expanded(
-              child: Container(
-                height: 18,
-                decoration: BoxDecoration(
-                  color: color(d),
-                  borderRadius: BorderRadius.circular(3),
-                  border: color(d) == null ? Border.all(color: p.line) : null,
-                ),
-              ),
+    children: [
+      for (final d in days) ...[
+        Expanded(
+          child: Container(
+            height: 18,
+            decoration: BoxDecoration(
+              color: color(d),
+              borderRadius: BorderRadius.circular(3),
+              border: color(d) == null ? Border.all(color: p.line) : null,
             ),
-            if (d != days.last) const SizedBox(width: 2),
-          ],
-        ],
-      );
+          ),
+        ),
+        if (d != days.last) const SizedBox(width: 2),
+      ],
+    ],
+  );
 
   Widget _symptomBar(DiaryEntry? e, AppPalette p) {
     if (e == null) return Container(height: 3, color: p.line);

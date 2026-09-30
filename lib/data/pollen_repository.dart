@@ -27,22 +27,22 @@ class RawPollenData {
   final double? stationKm;
 
   Map<String, dynamic> toJson() => {
-        'place': place.toJson(),
-        'fetchedAt': fetchedAt.toIso8601String(),
-        'openMeteo': openMeteo,
-        'pollnetCsv': pollnetCsv,
-        'stationId': stationId,
-        'stationKm': stationKm,
-      };
+    'place': place.toJson(),
+    'fetchedAt': fetchedAt.toIso8601String(),
+    'openMeteo': openMeteo,
+    'pollnetCsv': pollnetCsv,
+    'stationId': stationId,
+    'stationKm': stationKm,
+  };
 
   factory RawPollenData.fromJson(Map<String, dynamic> j) => RawPollenData(
-        place: Place.fromJson(j['place'] as Map<String, dynamic>),
-        fetchedAt: DateTime.parse(j['fetchedAt'] as String),
-        openMeteo: j['openMeteo'] as String,
-        pollnetCsv: j['pollnetCsv'] as String?,
-        stationId: j['stationId'] as int?,
-        stationKm: (j['stationKm'] as num?)?.toDouble(),
-      );
+    place: Place.fromJson(j['place'] as Map<String, dynamic>),
+    fetchedAt: DateTime.parse(j['fetchedAt'] as String),
+    openMeteo: j['openMeteo'] as String,
+    pollnetCsv: j['pollnetCsv'] as String?,
+    stationId: j['stationId'] as int?,
+    stationKm: (j['stationKm'] as num?)?.toDouble(),
+  );
 
   String encode() => jsonEncode(toJson());
 
@@ -50,12 +50,8 @@ class RawPollenData {
 }
 
 class PollenRepository {
-  PollenRepository({
-    required this.openMeteo,
-    required this.pollnet,
-    required this.stations,
-    DateTime Function()? clock,
-  }) : _now = clock ?? DateTime.now;
+  PollenRepository({required this.openMeteo, required this.pollnet, required this.stations, DateTime Function()? clock})
+    : _now = clock ?? DateTime.now;
 
   final OpenMeteoClient openMeteo;
   final PollnetClient pollnet;
@@ -112,9 +108,12 @@ class PollenRepository {
       if (s != null) station = NearStation(s, raw.stationKm ?? distanceKm(raw.place.lat, raw.place.lon, s.lat, s.lon));
     }
 
+    final area = stations.areaOf(raw.place);
     final statuses = <String, AllergenStatus>{};
     for (final a in Allergens.all) {
-      statuses[a.id] = (a.hasForecast ? _forecast(a, om, today) : _measured(a, measures, station, today)) ?? _estimate(a, today);
+      statuses[a.id] =
+          (a.hasForecast ? _forecast(a, om, today) : _measured(a, measures, station, today)) ??
+          _estimate(a, area, today);
     }
 
     return PollenSnapshot(
@@ -122,6 +121,7 @@ class PollenRepository {
       fetchedAt: raw.fetchedAt,
       statuses: statuses,
       air: _air(om, today),
+      area: area,
       measuringStation: station,
       nearestStation: stations.near(raw.place).firstOrNull,
     );
@@ -170,19 +170,19 @@ class PollenRepository {
     );
   }
 
-  AllergenStatus _estimate(Allergen a, DateTime today) => AllergenStatus(
-        allergen: a,
-        kind: DataKind.estimate,
-        level: Level.fromIndex(a.calendar[today.month - 1]),
-        date: today,
-      );
+  AllergenStatus _estimate(Allergen a, Area area, DateTime today) => AllergenStatus(
+    allergen: a,
+    kind: DataKind.estimate,
+    level: Level.fromIndex(a.calendarFor(area)[today.month - 1]),
+    date: today,
+  );
 
   AirStatus _air(OpenMeteoData om, DateTime today) {
     List<double> todayValues(String k) => [
-          for (var i = 0; i < om.times.length; i++)
-            if (DateTime(om.times[i].year, om.times[i].month, om.times[i].day) == today && om.series[k]?[i] != null)
-              om.series[k]![i]!,
-        ];
+      for (var i = 0; i < om.times.length; i++)
+        if (DateTime(om.times[i].year, om.times[i].month, om.times[i].day) == today && om.series[k]?[i] != null)
+          om.series[k]![i]!,
+    ];
     double? maxOf(List<double> v) => v.isEmpty ? null : v.reduce((a, b) => a > b ? a : b);
     final pm = todayValues('pm2_5');
     return AirStatus(

@@ -30,6 +30,7 @@ void main() {
     expect(par.value, isNull);
 
     // Brindisi è entro 60 km ma non pubblica più: interrogata, poi scartata.
+    expect(snap.area, Area.south);
     expect(snap.nearestStation!.station.name, 'Brindisi');
     expect(snap.measuringStation, isNull);
     expect(log.where((u) => u.host == 'sdi.isprambiente.it'), hasLength(1));
