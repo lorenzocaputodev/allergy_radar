@@ -9,8 +9,9 @@ import '../state/diary_state.dart';
 import '../theme/palette.dart';
 import '../utils/format.dart';
 import '../widgets/level_widgets.dart';
+import 'log_entry_screen.dart';
 
-/// Sintomi, farmaci e un allergene negli ultimi 30 giorni.
+/// Sintomi confrontati con un allergene negli ultimi 30 giorni: prima la risposta, poi i dettagli.
 class TrendScreen extends StatefulWidget {
   const TrendScreen({super.key});
 
@@ -24,7 +25,6 @@ class _TrendScreenState extends State<TrendScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final p = context.palette;
     final diary = context.watch<DiaryState>();
     final app = context.watch<AppState>();
     final choices = app.followedAllergens.isEmpty ? Allergens.all : app.followedAllergens;
@@ -39,142 +39,28 @@ class _TrendScreenState extends State<TrendScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Andamento')),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
         children: [
-          DropdownButtonFormField<String>(
-            initialValue: a.id,
-            decoration: InputDecoration(
-              labelText: 'Confronta con',
-              filled: true,
-              fillColor: p.card,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-            ),
-            items: [for (final c in choices) DropdownMenuItem(value: c.id, child: Text(c.name))],
-            onChanged: (v) => setState(() => _allergenId = v),
-          ),
-          const SizedBox(height: 14),
-          SectionCard(
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Ultimi $_days giorni', style: Theme.of(context).textTheme.titleLarge),
-                  const SizedBox(height: 2),
-                  Text(
-                    '$logged giorni registrati. I pollini sono quelli salvati con ogni voce.',
-                    style: TextStyle(fontSize: 13, color: p.ink3),
-                  ),
-                ],
-              ),
-              _label(context, '${a.name}, livello del giorno'),
-              _strip(days, (d) {
-                final l = diary.entryFor(d)?.pollen[a.id];
-                return l == null ? null : p.fill(Level.fromIndex(l));
-              }, p),
-              _label(context, 'I tuoi sintomi, 0–3'),
-              SizedBox(
-                height: 110,
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    for (final d in days) ...[
-                      Expanded(child: _symptomBar(diary.entryFor(d), p)),
-                      if (d != days.last) const SizedBox(width: 2),
-                    ],
-                  ],
+              for (final c in choices)
+                ChoiceChip(
+                  label: Text(c.name),
+                  selected: c.id == a.id,
+                  onSelected: (_) => setState(() => _allergenId = c.id),
                 ),
-              ),
-              Row(
-                children: [
-                  for (final d in days) ...[
-                    Expanded(
-                      child: Text(
-                        d.day == 1 || d == days.first || d == today ? '${d.day}' : '',
-                        textAlign: TextAlign.center,
-                        softWrap: false,
-                        overflow: TextOverflow.visible,
-                        style: TextStyle(fontSize: 10, color: p.ink3),
-                      ),
-                    ),
-                    if (d != days.last) const SizedBox(width: 2),
-                  ],
-                ],
-              ),
-              _label(context, 'Farmaci'),
-              Row(
-                children: [
-                  for (final d in days) ...[
-                    Expanded(
-                      child: Center(
-                        child: Container(
-                          width: 7,
-                          height: 7,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: (diary.entryFor(d)?.meds.isNotEmpty ?? false) ? p.ink2 : null,
-                            border: Border.all(color: (diary.entryFor(d)?.meds.isNotEmpty ?? false) ? p.ink2 : p.line),
-                          ),
-                        ),
-                      ),
-                    ),
-                    if (d != days.last) const SizedBox(width: 2),
-                  ],
-                ],
-              ),
             ],
           ),
           const SizedBox(height: 14),
-          if (insight == null)
-            Container(
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: p.line, width: 1.5),
-              ),
-              child: Text(
-                'Servono almeno ${DiaryState.minDaysForInsight} giorni registrati negli ultimi $_days, con giorni sia sopra sia '
-                'sotto il livello moderato di ${a.name}, per un confronto. Finora: $logged.',
-                style: TextStyle(fontSize: 14, height: 1.5, color: p.ink2),
-              ),
-            )
-          else
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(color: p.hero, borderRadius: BorderRadius.circular(22)),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'COSA EMERGE',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.8,
-                      color: p.onHero.withValues(alpha: 0.85),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    insight.clear
-                        ? (insight.highMean > insight.lowMean
-                              ? 'I tuoi sintomi salgono quando ${a.name} è da moderato in su.'
-                              : 'Con ${a.name} alto non stai peggio: forse non è lui a darti fastidio.')
-                        : 'Per ora nessuna differenza netta con ${a.name}.',
-                    style: TextStyle(fontFamily: AppFonts.display, fontSize: 21, height: 1.3, color: p.onHero),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Da moderato in su: sintomi medi ${Fmt.number(insight.highMean)} su 3 (${insight.highDays} giorni). '
-                    'Sotto: ${Fmt.number(insight.lowMean)} (${insight.lowDays} giorni).',
-                    style: TextStyle(fontSize: 14, height: 1.5, color: p.onHero.withValues(alpha: 0.9)),
-                  ),
-                ],
-              ),
-            ),
+          if (insight == null) _Progress(allergen: a, logged: logged) else _Answer(insight: insight),
+          const SizedBox(height: 14),
+          _DayByDay(allergen: a, days: days, diary: diary),
           const SizedBox(height: 12),
           Text(
-            'È una correlazione, non una diagnosi. Portala al tuo allergologo insieme al diario.',
-            style: TextStyle(fontSize: 13, color: p.ink3),
+            'È un confronto, non una diagnosi: portalo all’allergologo.',
+            style: TextStyle(fontSize: 13, color: context.palette.ink3),
           ),
         ],
       ),
@@ -193,38 +79,222 @@ class _TrendScreenState extends State<TrendScreen> {
     }
     return best;
   }
+}
 
-  Widget _label(BuildContext context, String s) => Text(
-    s,
-    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: context.palette.ink2),
-  );
+/// Dati non ancora sufficienti: quanto manca.
+class _Progress extends StatelessWidget {
+  const _Progress({required this.allergen, required this.logged});
 
-  Widget _strip(List<DateTime> days, Color? Function(DateTime) color, AppPalette p) => Row(
-    children: [
-      for (final d in days) ...[
-        Expanded(
-          child: Container(
-            height: 18,
+  final Allergen allergen;
+  final int logged;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    const need = DiaryState.minDaysForInsight;
+    final enough = logged >= need;
+    return SectionCard(
+      children: [
+        Text(
+          enough ? 'Servono giorni diversi' : 'Ancora ${need - logged} giorni',
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
+        Text(
+          enough
+              ? 'Per il confronto servono giorni con ${allergen.name} sia alto sia basso.'
+              : 'Con $need giorni di diario ti dico se ${allergen.name} ti dà fastidio.',
+          style: TextStyle(fontSize: 14, height: 1.4, color: p.ink2),
+        ),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(6),
+          child: LinearProgressIndicator(
+            value: (logged / need).clamp(0, 1).toDouble(),
+            minHeight: 8,
+            color: p.pine,
+            backgroundColor: p.track,
+          ),
+        ),
+        Text('$logged di $need giorni', style: TextStyle(fontSize: 12, color: p.ink3)),
+      ],
+    );
+  }
+}
+
+/// La risposta in una frase e il confronto a due barre.
+class _Answer extends StatelessWidget {
+  const _Answer({required this.insight});
+
+  final DiaryInsight insight;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    final a = insight.allergen;
+    final headline = !insight.clear
+        ? 'Nessuna differenza netta con ${a.name}'
+        : insight.highMean > insight.lowMean
+        ? 'Quando ${a.name} sale, stai peggio'
+        : 'Quando ${a.name} sale, non stai peggio';
+
+    Widget bar(String label, double value, int days, Color color) => Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(label, style: TextStyle(fontSize: 14, color: p.onHero)),
+            ),
+            Text(
+              '${Fmt.number(value)} su 3',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: p.onHero),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(6),
+          child: LinearProgressIndicator(
+            value: (value / 3).clamp(0, 1).toDouble(),
+            minHeight: 12,
+            color: color,
+            backgroundColor: p.heroTrack,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          '$days ${days == 1 ? 'giorno' : 'giorni'}',
+          style: TextStyle(fontSize: 12, color: p.onHero.withValues(alpha: 0.8)),
+        ),
+      ],
+    );
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(color: p.hero, borderRadius: BorderRadius.circular(22)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            headline,
+            style: TextStyle(fontFamily: AppFonts.display, fontSize: 22, height: 1.25, color: p.onHero),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Intensità media dei sintomi, ultimi 30 giorni',
+            style: TextStyle(fontSize: 13, color: p.onHero.withValues(alpha: 0.85)),
+          ),
+          const SizedBox(height: 16),
+          bar('Giorni con ${a.name} da moderato in su', insight.highMean, insight.highDays, p.fill(Level.high)),
+          const SizedBox(height: 14),
+          bar('Altri giorni', insight.lowMean, insight.lowDays, p.fill(Level.low)),
+        ],
+      ),
+    );
+  }
+}
+
+/// Ogni colonna è un giorno: sopra il livello del polline, sotto i sintomi, in fondo i farmaci.
+class _DayByDay extends StatelessWidget {
+  const _DayByDay({required this.allergen, required this.days, required this.diary});
+
+  final Allergen allergen;
+  final List<DateTime> days;
+  final DiaryState diary;
+
+  static const _barHeight = 90.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    TextStyle label() => TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: p.ink2);
+
+    Widget columns(Widget Function(DateTime d, DiaryEntry? e) cell) => Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        for (final d in days) ...[
+          Expanded(child: cell(d, diary.entryFor(d))),
+          if (d != days.last) const SizedBox(width: 2),
+        ],
+      ],
+    );
+
+    void open(DateTime d) =>
+        Navigator.of(context)
+            .push(MaterialPageRoute<void>(builder: (_) => LogEntryScreen(date: d), fullscreenDialog: true));
+
+    return SectionCard(
+      gap: 10,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Giorno per giorno', style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 2),
+            Text(
+              'Ogni colonna è un giorno. Toccala per aprire la voce.',
+              style: TextStyle(fontSize: 13, color: p.ink3),
+            ),
+          ],
+        ),
+        Text(allergen.name, style: label()),
+        columns((d, e) {
+          final l = e?.pollen[allergen.id];
+          return Container(
+            height: 16,
             decoration: BoxDecoration(
-              color: color(d),
+              color: l == null ? null : p.fill(Level.fromIndex(l)),
               borderRadius: BorderRadius.circular(3),
-              border: color(d) == null ? Border.all(color: p.line) : null,
+              border: l == null ? Border.all(color: p.line) : null,
+            ),
+          );
+        }),
+        Text('Sintomi', style: label()),
+        SizedBox(
+          height: _barHeight,
+          child: columns(
+            (d, e) => GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => open(d),
+              child: SizedBox(
+                height: _barHeight,
+                child: Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Container(
+                    height: e == null || e.severity == 0 ? 3 : e.severity / 3 * _barHeight,
+                    decoration: BoxDecoration(
+                      color: e == null ? p.line : p.symFill[e.severity == 0 ? 1 : e.severity],
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(3)),
+                    ),
+                  ),
+                ),
+              ),
             ),
           ),
         ),
-        if (d != days.last) const SizedBox(width: 2),
+        columns(
+          (d, e) => Text(
+            d == days.first || d.difference(days.first).inDays % 7 == 0 ? '${d.day}/${d.month}' : '',
+            textAlign: TextAlign.left,
+            softWrap: false,
+            overflow: TextOverflow.visible,
+            style: TextStyle(fontSize: 10, color: p.ink3),
+          ),
+        ),
+        Text('Farmaci', style: label()),
+        columns(
+          (d, e) => Center(
+            child: Container(
+              width: 7,
+              height: 7,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: (e?.meds.isNotEmpty ?? false) ? p.ink2 : null,
+                border: Border.all(color: (e?.meds.isNotEmpty ?? false) ? p.ink2 : p.line),
+              ),
+            ),
+          ),
+        ),
       ],
-    ],
-  );
-
-  Widget _symptomBar(DiaryEntry? e, AppPalette p) {
-    if (e == null) return Container(height: 3, color: p.line);
-    return Container(
-      height: e.score == 0 ? 3 : (e.score / 3 * 110).clamp(3, 110),
-      decoration: BoxDecoration(
-        color: e.score == 0 ? p.symFill[1] : p.symFill[3],
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(3)),
-      ),
     );
   }
 }
