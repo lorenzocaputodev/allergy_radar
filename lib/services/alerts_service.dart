@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workmanager/workmanager.dart';
 
 import '../data/pollen_repository.dart';
+import '../models/alert_log.dart';
 import '../models/alert_settings.dart';
 import '../models/diary_entry.dart';
 import '../models/station.dart';
@@ -62,42 +63,55 @@ class AlertsService {
   /// Sistema reale, non defaultTargetPlatform: nei test vale «android» anche su Windows.
   static bool get isSupported => !kIsWeb && Platform.isAndroid;
 
-  static Future<void> init({bool background = false}) async {
-    if (!isSupported || _ready) return;
-    await _plugin.initialize(const InitializationSettings(android: AndroidInitializationSettings(_statusIcon)));
-    if (!background) await Workmanager().initialize(alertsCallbackDispatcher);
-    final android = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
-    await android?.createNotificationChannel(_pollenChannel);
-    await android?.createNotificationChannel(_diaryChannel);
-    _ready = true;
+  /// Non lancia mai: se il plugin non parte, gli avvisi restano spenti e l'app va avanti.
+  static Future<bool> init({bool background = false}) async {
+    if (!isSupported) return false;
+    if (_ready) return true;
+    try {
+      await _plugin.initialize(const InitializationSettings(android: AndroidInitializationSettings(_statusIcon)));
+      if (!background) await Workmanager().initialize(alertsCallbackDispatcher);
+      final android = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+      await android?.createNotificationChannel(_pollenChannel);
+      await android?.createNotificationChannel(_diaryChannel);
+      _ready = true;
+    } on Object catch (e) {
+      debugPrint('Avvisi non disponibili: $e');
+    }
+    return _ready;
   }
 
   /// Chiede il permesso (Android 13+). True se si possono mostrare avvisi.
   static Future<bool> requestPermission() async {
-    if (!isSupported) return false;
-    await init();
-    final android = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
-    return await android?.requestNotificationsPermission() ?? true;
+    if (!await init()) return false;
+    try {
+      final android = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+      return await android?.requestNotificationsPermission() ?? true;
+    } on Object {
+      return false;
+    }
   }
 
   /// Attiva o ferma il lavoro in background secondo le impostazioni.
   static Future<void> sync(AlertSettings settings) async {
-    if (!isSupported) return;
-    await init();
-    if (settings.anyEnabled) {
-      await Workmanager().registerPeriodicTask(
-        _work,
-        _task,
-        frequency: const Duration(hours: 1),
-        existingWorkPolicy: ExistingPeriodicWorkPolicy.update,
-      );
-    } else {
-      await Workmanager().cancelByUniqueName(_work);
+    if (!await init()) return;
+    try {
+      if (settings.anyEnabled) {
+        await Workmanager().registerPeriodicTask(
+          _work,
+          _task,
+          frequency: const Duration(hours: 1),
+          existingWorkPolicy: ExistingPeriodicWorkPolicy.update,
+        );
+      } else {
+        await Workmanager().cancelByUniqueName(_work);
+      }
+    } on Object catch (e) {
+      debugPrint('Controllo in background non registrato: $e');
     }
   }
 
   static Future<void> runInBackground() async {
-    await init(background: true);
+    final canNotify = await init(background: true);
     final prefs = await SharedPreferences.getInstance();
     await prefs.reload();
     final client = http.Client();
@@ -124,10 +138,14 @@ class AlertsService {
         diaryDoneToday: DiaryState(prefs).entryFor(DiaryEntry.day(now)) != null,
         sentOn: sent,
       );
+      if (!canNotify) return;
       for (final m in messages) {
         await _show(m);
         sent[m.kind] = now;
       }
+      await AlertLog.add(prefs, [
+        for (final m in messages) AlertLogEntry(kind: m.kind, title: m.title, body: m.body, at: now),
+      ]);
       if (messages.isNotEmpty) {
         await prefs.setString(
           _kSent,

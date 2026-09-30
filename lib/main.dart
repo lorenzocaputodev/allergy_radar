@@ -47,8 +47,9 @@ Future<void> main() async {
     ),
   );
 
-  await AlertsService.init();
+  // Prima lo stato: un problema con le notifiche non deve mai riportare l'app al primo avvio.
   await state.init();
+  await AlertsService.init();
   if (state.onboarded) await AlertsService.sync(state.alerts);
 }
 

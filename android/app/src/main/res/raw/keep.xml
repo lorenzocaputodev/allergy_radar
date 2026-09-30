@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Le notifiche citano l'icona solo per nome: senza questa riga la build
+     di release la considererebbe inutilizzata e la toglierebbe. -->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@drawable/ic_stat_logo" />

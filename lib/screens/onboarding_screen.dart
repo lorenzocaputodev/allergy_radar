@@ -85,7 +85,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           children: [
             FilledButton(
               onPressed: () async {
-                if (_alerts.anyEnabled) await AlertsService.requestPermission();
+                if (_alerts.anyEnabled && !await AlertsService.requestPermission()) {
+                  _alerts = AlertSettings.off;
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Avvisi disattivati: li riattivi dal Profilo.')),
+                    );
+                  }
+                }
                 _next();
               },
               child: Text(_alerts.anyEnabled ? 'Attiva gli avvisi' : 'Continua senza avvisi'),

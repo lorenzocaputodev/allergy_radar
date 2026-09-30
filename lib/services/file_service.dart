@@ -61,13 +61,10 @@ class FileService {
       return file?.readAsString();
     }
     if (_isAndroid) {
+      // Senza filtri: molti gestori file vedono un .json come application/octet-stream e lo
+      // mostrerebbero grigio. Il contenuto lo controlla chi legge (per esempio Backup.restore).
       final path = await FlutterFileDialog.pickFile(
-        params: OpenFileDialogParams(
-          fileExtensionsFilter: extensions,
-          mimeTypesFilter: mimes,
-          localOnly: true,
-          copyFileToCacheDir: true,
-        ),
+        params: const OpenFileDialogParams(localOnly: true, copyFileToCacheDir: true),
       );
       if (path == null || path.trim().isEmpty) return null;
       return File(path).readAsString(encoding: utf8);
