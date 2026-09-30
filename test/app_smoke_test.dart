@@ -64,7 +64,7 @@ void main() {
     await tester.scrollUntilVisible(card, 200, scrollable: find.byType(Scrollable).first);
     await tester.tap(card);
     await tester.pumpAndSettle();
-    expect(find.text('Perché non c’è la previsione?'), findsOneWidget);
+    expect(find.text('Perché è una stima'), findsOneWidget);
     final high = find.widgetWithText(SegmentedButton<Level>, 'Alto');
     await tester.scrollUntilVisible(
       high,

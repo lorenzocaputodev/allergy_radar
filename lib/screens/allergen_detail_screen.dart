@@ -162,7 +162,10 @@ class AllergenDetailScreen extends StatelessWidget {
                       Icon(Icons.info_outline, color: p.ink),
                       const SizedBox(width: 10),
                       Expanded(
-                        child: Text('Perché non c’è la previsione?', style: Theme.of(context).textTheme.titleLarge),
+                        child: Text(
+                          s.kind == DataKind.measured ? 'Da dove arriva' : 'Perché è una stima',
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
                       ),
                     ],
                   ),
@@ -178,20 +181,14 @@ class AllergenDetailScreen extends StatelessWidget {
             children: [
               Text('Stagione', style: Theme.of(context).textTheme.titleLarge),
               SeasonStrip(a.calendarFor(state.area), month: now.month),
-              Text(
-                'Livello medio di ogni mese nelle stazioni POLLnet dell’area ${state.area.label}, 2016–2025.',
-                style: TextStyle(fontSize: 13, color: p.ink3),
-              ),
+              Text('Media del mese, area ${state.area.label}.', style: TextStyle(fontSize: 13, color: p.ink3)),
             ],
           ),
           const SizedBox(height: 14),
           SectionCard(
             children: [
               Text('La tua soglia', style: Theme.of(context).textTheme.titleLarge),
-              Text(
-                'Da quale livello ti dà fastidio. Decide «La tua giornata» e, più avanti, gli avvisi.',
-                style: TextStyle(fontSize: 14, color: p.ink2),
-              ),
+              Text('Da quale livello ti dà fastidio.', style: TextStyle(fontSize: 14, color: p.ink2)),
               SegmentedButton<Level>(
                 segments: const [
                   ButtonSegment(value: Level.low, label: Text('Basso')),
@@ -301,15 +298,12 @@ class _Bars extends StatelessWidget {
 
 String _whyText(AllergenStatus s, NearStation? nearest, Area area, DateTime now) {
   if (s.kind == DataKind.measured) {
-    return 'I modelli europei non calcolano questo polline. Mostriamo la misura della stazione POLLnet più vicina: '
-        'esce ogni giorno, con qualche giorno di ritardo.';
+    return 'Nessun modello lo prevede: è la misura della stazione di ${s.station!.station.name}, di qualche giorno fa.';
   }
-  final model = s.allergen.hasForecast
-      ? 'La previsione non è disponibile in questo momento.'
-      : 'I modelli europei non calcolano questo polline.';
-  final station = nearest != null
-      ? 'La stazione più vicina (${nearest.station.name}, ${nearest.km.round()} km) non pubblica dati recenti.'
-      : 'Non c’è una stazione di misura entro ${StationDirectory.maxKm.round()} km.';
-  return '$model $station Il livello è la media storica di ${Fmt.month(now.month)} nelle stazioni dell’area ${area.label}: '
-      'indica la stagione, non il giorno. Il diario dei sintomi ti dirà quanto conta per te.';
+  final why = s.allergen.hasForecast
+      ? 'La previsione ora non è disponibile'
+      : nearest != null
+      ? 'Nessun modello lo prevede e ${nearest.station.name} non pubblica dati'
+      : 'Nessun modello lo prevede e non ci sono stazioni vicine';
+  return '$why. Mostriamo la media di ${Fmt.month(now.month)} nell’area ${area.label}.';
 }

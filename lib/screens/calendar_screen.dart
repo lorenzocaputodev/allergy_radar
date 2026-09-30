@@ -142,11 +142,7 @@ class CalendarScreen extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 12),
-        Text(
-          'Livello medio di ogni mese nelle stazioni POLLnet dell’area ${area.label}, 2016–2025. '
-          'L’area segue il luogo scelto. Il dato di oggi è nella scheda Oggi.',
-          style: TextStyle(fontSize: 13, color: p.ink3),
-        ),
+        Text('Media 2016–2025 delle stazioni dell’area ${area.label}.', style: TextStyle(fontSize: 13, color: p.ink3)),
       ],
     );
   }

@@ -141,7 +141,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
                 Text('Il diario è vuoto', style: Theme.of(context).textTheme.titleLarge),
                 const SizedBox(height: 6),
                 Text(
-                  'Registra come stai ogni sera. Dopo ${DiaryState.minDaysForInsight} giorni vedrai il confronto con i pollini.',
+                  'Registra come stai ogni sera: dopo ${DiaryState.minDaysForInsight} giorni vedi il confronto con i pollini.',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 14, height: 1.45, color: p.ink2),
                 ),
@@ -178,9 +178,7 @@ class _TodayCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            e == null
-                ? 'Bastano 10 secondi: servono a capire quali pollini ti danno fastidio.'
-                : 'Puoi modificarlo fino a stasera.',
+            e == null ? 'Bastano 10 secondi.' : 'Puoi modificarlo fino a stasera.',
             style: TextStyle(fontSize: 14, color: p.ink2),
           ),
           const SizedBox(height: 14),

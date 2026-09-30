@@ -234,7 +234,7 @@ class _Hero extends StatelessWidget {
             if (estimated) ...[
               const SizedBox(height: 10),
               Text(
-                'Parte del livello è una media storica del mese: non ci sono stazioni di misura attive vicine.',
+                'Include una stima: nessuna stazione vicina.',
                 style: TextStyle(fontSize: 13, color: p.onHero.withValues(alpha: 0.85)),
               ),
             ],
@@ -414,10 +414,7 @@ class _Air extends StatelessWidget {
           children: [
             Text('Aria', style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 2),
-            Text(
-              'Ozono, polveri fini e sabbia del Sahara peggiorano i sintomi da polline.',
-              style: TextStyle(fontSize: 13, color: p.ink3),
-            ),
+            Text('Possono peggiorare i sintomi.', style: TextStyle(fontSize: 13, color: p.ink3)),
           ],
         ),
         IntrinsicHeight(

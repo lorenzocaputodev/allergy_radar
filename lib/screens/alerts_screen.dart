@@ -163,9 +163,7 @@ class _BatteryNote extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Gli avvisi partono da un controllo in background circa ogni ora, quindi possono arrivare '
-              'con qualche minuto di ritardo. Se il risparmio energetico di Android blocca l’app, '
-              'escludila dall’ottimizzazione della batteria nelle impostazioni del telefono.',
+              'Possono arrivare con qualche minuto di ritardo. Se non arrivano, togli l’app dal risparmio batteria.',
               style: TextStyle(fontSize: 13, height: 1.45, color: p.ink2),
             ),
           ),
