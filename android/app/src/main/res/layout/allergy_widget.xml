@@ -15,6 +15,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:gravity="center_vertical"
             android:orientation="horizontal">
 
             <TextView
@@ -35,6 +36,15 @@
                 android:maxLines="1"
                 android:textColor="@color/widget_muted"
                 android:textSize="12sp" />
+
+            <ImageView
+                android:id="@+id/widget_refresh"
+                android:layout_width="28dp"
+                android:layout_height="20dp"
+                android:contentDescription="@string/widget_refresh"
+                android:paddingStart="8dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_widget_refresh" />
         </LinearLayout>
 
         <TextView
@@ -194,7 +204,9 @@
             <TextView
                 android:id="@+id/widget_page"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_height="28dp"
+                android:gravity="center"
+                android:includeFontPadding="false"
                 android:layout_marginStart="12dp"
                 android:layout_marginEnd="12dp"
                 android:textColor="@color/widget_muted"

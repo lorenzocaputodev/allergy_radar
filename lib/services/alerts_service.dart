@@ -25,7 +25,7 @@ void alertsCallbackDispatcher() {
   Workmanager().executeTask((task, inputData) async {
     WidgetsFlutterBinding.ensureInitialized();
     try {
-      await AlertsService.runInBackground();
+      await AlertsService.runInBackground(force: task == AlertsService.refreshTask);
     } on Object {
       // Un giro andato male non deve bloccare i successivi.
     }
@@ -38,6 +38,9 @@ void alertsCallbackDispatcher() {
 /// Cosa programmare lo decide [AlertPlanner].
 class AlertsService {
   static const _task = 'pollen_check';
+
+  /// Compito avviato dall'icona «aggiorna» del widget (`AllergyWidgetProvider.kt`).
+  static const refreshTask = 'widget_refresh';
   static const _work = 'pollen_check_hourly';
   static const _testId = 99;
   static const _testBody = 'Gli avvisi di Allergy Radar arrivano così.';
@@ -70,6 +73,7 @@ class AlertsService {
   static AndroidFlutterLocalNotificationsPlugin? get _android =>
       _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
 
+  // --- Avvio e permessi ---
   /// Non lancia mai: se il plugin non parte, gli avvisi restano spenti e l'app va avanti.
   static Future<bool> init({bool background = false}) async {
     if (!isSupported) return false;
@@ -134,7 +138,7 @@ class AlertsService {
     return exact();
   }
 
-  /// Avviso immediato, per controllare che arrivino.
+  // --- Prova e lavoro in background ---
   static Future<bool> sendTest() async {
     if (!await enabled()) return false;
     await _plugin.show(_testId, 'Avviso di prova', _testBody, _details(AlertKind.briefing, _testBody));
@@ -156,6 +160,7 @@ class AlertsService {
     }
   }
 
+  // --- Programmazione ---
   /// Riprogramma gli avvisi con i dati e le impostazioni attuali. Da chiamare dopo [init].
   static Future<void> reschedule(SharedPreferences prefs, AppState app, DiaryState diary) async {
     if (!_ready || !app.onboarded) return;
@@ -190,7 +195,8 @@ class AlertsService {
     }
   }
 
-  static Future<void> runInBackground() async {
+  // --- Controllo in background ---
+  static Future<void> runInBackground({bool force = false}) async {
     await init(background: true);
     final prefs = await SharedPreferences.getInstance();
     await prefs.reload();
@@ -204,7 +210,7 @@ class AlertsService {
       final app = AppState(repo, prefs);
       await app.load();
       if (!app.onboarded) return;
-      if (app.isStale) await app.refresh();
+      if (force || app.isStale) await app.refresh();
       await WidgetBridge.save(prefs, app);
       await reschedule(prefs, app, DiaryState(prefs));
     } finally {
@@ -212,6 +218,7 @@ class AlertsService {
     }
   }
 
+  // --- Notifiche ---
   static int _id(AlertKind k) => k.index + 1;
 
   static void _open(String? payload) => opened.value = AlertKind.values.asNameMap()[payload];

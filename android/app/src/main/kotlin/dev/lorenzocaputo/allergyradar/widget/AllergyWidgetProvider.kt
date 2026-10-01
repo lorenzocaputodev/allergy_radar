@@ -16,6 +16,13 @@ import android.text.style.StyleSpan
 import android.graphics.Typeface
 import android.view.View
 import android.widget.RemoteViews
+import androidx.work.Constraints
+import androidx.work.Data
+import androidx.work.ExistingWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequest
+import androidx.work.WorkManager
+import dev.fluttercommunity.workmanager.BackgroundWorker
 import dev.lorenzocaputo.allergyradar.R
 import org.json.JSONObject
 import java.time.OffsetDateTime
@@ -30,6 +37,7 @@ import java.time.format.DateTimeFormatter
  */
 class AllergyWidgetProvider : AppWidgetProvider() {
 
+    // --- Eventi ---
     override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray) {
         ids.forEach { update(context, manager, it) }
     }
@@ -40,11 +48,16 @@ class AllergyWidgetProvider : AppWidgetProvider() {
     }
 
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action != ACTION_PAGE) return super.onReceive(context, intent)
-        val id = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)
-        val pages = context.getSharedPreferences(PAGES, Context.MODE_PRIVATE)
-        pages.edit().putInt("$id", pages.getInt("$id", 0) + intent.getIntExtra(EXTRA_STEP, 1)).apply()
-        update(context, AppWidgetManager.getInstance(context), id)
+        when (intent.action) {
+            ACTION_PAGE -> {
+                val id = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)
+                val pages = context.getSharedPreferences(PAGES, Context.MODE_PRIVATE)
+                pages.edit().putInt("$id", pages.getInt("$id", 0) + intent.getIntExtra(EXTRA_STEP, 1)).apply()
+                update(context, AppWidgetManager.getInstance(context), id)
+            }
+            ACTION_REFRESH -> refresh(context)
+            else -> super.onReceive(context, intent)
+        }
     }
 
     companion object {
@@ -53,6 +66,10 @@ class AllergyWidgetProvider : AppWidgetProvider() {
         private const val PAGES = "allergy_widget_pages"
         private const val ACTION_PAGE = "dev.lorenzocaputo.allergyradar.widget.PAGE"
         private const val EXTRA_STEP = "step"
+        private const val ACTION_REFRESH = "dev.lorenzocaputo.allergyradar.widget.REFRESH"
+
+        // Nome del compito Dart: in AlertsService fa riscaricare i dati anche se recenti.
+        private const val REFRESH_TASK = "widget_refresh"
 
         // Altezze in dp rispetto a quella dichiarata dal launcher (che di solito tiene fuori i suoi margini):
         // intestazione con livello e barra, una riga di allergene, la barra delle frecce.
@@ -78,6 +95,7 @@ class AllergyWidgetProvider : AppWidgetProvider() {
         )
         private val SEGMENTS = intArrayOf(R.id.widget_seg1, R.id.widget_seg2, R.id.widget_seg3, R.id.widget_seg4)
 
+        // --- Disegno ---
         fun updateAll(context: Context) {
             val manager = AppWidgetManager.getInstance(context)
             val ids = manager.getAppWidgetIds(ComponentName(context, AllergyWidgetProvider::class.java))
@@ -140,7 +158,36 @@ class AllergyWidgetProvider : AppWidgetProvider() {
                 )
                 views.setOnClickPendingIntent(R.id.widget_root, pending)
             }
+            val refresh = Intent(context, AllergyWidgetProvider::class.java).setAction(ACTION_REFRESH)
+            views.setOnClickPendingIntent(
+                R.id.widget_refresh,
+                PendingIntent.getBroadcast(context, 0, refresh, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT),
+            )
             manager.updateAppWidget(id, views)
+        }
+
+        // --- Aggiornamento e pagine ---
+        /**
+         * Scarica i dati nuovi con lo stesso compito Dart del controllo orario, poi ridisegna i widget.
+         * Senza rete il primo passo aspetta che torni.
+         */
+        private fun refresh(context: Context) {
+            val manager = AppWidgetManager.getInstance(context)
+            val ids = manager.getAppWidgetIds(ComponentName(context, AllergyWidgetProvider::class.java))
+            ids.forEach { id ->
+                val views = RemoteViews(context.packageName, R.layout.allergy_widget)
+                views.setTextViewText(R.id.widget_updated, context.getString(R.string.widget_updating))
+                manager.partiallyUpdateAppWidget(id, views)
+            }
+            val fetch = OneTimeWorkRequest.Builder(BackgroundWorker::class.java)
+                .setInputData(Data.Builder().putString(BackgroundWorker.DART_TASK_KEY, REFRESH_TASK).build())
+                .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
+                .build()
+            val redraw = OneTimeWorkRequest.Builder(WidgetUpdateWorker::class.java).build()
+            WorkManager.getInstance(context)
+                .beginUniqueWork(REFRESH_TASK, ExistingWorkPolicy.REPLACE, fetch)
+                .then(redraw)
+                .enqueue()
         }
 
         /** Quante righe di allergeni stanno nell'altezza attuale del widget (1–6). */

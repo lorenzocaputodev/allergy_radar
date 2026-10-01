@@ -69,4 +69,6 @@ flutter {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+    // Stessa versione del plugin workmanager: serve al widget per avviare l'aggiornamento.
+    implementation("androidx.work:work-runtime:2.11.2")
 }
