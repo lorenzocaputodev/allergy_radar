@@ -61,7 +61,9 @@ class ReportPdf {
     }
     final withMeds = entries.where((e) => e.meds.isNotEmpty).length;
     final avg = entries.isEmpty ? null : entries.fold<double>(0, (s, e) => s + e.score) / entries.length;
-    final insights = [for (final a in allergens) ?diary.insight(a, now, days: days)];
+    // Prima le differenze più nette: sono quelle che interessano al medico.
+    final insights = [for (final a in allergens) ?diary.insight(a, now, days: days)]
+      ..sort((x, y) => (y.highMean - y.lowMean).compareTo(x.highMean - x.lowMean));
 
     pw.Widget small(String s, {PdfColor color = _muted}) =>
         pw.Text(s, style: pw.TextStyle(fontSize: 8.5, color: color));
@@ -110,12 +112,13 @@ class ReportPdf {
             color: _pdf(palette.riskOnFill[v]),
             center: true,
           );
-    pw.Widget head(String s) => pw.Container(
+    pw.Widget head(String s, {double size = 8}) => pw.Container(
       alignment: pw.Alignment.center,
-      padding: const pw.EdgeInsets.symmetric(horizontal: 3, vertical: 5),
+      padding: const pw.EdgeInsets.symmetric(horizontal: 2, vertical: 5),
       child: pw.Text(
         s,
-        style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold, color: PdfColors.white),
+        textAlign: pw.TextAlign.center,
+        style: pw.TextStyle(fontSize: size, fontWeight: pw.FontWeight.bold, color: PdfColors.white),
       ),
     );
 
@@ -136,7 +139,8 @@ class ReportPdf {
     final doc = pw.Document(title: 'Diario allergie', author: 'Allergy Radar');
     doc.addPage(
       pw.MultiPage(
-        pageFormat: PdfPageFormat.a4,
+        // Oltre 4 allergeni le colonne non stanno in verticale.
+        pageFormat: allergens.length > 4 ? PdfPageFormat.a4.landscape : PdfPageFormat.a4,
         margin: const pw.EdgeInsets.fromLTRB(36, 36, 36, 40),
         theme: pw.ThemeData.withFont(
           base: regular,
@@ -240,12 +244,12 @@ class ReportPdf {
             pw.Table(
               border: const pw.TableBorder(horizontalInside: pw.BorderSide(color: _line, width: 0.5)),
               columnWidths: {
-                0: const pw.FixedColumnWidth(34),
-                for (var c = 1; c <= 4; c++) c: const pw.FixedColumnWidth(38),
-                5: const pw.FixedColumnWidth(52),
-                6: const pw.FlexColumnWidth(2),
-                for (var c = 0; c < allergens.length; c++) 7 + c: const pw.FixedColumnWidth(52),
-                7 + allergens.length: const pw.FlexColumnWidth(3),
+                0: const pw.FixedColumnWidth(30),
+                for (var c = 1; c <= 4; c++) c: const pw.FixedColumnWidth(34),
+                5: const pw.FixedColumnWidth(34),
+                6: const pw.FlexColumnWidth(3),
+                for (var c = 0; c < allergens.length; c++) 7 + c: const pw.FixedColumnWidth(46),
+                7 + allergens.length: const pw.FlexColumnWidth(2),
               },
               children: [
                 pw.TableRow(
@@ -253,7 +257,7 @@ class ReportPdf {
                   repeat: true,
                   children: [
                     for (final h in ['Data', 'Naso', 'Occhi', 'Gola', 'Respiro', 'Sonno', 'Farmaci']) head(h),
-                    for (final a in allergens) head(a.name),
+                    for (final a in allergens) head(a.name, size: 7),
                     head('Nota'),
                   ],
                 ),
@@ -267,7 +271,7 @@ class ReportPdf {
                       symptom(e.eyes),
                       symptom(e.throat),
                       symptom(e.breath),
-                      cell(e.badSleep ? 'disturbato' : '', center: true),
+                      cell(e.badSleep ? 'male' : '', center: true),
                       cell(e.meds.join(', ')),
                       for (final a in allergens) pollen(e.pollen[a.id]),
                       cell(e.note),
