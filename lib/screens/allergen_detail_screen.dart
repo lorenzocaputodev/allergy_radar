@@ -224,13 +224,14 @@ class _Bars extends StatelessWidget {
   /// La barra dell'ora attuale, se c'è: quelle prima si attenuano.
   final bool Function(DayValue)? current;
 
-  /// La scala arriva almeno alla soglia «alto»: così 0,1 granuli non sembrano una barra piena.
+  /// La scala arriva almeno a una volta e mezza la soglia «moderato»: 0,1 granuli non sembrano una barra piena,
+  /// e i valori normali non lasciano metà grafico vuoto.
   final Thresholds thresholds;
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    final max = values.fold<double>(thresholds.high, (m, v) => v.value > m ? v.value : m);
+    final max = values.fold<double>(thresholds.moderate * 1.5, (m, v) => v.value > m ? v.value : m);
     final refBottom = thresholds.moderate / max * height;
     final now = current == null ? -1 : values.indexWhere(current!);
     return Column(

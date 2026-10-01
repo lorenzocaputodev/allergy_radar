@@ -105,7 +105,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
         const SizedBox(height: 14),
         Row(
           children: [
-            _Stat(value: '${monthEntries.length}', label: 'giorni registrati su $lastDay'),
+            _Stat(value: '${monthEntries.length}/$lastDay', label: 'giorni registrati a ${Fmt.month(_month.month)}'),
             const SizedBox(width: 8),
             _Stat(value: avg == null ? '–' : Fmt.number(avg), label: 'intensità media su 3'),
             const SizedBox(width: 8),
@@ -310,7 +310,7 @@ class _Legend extends StatelessWidget {
               ),
               const SizedBox(width: 6),
               Text(DiaryEntry.severityNames[i], style: TextStyle(fontSize: 12, color: p.ink2)),
-              if (i > 0) ...[const SizedBox(width: 4), SeverityDots(i, color: p.ink3, size: 5)],
+              if (i > 0) ...[const SizedBox(width: 4), SeverityDots(i, color: p.ink2, size: 6)],
             ],
           ),
         Row(
@@ -365,6 +365,8 @@ class _Stat extends StatelessWidget {
     );
   }
 }
+
+const _outdoor = ['meno di 1 ora', '1–3 ore', 'più di 3 ore'];
 
 class _EntryCard extends StatelessWidget {
   const _EntryCard({required this.entry, required this.followed, required this.onTap});
@@ -455,6 +457,7 @@ class _EntryCard extends StatelessWidget {
               const SizedBox(height: 4),
               line('Sintomi', parts.isEmpty ? 'nessuno' : parts.join(' · ')),
               if (e.meds.isNotEmpty) line('Farmaci', e.meds.join(', ')),
+              if (e.outdoor case final o?) line('All’aperto', _outdoor[o]),
               if (pollen.isNotEmpty) line('Pollini', pollen.join(' · ')),
               if (e.note.isNotEmpty) line('Nota', e.note),
             ],

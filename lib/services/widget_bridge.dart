@@ -25,7 +25,8 @@ class WidgetBridge {
       'level': app.dayLevel.index,
       'levelLabel': app.dayLevel.label,
       'allergens': [
-        for (final s in app.followedStatuses.take(3))
+        // Ci stanno tre righe: prima i livelli più alti.
+        for (final s in ([...app.followedStatuses]..sort((a, b) => b.level.index.compareTo(a.level.index))).take(3))
           {
             'name': s.allergen.name,
             'level': s.level.index,

@@ -32,17 +32,17 @@ class ProfileScreen extends StatelessWidget {
     final a = state.alerts;
     final t = AlertSettingsEditor.time;
     final alertsText = [
-      if (a.briefing) t(a.briefingAt),
-      if (a.tomorrow) t(a.tomorrowAt),
-      if (a.diary) t(a.diaryAt),
+      if (a.briefing) 'Mattino ${t(a.briefingAt)}',
+      if (a.tomorrow) 'Sera ${t(a.tomorrowAt)}',
+      if (a.diary) 'Diario ${t(a.diaryAt)}',
     ].join(' · ');
 
     void go(Widget screen) => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => screen));
 
-    ListTile nav(IconData icon, String title, String? subtitle, Widget screen) => ListTile(
+    ListTile nav(IconData icon, String title, String? subtitle, Widget screen, {int lines = 1}) => ListTile(
       leading: Icon(icon),
       title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
-      subtitle: subtitle == null ? null : Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis),
+      subtitle: subtitle == null ? null : Text(subtitle, maxLines: lines, overflow: TextOverflow.ellipsis),
       trailing: const Icon(Icons.chevron_right),
       onTap: () => go(screen),
     );
@@ -109,7 +109,13 @@ class ProfileScreen extends StatelessWidget {
         ]),
         const SettingsLabel('Notifiche'),
         SettingsGroup([
-          nav(Icons.notifications_outlined, 'Avvisi', alertsText.isEmpty ? 'Spenti' : alertsText, const AlertsScreen()),
+          nav(
+            Icons.notifications_outlined,
+            'Avvisi',
+            alertsText.isEmpty ? 'Spenti' : alertsText,
+            const AlertsScreen(),
+            lines: 2,
+          ),
         ]),
         if (FileService.isSupported) ...[
           const SettingsLabel('I tuoi dati'),

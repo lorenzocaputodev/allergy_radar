@@ -56,6 +56,18 @@ class _LogEntryScreenState extends State<LogEntryScreen> {
   }
 
   Future<void> _delete() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Eliminare la voce?'),
+        content: Text('Sintomi e note di ${Fmt.longDate(_entry.date).toLowerCase()} vanno persi.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Annulla')),
+          TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Elimina')),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
     await context.read<DiaryState>().delete(_entry.date);
     if (mounted) Navigator.of(context).pop();
   }

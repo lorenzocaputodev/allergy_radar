@@ -89,8 +89,8 @@ abstract final class AppTheme {
       ),
       segmentedButtonTheme: SegmentedButtonThemeData(
         style: SegmentedButton.styleFrom(
-          selectedBackgroundColor: p.pineSoft,
-          selectedForegroundColor: p.pineText,
+          selectedBackgroundColor: p.pine,
+          selectedForegroundColor: p.onPine,
           side: BorderSide(color: p.line),
           textStyle: const TextStyle(fontFamily: AppFonts.sans, fontWeight: FontWeight.w600),
         ),

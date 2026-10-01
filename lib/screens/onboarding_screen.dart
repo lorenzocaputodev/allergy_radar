@@ -311,7 +311,7 @@ class _AllergenChoice extends StatelessWidget {
         onChanged: (v) => onChanged(v ?? false),
         secondary: AllergenGlyph(allergen, size: 44),
         title: Text(allergen.name, style: const TextStyle(fontWeight: FontWeight.w700)),
-        subtitle: Text(allergen.hasForecast ? 'Previsione giornaliera' : 'Misura di stazione o media storica'),
+        subtitle: Text(allergen.hasForecast ? 'Previsione giornaliera' : 'Misura o media storica'),
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       ),
     );
@@ -357,10 +357,10 @@ class _Summary extends StatelessWidget {
     final names = Allergens.all.where((a) => allergens.contains(a.id)).map((a) => a.name).join(', ');
     final t = AlertSettingsEditor.time;
     final alertsText = [
-      if (alerts.briefing) 'briefing alle ${t(alerts.briefingAt)}',
-      if (alerts.tomorrow) 'domani peggiora alle ${t(alerts.tomorrowAt)}',
-      if (alerts.diary) 'diario alle ${t(alerts.diaryAt)}',
-    ].join(', ');
+      if (alerts.briefing) 'Mattino alle ${t(alerts.briefingAt)}',
+      if (alerts.tomorrow) 'Sera alle ${t(alerts.tomorrowAt)}',
+      if (alerts.diary) 'Diario alle ${t(alerts.diaryAt)}',
+    ].join('\n');
     Widget row(IconData i, String k, String v) => Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(

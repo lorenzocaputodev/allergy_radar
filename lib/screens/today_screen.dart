@@ -345,10 +345,7 @@ class _Forecast extends StatelessWidget {
           },
         ),
         if (statuses.any((s) => s.kind == DataKind.estimate))
-          Text(
-            'La stima è la media storica del mese: vale per tutti i giorni.',
-            style: TextStyle(fontSize: 12, color: p.ink3),
-          ),
+          Text('Stima: media storica del mese.', style: TextStyle(fontSize: 12, color: p.ink3)),
       ],
     );
   }
@@ -375,7 +372,9 @@ class _DayCell extends StatelessWidget {
             decoration: BoxDecoration(
               color: l == null ? p.track : p.fill(l),
               borderRadius: BorderRadius.circular(8),
-              border: l == null || l == Level.none ? Border.all(color: p.line, width: 1.5) : null,
+              border: l == null || l == Level.none
+                  ? Border.all(color: p.ink3.withValues(alpha: 0.35), width: 1.5)
+                  : null,
             ),
           ),
         ),
@@ -575,7 +574,7 @@ class _DiaryCta extends StatelessWidget {
     final e = diary.entryFor(today);
     final yesterday = diary.entryFor(today.subtract(const Duration(days: 1)));
     final sub = e != null
-        ? 'Oggi: sintomi ${DiaryEntry.severityNames[e.severity].toLowerCase()} · tocca per modificare'
+        ? 'Sintomi ${DiaryEntry.severityNames[e.severity].toLowerCase()} · tocca per modificare'
         : yesterday != null
         ? 'Registra i sintomi in 10 secondi · ieri: ${DiaryEntry.severityNames[yesterday.severity].toLowerCase()}'
         : 'Registra i sintomi in 10 secondi';
