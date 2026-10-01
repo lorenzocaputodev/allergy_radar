@@ -4,6 +4,8 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <!-- Avvisi programmati: si riprogrammano dopo un riavvio. -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <!-- Orario preciso degli avvisi, se l'utente lo concede (Android 14+ lo chiede a parte). -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
     <!-- Solo posizione approssimativa: basta la zona. -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <application

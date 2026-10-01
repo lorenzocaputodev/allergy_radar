@@ -61,6 +61,9 @@ class AlertsService {
   static final _plugin = FlutterLocalNotificationsPlugin();
   static bool _ready = false;
 
+  /// L'ultimo avviso toccato: chi mostra l'app decide dove portare l'utente.
+  static final opened = ValueNotifier<AlertKind?>(null);
+
   /// Sistema reale, non defaultTargetPlatform: nei test vale «android» anche su Windows.
   static bool get isSupported => !kIsWeb && Platform.isAndroid;
 
@@ -72,8 +75,15 @@ class AlertsService {
     if (!isSupported) return false;
     if (_ready) return true;
     try {
-      await _plugin.initialize(const InitializationSettings(android: AndroidInitializationSettings(_statusIcon)));
-      if (!background) await Workmanager().initialize(alertsCallbackDispatcher);
+      await _plugin.initialize(
+        const InitializationSettings(android: AndroidInitializationSettings(_statusIcon)),
+        onDidReceiveNotificationResponse: (r) => _open(r.payload),
+      );
+      if (!background) {
+        await Workmanager().initialize(alertsCallbackDispatcher);
+        final launch = await _plugin.getNotificationAppLaunchDetails();
+        if (launch?.didNotificationLaunchApp ?? false) _open(launch!.notificationResponse?.payload);
+      }
       await _android?.createNotificationChannel(_pollenChannel);
       await _android?.createNotificationChannel(_diaryChannel);
       _ready = true;
@@ -101,6 +111,27 @@ class AlertsService {
     } on Object {
       return false;
     }
+  }
+
+  /// True se Android permette l'orario preciso; senza, un avviso può arrivare fino a un'ora dopo.
+  static Future<bool> exact() async {
+    if (!await init()) return false;
+    try {
+      return await _android?.canScheduleExactNotifications() ?? false;
+    } on Object {
+      return false;
+    }
+  }
+
+  /// Apre l'impostazione di Android per l'orario preciso. True se concesso.
+  static Future<bool> requestExact() async {
+    if (!await init()) return false;
+    try {
+      await _android?.requestExactAlarmsPermission();
+    } on Object {
+      return false;
+    }
+    return exact();
   }
 
   /// Avviso immediato, per controllare che arrivino.
@@ -138,6 +169,7 @@ class AlertsService {
       diaryDoneToday: diary.entryFor(DiaryEntry.day(now)) != null,
     );
     try {
+      final mode = await exact() ? AndroidScheduleMode.exactAllowWhileIdle : AndroidScheduleMode.inexactAllowWhileIdle;
       for (final k in AlertKind.values) {
         await _plugin.cancel(_id(k));
       }
@@ -148,7 +180,8 @@ class AlertsService {
           m.body,
           tz.TZDateTime.from(m.at, tz.UTC),
           _details(m.kind, m.body),
-          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+          androidScheduleMode: mode,
+          payload: m.kind.name,
         );
       }
       await AlertLog.setPending(prefs, messages, now);
@@ -180,6 +213,8 @@ class AlertsService {
   }
 
   static int _id(AlertKind k) => k.index + 1;
+
+  static void _open(String? payload) => opened.value = AlertKind.values.asNameMap()[payload];
 
   static NotificationDetails _details(AlertKind kind, String body) {
     final channel = kind == AlertKind.diary ? _diaryChannel : _pollenChannel;

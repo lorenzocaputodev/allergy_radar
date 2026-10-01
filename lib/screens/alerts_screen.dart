@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/alert_settings.dart';
 import '../services/alerts_service.dart';
 import '../state/app_state.dart';
+import '../state/diary_state.dart';
 import '../theme/palette.dart';
 
 class AlertsScreen extends StatelessWidget {
@@ -113,7 +115,7 @@ class AlertSettingsEditor extends StatelessWidget {
             setAt: (m) => onChanged(value.copyWith(briefingAt: m)),
             extra: SwitchListTile(
               secondary: const SizedBox(width: 24),
-              title: Text('Solo nei giorni sopra la tua soglia', style: TextStyle(fontSize: 15, color: p.ink2)),
+              title: Text('Solo sopra la tua soglia', style: TextStyle(fontSize: 15, color: p.ink2)),
               value: value.briefingOnlyAbove,
               onChanged: (v) => onChanged(value.copyWith(briefingOnlyAbove: v)),
             ),
@@ -153,7 +155,9 @@ class _Check extends StatefulWidget {
 }
 
 class _CheckState extends State<_Check> {
-  late final Future<bool> _enabled = AlertsService.enabled();
+  late Future<(bool, bool)> _status = _read();
+
+  static Future<(bool, bool)> _read() async => (await AlertsService.enabled(), await AlertsService.exact());
 
   Future<void> _test() async {
     final sent = await AlertsService.sendTest();
@@ -161,13 +165,24 @@ class _CheckState extends State<_Check> {
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Le notifiche dell’app sono spente.')));
   }
 
+  Future<void> _makeExact() async {
+    final app = context.read<AppState>();
+    final diary = context.read<DiaryState>();
+    if (await AlertsService.requestExact()) {
+      await AlertsService.reschedule(await SharedPreferences.getInstance(), app, diary);
+    }
+    if (mounted) setState(() => _status = _read());
+  }
+
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    return FutureBuilder<bool>(
-      future: _enabled,
+    return FutureBuilder<(bool, bool)>(
+      future: _status,
       builder: (context, snap) {
-        final off = AlertsService.isSupported && snap.data == false;
+        final (enabled, exact) = snap.data ?? (true, true);
+        final off = AlertsService.isSupported && !enabled;
+        final delayed = AlertsService.isSupported && enabled && !exact;
         return Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(color: p.chip, borderRadius: BorderRadius.circular(16)),
@@ -183,7 +198,9 @@ class _CheckState extends State<_Check> {
                     child: Text(
                       off
                           ? 'Le notifiche dell’app sono spente: riattivale da Impostazioni › App › Allergy Radar.'
-                          : 'Arrivano all’orario scelto anche ad app chiusa, al massimo con qualche minuto di ritardo.',
+                          : delayed
+                          ? 'Arrivano anche ad app chiusa, ma Android può ritardarle fino a un’ora.'
+                          : 'Arrivano all’orario scelto, anche ad app chiusa.',
                       style: TextStyle(fontSize: 13, height: 1.45, color: p.ink2),
                     ),
                   ),
@@ -191,10 +208,23 @@ class _CheckState extends State<_Check> {
               ),
               if (AlertsService.isSupported && !off) ...[
                 const SizedBox(height: 10),
-                OutlinedButton.icon(
-                  onPressed: _test,
-                  icon: const Icon(Icons.notifications_active_outlined, size: 18),
-                  label: const Text('Manda un avviso di prova'),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    if (delayed)
+                      FilledButton.tonalIcon(
+                        onPressed: _makeExact,
+                        style: FilledButton.styleFrom(minimumSize: const Size(0, 40)),
+                        icon: const Icon(Icons.alarm_on, size: 18),
+                        label: const Text('Rendili puntuali'),
+                      ),
+                    OutlinedButton.icon(
+                      onPressed: _test,
+                      icon: const Icon(Icons.notifications_active_outlined, size: 18),
+                      label: const Text('Avviso di prova'),
+                    ),
+                  ],
                 ),
               ],
             ],

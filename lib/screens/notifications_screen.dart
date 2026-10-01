@@ -9,8 +9,8 @@ import '../theme/palette.dart';
 import '../utils/format.dart';
 import 'alerts_screen.dart';
 
-/// Gli avvisi mandati dall'app, dal più recente. L'ingranaggio porta alle impostazioni.
-class NotificationsScreen extends StatelessWidget {
+/// Gli avvisi arrivati, dal più recente. L'ingranaggio porta alle impostazioni.
+class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
 
   static IconData iconOf(AlertKind k) => switch (k) {
@@ -20,17 +20,40 @@ class NotificationsScreen extends StatelessWidget {
   };
 
   @override
+  State<NotificationsScreen> createState() => _NotificationsScreenState();
+}
+
+class _NotificationsScreenState extends State<NotificationsScreen> {
+  // Un avviso può arrivare mentre la schermata è aperta: si rilegge quando l'app torna in primo piano.
+  late final AppLifecycleListener _lifecycle;
+
+  @override
+  void initState() {
+    super.initState();
+    _lifecycle = AppLifecycleListener(onResume: () => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _lifecycle.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final p = context.palette;
     final alertsOn = context.select<AppState, bool>((s) => s.alerts.anyEnabled);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Avvisi'),
+        title: const Text('Avvisi ricevuti'),
         actions: [
           IconButton(
             tooltip: 'Impostazioni degli avvisi',
             icon: const Icon(Icons.settings_outlined),
-            onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const AlertsScreen())),
+            onPressed: () async {
+              await Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const AlertsScreen()));
+              if (mounted) setState(() {});
+            },
           ),
         ],
       ),
@@ -91,7 +114,7 @@ class NotificationsScreen extends StatelessWidget {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(iconOf(e.kind), color: p.pineText, size: 22),
+                      Icon(NotificationsScreen.iconOf(e.kind), color: p.pineText, size: 22),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(

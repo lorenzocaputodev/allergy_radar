@@ -8,10 +8,13 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'data/pollen_repository.dart';
+import 'models/diary_entry.dart';
 import 'models/pollen_snapshot.dart';
 import 'models/station.dart';
 import 'screens/home_shell.dart';
+import 'screens/log_entry_screen.dart';
 import 'screens/onboarding_screen.dart';
+import 'services/alert_planner.dart';
 import 'services/alerts_service.dart';
 import 'services/open_meteo_client.dart';
 import 'services/pollnet_client.dart';
@@ -19,6 +22,8 @@ import 'services/widget_bridge.dart';
 import 'state/app_state.dart';
 import 'state/diary_state.dart';
 import 'theme/app_theme.dart';
+
+final _navigator = GlobalKey<NavigatorState>();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -47,6 +52,18 @@ Future<void> main() async {
   state.addListener(reschedule);
   diary.addListener(reschedule);
 
+  // Toccando il promemoria del diario si apre direttamente la voce di oggi.
+  AlertsService.opened.addListener(() {
+    if (AlertsService.opened.value != AlertKind.diary) return;
+    AlertsService.opened.value = null;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!state.onboarded) return;
+      _navigator.currentState?.push(
+        MaterialPageRoute<void>(builder: (_) => LogEntryScreen(date: DiaryEntry.day(DateTime.now()))),
+      );
+    });
+  });
+
   runApp(
     MultiProvider(
       providers: [
@@ -71,6 +88,7 @@ class AllergyRadarApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) => MaterialApp(
     title: 'Allergy Radar',
+    navigatorKey: _navigator,
     debugShowCheckedModeBanner: false,
     theme: AppTheme.of(Brightness.light),
     darkTheme: AppTheme.of(Brightness.dark),
