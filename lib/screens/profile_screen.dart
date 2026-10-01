@@ -24,8 +24,11 @@ class ProfileScreen extends StatelessWidget {
     final diary = context.watch<DiaryState>();
     final p = context.palette;
     final measuring = state.snapshot?.measuringStation;
+    final nearest = state.snapshot?.nearestStation;
     final stationText = measuring != null
         ? 'Misure da ${measuring.station.name}, ${measuring.km.round()} km'
+        : nearest != null
+        ? '${nearest.station.name} senza misure recenti'
         : 'nessuna stazione di misura vicina';
     final a = state.alerts;
     final t = AlertSettingsEditor.time;

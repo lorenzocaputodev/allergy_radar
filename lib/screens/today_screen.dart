@@ -194,6 +194,7 @@ class _Hero extends StatelessWidget {
       summary = 'Al livello che ti dà fastidio: ${Fmt.list([for (final s in above) s.allergen.name])}.';
     }
     final estimated = followed.where((s) => s.kind == DataKind.estimate).map((s) => s.allergen.name).toList();
+    final nearest = state.snapshot?.nearestStation;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -231,7 +232,9 @@ class _Hero extends StatelessWidget {
             if (estimated.isNotEmpty) ...[
               const SizedBox(height: 10),
               Text(
-                'Stima per ${Fmt.list(estimated)}: non ci sono stazioni di misura vicine.',
+                nearest == null
+                    ? 'Stima per ${Fmt.list(estimated)}: non ci sono stazioni di misura vicine.'
+                    : 'Stima per ${Fmt.list(estimated)}: la stazione di ${nearest.station.name} non ha misure recenti.',
                 style: TextStyle(fontSize: 13, color: p.onHero.withValues(alpha: 0.85)),
               ),
             ],

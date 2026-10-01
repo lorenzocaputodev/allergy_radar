@@ -59,7 +59,8 @@ class PollenRepository {
   final DateTime Function() _now;
 
   /// Una misura più vecchia di così non descrive più la situazione attuale.
-  static const maxMeasureAgeDays = 10;
+  /// ISPRA pubblica una settimana alla volta, con giorni di ritardo: con 10 giorni intere regioni restavano senza.
+  static const maxMeasureAgeDays = 14;
   static const historyDays = 30;
 
   Future<RawPollenData> fetch(Place place) async {

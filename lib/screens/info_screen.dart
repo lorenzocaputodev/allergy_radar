@@ -24,7 +24,7 @@ class InfoScreen extends StatelessWidget {
               _Item(
                 icon: Icons.sensors,
                 title: 'Misure',
-                text: 'Stazioni POLLnet di ISPRA entro 60 km, con qualche giorno di ritardo.',
+                text: 'Stazioni POLLnet di ISPRA entro 60 km, pubblicate una volta a settimana.',
               ),
               _Item(
                 icon: Icons.calendar_month_outlined,
