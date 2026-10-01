@@ -188,8 +188,7 @@ class AllergenDetailScreen extends StatelessWidget {
           const SizedBox(height: 14),
           SectionCard(
             children: [
-              Text('La tua soglia', style: Theme.of(context).textTheme.titleLarge),
-              Text('Da quale livello ti dà fastidio.', style: TextStyle(fontSize: 14, color: p.ink2)),
+              Text('Ti dà fastidio da', style: Theme.of(context).textTheme.titleLarge),
               SegmentedButton<Level>(
                 segments: const [
                   ButtonSegment(value: Level.low, label: Text('Basso')),
@@ -274,7 +273,7 @@ class _Bars extends StatelessWidget {
             Container(width: 16, height: 1.5, color: p.text(Level.moderate)),
             const SizedBox(width: 6),
             Text(
-              'Livello moderato da ${Fmt.number(thresholds.moderate)} granuli/m³',
+              'Da qui il livello è moderato (${Fmt.number(thresholds.moderate)} granuli/m³)',
               style: TextStyle(fontSize: 12, color: p.ink2),
             ),
           ],
@@ -318,12 +317,13 @@ class _Bars extends StatelessWidget {
 
 String _whyText(AllergenStatus s, NearStation? nearest, Area area, DateTime now) {
   if (s.kind == DataKind.measured) {
-    return 'Nessun modello lo prevede: è la misura della stazione di ${s.station!.station.name}, di qualche giorno fa.';
+    return 'Per questo polline non c’è una previsione: è l’ultima misura della stazione di ${s.station!.station.name}, '
+        'di qualche giorno fa.';
   }
   final why = s.allergen.hasForecast
-      ? 'La previsione ora non è disponibile'
+      ? 'Oggi la previsione non è disponibile'
       : nearest != null
-      ? 'Nessun modello lo prevede e ${nearest.station.name} non pubblica dati'
-      : 'Nessun modello lo prevede e non ci sono stazioni vicine';
-  return '$why. Mostriamo la media di ${Fmt.month(now.month)} nell’area ${area.label}.';
+      ? 'Per questo polline non c’è una previsione e la stazione di ${nearest.station.name} non pubblica dati'
+      : 'Per questo polline non c’è una previsione e non ci sono stazioni di misura vicine';
+  return '$why: mostriamo il valore tipico di ${Fmt.month(now.month)} nell’area ${area.label}.';
 }

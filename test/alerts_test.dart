@@ -44,14 +44,14 @@ void main() {
 
   test('briefing: testo del giorno in cui arriva', () {
     final today = of(schedule(DateTime(2026, 9, 30, 7)), AlertKind.briefing)!;
-    expect(today.title, 'Pollini oggi a Lecce');
-    expect(today.body, 'Graminacee: basso. Parietaria: alto (media storica). Sopra la tua soglia: Parietaria.');
+    expect(today.title, 'Pollini di oggi a Lecce');
+    expect(today.body, 'Graminacee: basso. Parietaria: alto (stima). Ti danno fastidio: Parietaria.');
 
     // Dopo le 7:30 si programma per domani, con la previsione di domani.
     final next = of(schedule(DateTime(2026, 9, 30, 9)), AlertKind.briefing)!;
     expect(next.at, DateTime(2026, 10, 1, 7, 30));
     expect(next.body, contains('Graminacee: moderato'));
-    expect(next.body, contains('Sopra la tua soglia: Graminacee, Parietaria.'));
+    expect(next.body, contains('Ti danno fastidio: Graminacee, Parietaria.'));
   });
 
   test('briefing solo sopra soglia', () {

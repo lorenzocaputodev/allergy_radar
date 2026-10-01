@@ -182,21 +182,19 @@ class _Hero extends StatelessWidget {
     final level = state.dayLevel;
     final above = state.aboveThreshold;
     final followed = state.followedStatuses;
-    final below = followed.where((s) => !above.contains(s)).toList();
 
     String summary;
     if (followed.isEmpty) {
       summary = 'Scegli i tuoi allergeni da Profilo.';
     } else if (above.isEmpty) {
-      summary = 'Nessun tuo allergene sopra soglia.';
+      summary = 'Nessun tuo allergene ti dà fastidio oggi.';
     } else {
-      final names = above.map((s) => s.allergen.name).join(' e ');
-      summary = above.length == 1 ? '$names è sopra la tua soglia.' : '$names sono sopra la tua soglia.';
+      final names = Fmt.list([for (final s in above) s.allergen.name]);
+      summary = above.length == 1
+          ? '$names è al livello che ti dà fastidio.'
+          : '$names sono al livello che ti dà fastidio.';
     }
-    if (above.isNotEmpty && below.isNotEmpty) {
-      summary += ' ${below.map((s) => '${s.allergen.name}: ${s.level.label.toLowerCase()}').join(', ')}.';
-    }
-    final estimated = followed.any((s) => s.kind == DataKind.estimate);
+    final estimated = followed.where((s) => s.kind == DataKind.estimate).map((s) => s.allergen.name).toList();
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -208,7 +206,7 @@ class _Hero extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'LA TUA GIORNATA',
+              'OGGI PER TE',
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
@@ -231,10 +229,12 @@ class _Hero extends StatelessWidget {
             RiskBar(level, track: p.heroTrack),
             const SizedBox(height: 14),
             Text(summary),
-            if (estimated) ...[
+            if (estimated.isNotEmpty) ...[
               const SizedBox(height: 10),
               Text(
-                'Include una stima: nessuna stazione vicina.',
+                estimated.length == 1
+                    ? '${estimated.single} è una stima: non ci sono stazioni di misura vicine.'
+                    : 'Alcuni valori sono stime: non ci sono stazioni di misura vicine.',
                 style: TextStyle(fontSize: 13, color: p.onHero.withValues(alpha: 0.85)),
               ),
             ],
@@ -270,7 +270,7 @@ class _Forecast extends StatelessWidget {
     String source(AllergenStatus s) => switch (s.kind) {
       DataKind.forecast => 'previsione',
       DataKind.measured => 'misura del ${s.date!.day}/${s.date!.month}',
-      DataKind.estimate => 'stima del mese',
+      DataKind.estimate => 'stima',
     };
 
     _DayCell cell(AllergenStatus s, DateTime d) {
@@ -345,7 +345,7 @@ class _Forecast extends StatelessWidget {
           },
         ),
         if (statuses.any((s) => s.kind == DataKind.estimate))
-          Text('Stima: media storica del mese.', style: TextStyle(fontSize: 12, color: p.ink3)),
+          Text('Stima: valore tipico del mese, uguale ogni giorno.', style: TextStyle(fontSize: 12, color: p.ink3)),
       ],
     );
   }
@@ -560,7 +560,7 @@ class _OthersState extends State<_Others> {
 String _othersNote(AllergenStatus s, Area area, DateTime today) {
   if (s.level == Level.none && s.allergen.calendarFor(area)[today.month - 1] == 0) return 'Fuori stagione';
   if (s.value != null) return Fmt.grains(s.value!);
-  return SourceChip.label(s.kind);
+  return s.kind == DataKind.estimate ? 'Stima (valore tipico)' : SourceChip.label(s.kind);
 }
 
 class _DiaryCta extends StatelessWidget {

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../models/station.dart';
 import '../services/backup.dart';
 import '../services/file_service.dart';
 import '../services/report_pdf.dart';
@@ -28,7 +27,7 @@ class ProfileScreen extends StatelessWidget {
     final measuring = state.snapshot?.measuringStation;
     final stationText = measuring != null
         ? 'Misure da ${measuring.station.name}, ${measuring.km.round()} km'
-        : 'Nessuna stazione attiva entro ${StationDirectory.maxKm.round()} km';
+        : 'nessuna stazione di misura vicina';
     final a = state.alerts;
     final t = AlertSettingsEditor.time;
     final alertsText = [
@@ -79,7 +78,7 @@ class ProfileScreen extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 2),
-                        Text('${state.area.label} · $stationText', style: TextStyle(fontSize: 13, color: p.ink2)),
+                        Text('Area ${state.area.label} · $stationText', style: TextStyle(fontSize: 13, color: p.ink2)),
                       ],
                     ),
                   ),

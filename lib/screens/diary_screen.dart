@@ -42,11 +42,6 @@ class _DiaryScreenState extends State<DiaryScreen> {
     final todayEntry = diary.entryFor(today);
     final isCurrentMonth = _month.year == now.year && _month.month == now.month;
 
-    final monthEntries = diary.between(_month, DateTime(_month.year, _month.month + 1, 0));
-    final lastDay = isCurrentMonth ? now.day : DateTime(_month.year, _month.month + 1, 0).day;
-    final avg = monthEntries.isEmpty ? null : monthEntries.fold<double>(0, (s, e) => s + e.score) / monthEntries.length;
-    final medDays = monthEntries.where((e) => e.meds.isNotEmpty).length;
-
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
       children: [
@@ -100,16 +95,6 @@ class _DiaryScreenState extends State<DiaryScreen> {
             ),
             _MonthGrid(month: _month, today: today, diary: diary, onTap: _open),
             const _Legend(),
-          ],
-        ),
-        const SizedBox(height: 14),
-        Row(
-          children: [
-            _Stat(value: '${monthEntries.length}/$lastDay', label: 'giorni registrati a ${Fmt.month(_month.month)}'),
-            const SizedBox(width: 8),
-            _Stat(value: avg == null ? '–' : Fmt.number(avg), label: 'intensità media su 3'),
-            const SizedBox(width: 8),
-            _Stat(value: '$medDays', label: 'giorni con farmaci'),
           ],
         ),
         const SizedBox(height: 20),
@@ -329,39 +314,6 @@ class _Legend extends StatelessWidget {
           ],
         ),
       ],
-    );
-  }
-}
-
-class _Stat extends StatelessWidget {
-  const _Stat({required this.value, required this.label});
-
-  final String value;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.palette;
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: p.card,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: p.line),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              value,
-              style: const TextStyle(fontFamily: AppFonts.display, fontSize: 26, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 4),
-            Text(label, style: TextStyle(fontSize: 12, height: 1.35, color: p.ink3)),
-          ],
-        ),
-      ),
     );
   }
 }

@@ -102,7 +102,7 @@ class SourceChip extends StatelessWidget {
 
   static String label(DataKind k) => switch (k) {
     DataKind.forecast => 'Previsione',
-    DataKind.measured => 'Misurato',
+    DataKind.measured => 'Misura',
     DataKind.estimate => 'Stima',
   };
 

@@ -45,7 +45,7 @@ void main() {
 
   testWidgets('Oggi mostra livelli e fonti', (tester) async {
     await pumpApp(tester);
-    expect(find.text('LA TUA GIORNATA'), findsOneWidget);
+    expect(find.text('OGGI PER TE'), findsOneWidget);
     await tester.scrollUntilVisible(find.text('Parietaria'), 200, scrollable: find.byType(Scrollable).first);
     expect(find.text('Parietaria'), findsWidgets);
     expect(find.textContaining('Stima'), findsWidgets);
@@ -160,6 +160,6 @@ void main() {
     await tester.tap(find.text('Vai a Oggi'));
     await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 100)));
     await tester.pumpAndSettle();
-    expect(find.text('LA TUA GIORNATA'), findsOneWidget);
+    expect(find.text('OGGI PER TE'), findsOneWidget);
   });
 }

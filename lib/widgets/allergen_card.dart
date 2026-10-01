@@ -17,7 +17,7 @@ class AllergenCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = context.palette;
     final a = status.allergen;
-    final value = status.value == null ? 'stima di ${Fmt.month(today.month)}' : Fmt.grains(status.value!);
+    final value = status.value == null ? 'tipico di ${Fmt.month(today.month)}' : Fmt.grains(status.value!);
     return Material(
       color: p.card,
       shape: RoundedRectangleBorder(
@@ -79,7 +79,7 @@ class AllergenCard extends StatelessWidget {
                   SourceChip(status.kind, detail: Fmt.sourceDetail(status, today)),
                   if (aboveThreshold)
                     Text(
-                      'Sopra la tua soglia',
+                      'Ti dà fastidio',
                       style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: p.text(status.level)),
                     ),
                 ],

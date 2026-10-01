@@ -26,6 +26,10 @@ abstract final class Fmt {
   static String weekday(DateTime d, DateTime today) =>
       DateTime(d.year, d.month, d.day) == DateTime(today.year, today.month, today.day) ? 'Oggi' : _short[d.weekday - 1];
 
+  /// «A, B e C».
+  static String list(List<String> items) =>
+      items.length < 2 ? items.join() : '${items.sublist(0, items.length - 1).join(', ')} e ${items.last}';
+
   static String time(DateTime d) => '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
 
   static String number(double v) {
@@ -37,10 +41,10 @@ abstract final class Fmt {
 
   static String month(int m) => _months[m - 1];
 
-  static String sourceDetail(AllergenStatus s, DateTime today) => switch (s.kind) {
-    DataKind.forecast => 'oggi',
+  static String? sourceDetail(AllergenStatus s, DateTime today) => switch (s.kind) {
+    DataKind.forecast => null,
     DataKind.measured =>
       '${s.station!.station.name}, ${s.station!.km.round()} km · ${s.date == null ? '' : shortDate(s.date!)}',
-    DataKind.estimate => 'media storica',
+    DataKind.estimate => null,
   };
 }

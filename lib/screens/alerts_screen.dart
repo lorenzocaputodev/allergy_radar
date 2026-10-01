@@ -107,15 +107,15 @@ class AlertSettingsEditor extends StatelessWidget {
         children: [
           block(
             icon: Icons.wb_sunny_outlined,
-            title: 'Briefing del mattino',
-            subtitle: 'I livelli di oggi dei tuoi allergeni.',
+            title: 'Pollini di oggi',
+            subtitle: 'La mattina, i livelli dei tuoi allergeni.',
             on: value.briefing,
             toggle: (v) => onChanged(value.copyWith(briefing: v)),
             at: value.briefingAt,
             setAt: (m) => onChanged(value.copyWith(briefingAt: m)),
             extra: SwitchListTile(
               secondary: const SizedBox(width: 24),
-              title: Text('Solo sopra la tua soglia', style: TextStyle(fontSize: 15, color: p.ink2)),
+              title: Text('Solo se qualcosa ti dà fastidio', style: TextStyle(fontSize: 15, color: p.ink2)),
               value: value.briefingOnlyAbove,
               onChanged: (v) => onChanged(value.copyWith(briefingOnlyAbove: v)),
             ),
@@ -123,8 +123,8 @@ class AlertSettingsEditor extends StatelessWidget {
           const Divider(),
           block(
             icon: Icons.trending_up,
-            title: 'Domani peggiora',
-            subtitle: 'La sera, se domani un tuo allergene sale sopra soglia.',
+            title: 'Allerta per domani',
+            subtitle: 'La sera, se domani un tuo allergene ti darà fastidio.',
             on: value.tomorrow,
             toggle: (v) => onChanged(value.copyWith(tomorrow: v)),
             at: value.tomorrowAt,
@@ -199,7 +199,7 @@ class _CheckState extends State<_Check> {
                       off
                           ? 'Le notifiche dell’app sono spente: riattivale da Impostazioni › App › Allergy Radar.'
                           : delayed
-                          ? 'Arrivano anche ad app chiusa, ma Android può ritardarle fino a un’ora.'
+                          ? 'Ora possono arrivare con fino a un’ora di ritardo.'
                           : 'Arrivano all’orario scelto, anche ad app chiusa.',
                       style: TextStyle(fontSize: 13, height: 1.45, color: p.ink2),
                     ),
@@ -217,7 +217,7 @@ class _CheckState extends State<_Check> {
                         onPressed: _makeExact,
                         style: FilledButton.styleFrom(minimumSize: const Size(0, 40)),
                         icon: const Icon(Icons.alarm_on, size: 18),
-                        label: const Text('Rendili puntuali'),
+                        label: const Text('Falli arrivare in orario'),
                       ),
                     OutlinedButton.icon(
                       onPressed: _test,

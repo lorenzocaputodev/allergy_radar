@@ -43,14 +43,14 @@ class AlertPlanner {
       if (!settings.briefingOnlyAbove || over.isNotEmpty) {
         final text = followed
             .map((s) {
-              final estimate = s.kind == DataKind.estimate ? ' (media storica)' : '';
+              final estimate = s.kind == DataKind.estimate ? ' (stima)' : '';
               return '${s.allergen.name}: ${levels[s.allergen]!.label.toLowerCase()}$estimate';
             })
             .join('. ');
         final tail = over.isEmpty
-            ? 'Nessun tuo allergene sopra soglia.'
-            : 'Sopra la tua soglia: ${over.map((s) => s.allergen.name).join(', ')}.';
-        out.add(AlertMessage(AlertKind.briefing, when, 'Pollini oggi a $placeName', '$text. $tail'));
+            ? 'Niente che ti dia fastidio.'
+            : 'Ti danno fastidio: ${over.map((s) => s.allergen.name).join(', ')}.';
+        out.add(AlertMessage(AlertKind.briefing, when, 'Pollini di oggi a $placeName', '$text. $tail'));
       }
     }
 
@@ -70,7 +70,7 @@ class AlertPlanner {
         }
       }
       if (worse.isNotEmpty) {
-        out.add(AlertMessage(AlertKind.tomorrow, when, 'Domani peggiora a $placeName', '${worse.join('. ')}.'));
+        out.add(AlertMessage(AlertKind.tomorrow, when, 'Domani più polline a $placeName', '${worse.join('. ')}.'));
       }
     }
 
