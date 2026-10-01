@@ -35,9 +35,17 @@ class LocationService {
     if (permission == LocationPermission.deniedForever) {
       throw const LocationException('Permesso negato: si riattiva dalle impostazioni di Android.');
     }
-    final pos = await Geolocator.getCurrentPosition(
-      locationSettings: const LocationSettings(accuracy: LocationAccuracy.low, timeLimit: Duration(seconds: 20)),
-    );
+    // Precisione media: con il solo permesso approssimativo Android la limita comunque alla zona.
+    // «Bassa» chiede la posizione a basso consumo, che può non arrivare se nessun'altra app la usa.
+    Position? pos;
+    try {
+      pos = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.medium, timeLimit: Duration(seconds: 15)),
+      );
+    } on Object {
+      pos = await Geolocator.getLastKnownPosition();
+    }
+    if (pos == null) throw const LocationException('Posizione non disponibile. Cerca una città.');
     return placeAt(pos.latitude, pos.longitude, reverse: reverse ?? androidGeocoder);
   }
 

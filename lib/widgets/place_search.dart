@@ -52,7 +52,13 @@ class _PlaceSearchState extends State<PlaceSearch> {
     });
     try {
       final r = await context.read<OpenMeteoClient>().searchPlaces(q);
-      if (mounted) setState(() => _results = r);
+      // Il geocoding può restituire più voci per lo stesso comune (città e località): se ne tiene una.
+      final seen = <String>{};
+      final unique = [
+        for (final p in r)
+          if (seen.add('${p.name}|${p.region}')) p,
+      ];
+      if (mounted) setState(() => _results = unique);
     } on Object {
       if (mounted) setState(() => _error = 'Ricerca non riuscita. Controlla la connessione.');
     } finally {
@@ -68,7 +74,9 @@ class _PlaceSearchState extends State<PlaceSearch> {
     });
     try {
       final place = await LocationService.current();
-      if (mounted) setState(() => _found = place);
+      if (!mounted) return;
+      setState(() => _found = place);
+      widget.onSelected(place);
     } on LocationException catch (e) {
       if (mounted) setState(() => _error = e.message);
     } on Object {
@@ -96,10 +104,7 @@ class _PlaceSearchState extends State<PlaceSearch> {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           ),
         ),
-        if (_found case final found?) ...[
-          const SizedBox(height: 10),
-          _FoundPlace(place: found, onUse: () => widget.onSelected(found)),
-        ],
+        if (_found case final found?) ...[const SizedBox(height: 10), _FoundPlace(place: found)],
         const SizedBox(height: 12),
         TextField(
           autofocus: widget.autofocus,
@@ -138,12 +143,11 @@ class _PlaceSearchState extends State<PlaceSearch> {
   }
 }
 
-/// Conferma del luogo trovato con il GPS: si vede cosa ha capito l'app prima di usarlo.
+/// Conferma del luogo trovato con il GPS: si vede quale comune ha capito l'app.
 class _FoundPlace extends StatelessWidget {
-  const _FoundPlace({required this.place, required this.onUse});
+  const _FoundPlace({required this.place});
 
   final Place place;
-  final VoidCallback onUse;
 
   @override
   Widget build(BuildContext context) {
@@ -154,29 +158,23 @@ class _FoundPlace extends StatelessWidget {
       decoration: BoxDecoration(color: p.pineSoft, borderRadius: BorderRadius.circular(16)),
       child: Row(
         children: [
-          Icon(Icons.my_location, color: p.pineText),
+          Icon(Icons.check_circle, color: p.pineText),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  named ? 'Trovato: ${place.name}' : 'Posizione trovata',
+                  named ? place.name : 'Posizione trovata',
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  named ? '${place.region ?? 'Italia'} · precisione circa 1 km' : 'Nome del comune non disponibile',
+                  named ? '${place.region ?? 'Italia'} · dalla tua posizione' : 'Nome del comune non disponibile',
                   style: TextStyle(fontSize: 13, color: p.ink2),
                 ),
               ],
             ),
-          ),
-          const SizedBox(width: 8),
-          FilledButton(
-            onPressed: onUse,
-            style: FilledButton.styleFrom(minimumSize: const Size(0, 44)),
-            child: const Text('Usa'),
           ),
         ],
       ),
