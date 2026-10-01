@@ -138,7 +138,11 @@ class AllergyWidgetProvider : AppWidgetProvider() {
                 ROWS.forEachIndexed { i, rowId ->
                     val item = if (i < perPage) allergens?.optJSONObject(page * perPage + i) else null
                     if (item == null) {
-                        views.setViewVisibility(rowId, View.GONE)
+                        // Sull'ultima pagina le righe vuote tengono il posto: frecce e titolo non si spostano.
+                        val keep = i < perPage && pageCount > 1
+                        views.setViewVisibility(rowId, if (keep) View.INVISIBLE else View.GONE)
+                        views.setTextViewText(NAMES[i], "")
+                        views.setTextViewText(LEVELS[i], "")
                     } else {
                         views.setViewVisibility(rowId, View.VISIBLE)
                         views.setTextViewText(NAMES[i], item.optString("name"))
