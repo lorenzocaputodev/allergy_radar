@@ -56,21 +56,23 @@ class AlertPlanner {
 
     if (settings.tomorrow) {
       final when = next(settings.tomorrowAt);
-      final day = dayOf(when);
-      final worse = <String>[];
+      final target = dayOf(when).add(const Duration(days: 1));
+      final bothering = <String>[];
       for (final s in followed.where((s) => s.kind == DataKind.forecast)) {
-        final from = _dayValue(s, day);
-        final to = _dayValue(s, day.add(const Duration(days: 1)));
-        if (from == null || to == null) continue;
-        if (to.level.index > from.level.index && above(s.allergen, to.level)) {
-          worse.add(
-            '${s.allergen.name}: da ${from.level.label.toLowerCase()} a ${to.level.label.toLowerCase()} '
-            '(${to.value.round()} granuli/m³)',
-          );
+        final v = _dayValue(s, target);
+        if (v != null && above(s.allergen, v.level)) {
+          bothering.add('${s.allergen.name} ${v.level.label.toLowerCase()} (${v.value.round()} granuli/m³)');
         }
       }
-      if (worse.isNotEmpty) {
-        out.add(AlertMessage(AlertKind.tomorrow, when, 'Domani più polline a $placeName', '${worse.join('. ')}.'));
+      if (bothering.isNotEmpty) {
+        out.add(
+          AlertMessage(
+            AlertKind.tomorrow,
+            when,
+            'Domani a $placeName',
+            'Ti daranno fastidio: ${bothering.join(', ')}.',
+          ),
+        );
       }
     }
 

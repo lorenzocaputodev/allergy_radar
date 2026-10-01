@@ -66,13 +66,22 @@ void main() {
     expect(of(schedule(DateTime(2026, 9, 30, 7), settings: s), AlertKind.briefing), isNotNull);
   });
 
-  test('domani peggiora: solo se sale e supera la soglia', () {
+  test('allerta per domani: se domani un allergene arriva al livello che dà fastidio', () {
     final m = of(schedule(DateTime(2026, 9, 30, 12)), AlertKind.tomorrow)!;
     expect(m.at, DateTime(2026, 9, 30, 19));
-    expect(m.body, 'Graminacee: da basso a moderato (14 granuli/m³).');
+    expect(m.title, 'Domani a Lecce');
+    expect(m.body, 'Ti daranno fastidio: Graminacee moderato (14 granuli/m³).');
     expect(
       of(schedule(DateTime(2026, 9, 30, 12), followed: [grass(Level.none, Level.low, 3)]), AlertKind.tomorrow),
       isNull,
+    );
+    // Conta il livello di domani, anche se è uguale a oggi.
+    expect(
+      of(
+        schedule(DateTime(2026, 9, 30, 12), followed: [grass(Level.moderate, Level.moderate, 12)]),
+        AlertKind.tomorrow,
+      ),
+      isNotNull,
     );
     // Dopo le 19 servirebbe la previsione di dopodomani, che qui non c'è.
     expect(of(schedule(DateTime(2026, 9, 30, 20)), AlertKind.tomorrow), isNull);

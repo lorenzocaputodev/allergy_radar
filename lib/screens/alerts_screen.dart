@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/alert_settings.dart';
+import '../models/diary_entry.dart';
+import '../services/alert_planner.dart';
 import '../services/alerts_service.dart';
 import '../state/app_state.dart';
 import '../state/diary_state.dart';
@@ -14,6 +16,7 @@ class AlertsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
+    final diary = context.watch<DiaryState>();
     return Scaffold(
       appBar: AppBar(title: const Text('Avvisi')),
       body: ListView(
@@ -21,6 +24,7 @@ class AlertsScreen extends StatelessWidget {
         children: [
           AlertSettingsEditor(
             value: state.alerts,
+            notes: _notes(state, diary, DateTime.now()),
             onChanged: (a) async {
               if (a.anyEnabled && !state.alerts.anyEnabled) await AlertsService.requestPermission();
               await state.setAlerts(a);
@@ -32,14 +36,50 @@ class AlertsScreen extends StatelessWidget {
       ),
     );
   }
+
+  /// Cosa succederà per ogni avviso, così si capisce anche perché oggi uno non arriva.
+  static Map<AlertKind, String> _notes(AppState app, DiaryState diary, DateTime now) {
+    final diaryDone = diary.entryFor(DiaryEntry.day(now)) != null;
+    final planned = {
+      for (final m in const AlertPlanner().schedule(
+        now: now,
+        settings: app.alerts,
+        placeName: app.place.name,
+        followed: app.followedStatuses,
+        thresholdOf: app.thresholdOf,
+        diaryDoneToday: diaryDone,
+      ))
+        m.kind: m.at,
+    };
+    String next(DateTime at) =>
+        '${DiaryEntry.day(at) == DiaryEntry.day(now) ? 'oggi' : 'domani'} alle ${AlertSettingsEditor.time(at.hour * 60 + at.minute)}';
+    final briefing = planned[AlertKind.briefing];
+    final tomorrow = planned[AlertKind.tomorrow];
+    final reminder = planned[AlertKind.diary];
+    return {
+      AlertKind.briefing: briefing == null
+          ? 'Niente in programma: nessun allergene ti darà fastidio.'
+          : 'Prossimo: ${next(briefing)}',
+      AlertKind.tomorrow: tomorrow == null
+          ? 'Niente in programma: domani nessun allergene ti darà fastidio.'
+          : 'Prossimo: ${next(tomorrow)}',
+      if (reminder != null)
+        AlertKind.diary: diaryDone && DiaryEntry.day(reminder) != DiaryEntry.day(now)
+            ? 'Oggi hai già registrato: prossimo ${next(reminder)}'
+            : 'Prossimo: ${next(reminder)}',
+    };
+  }
 }
 
 /// Interruttori e orari degli avvisi. Usato anche nel primo avvio.
 class AlertSettingsEditor extends StatelessWidget {
-  const AlertSettingsEditor({super.key, required this.value, required this.onChanged});
+  const AlertSettingsEditor({super.key, required this.value, required this.onChanged, this.notes = const {}});
 
   final AlertSettings value;
   final void Function(AlertSettings) onChanged;
+
+  /// Sotto ogni orario: quando arriva il prossimo avviso.
+  final Map<AlertKind, String> notes;
 
   /// Larghezza di un interruttore Material 3: l'ora si centra sotto di lui.
   static const _switchWidth = 52.0;
@@ -68,6 +108,7 @@ class AlertSettingsEditor extends StatelessWidget {
       required void Function(bool) toggle,
       int? at,
       void Function(int)? setAt,
+      String? note,
       Widget? extra,
     }) => Column(
       children: [
@@ -82,6 +123,7 @@ class AlertSettingsEditor extends StatelessWidget {
           ListTile(
             leading: const SizedBox(width: 24),
             title: Text('Ora', style: TextStyle(fontSize: 15, color: p.ink2)),
+            subtitle: note == null ? null : Text(note, style: TextStyle(fontSize: 13, color: p.ink3)),
             trailing: SizedBox(
               width: _switchWidth,
               child: Text(
@@ -113,6 +155,7 @@ class AlertSettingsEditor extends StatelessWidget {
             toggle: (v) => onChanged(value.copyWith(briefing: v)),
             at: value.briefingAt,
             setAt: (m) => onChanged(value.copyWith(briefingAt: m)),
+            note: notes[AlertKind.briefing],
             extra: SwitchListTile(
               secondary: const SizedBox(width: 24),
               title: Text('Solo se qualcosa ti dà fastidio', style: TextStyle(fontSize: 15, color: p.ink2)),
@@ -129,6 +172,7 @@ class AlertSettingsEditor extends StatelessWidget {
             toggle: (v) => onChanged(value.copyWith(tomorrow: v)),
             at: value.tomorrowAt,
             setAt: (m) => onChanged(value.copyWith(tomorrowAt: m)),
+            note: notes[AlertKind.tomorrow],
           ),
           const Divider(),
           block(
@@ -139,6 +183,7 @@ class AlertSettingsEditor extends StatelessWidget {
             toggle: (v) => onChanged(value.copyWith(diary: v)),
             at: value.diaryAt,
             setAt: (m) => onChanged(value.copyWith(diaryAt: m)),
+            note: notes[AlertKind.diary],
           ),
         ],
       ),
