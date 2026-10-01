@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -35,6 +37,16 @@ Future<void> main() async {
     WidgetBridge.save(prefs, state).then((_) => WidgetBridge.refresh());
   });
 
+  // Dati, impostazioni o diario cambiati: gli avvisi programmati si rifanno, una volta sola per raffica.
+  Timer? pending;
+  void reschedule() {
+    pending?.cancel();
+    pending = Timer(const Duration(seconds: 1), () => AlertsService.reschedule(prefs, state, diary));
+  }
+
+  state.addListener(reschedule);
+  diary.addListener(reschedule);
+
   runApp(
     MultiProvider(
       providers: [
@@ -49,7 +61,8 @@ Future<void> main() async {
   // Prima lo stato: un problema con le notifiche non deve mai riportare l'app al primo avvio.
   await state.init();
   await AlertsService.init();
-  if (state.onboarded) await AlertsService.sync(state.alerts);
+  if (state.onboarded) await AlertsService.startBackground();
+  reschedule();
 }
 
 class AllergyRadarApp extends StatelessWidget {

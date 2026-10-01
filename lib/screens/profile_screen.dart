@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/station.dart';
-import '../services/alerts_service.dart';
 import '../services/backup.dart';
 import '../services/file_service.dart';
 import '../services/report_pdf.dart';
@@ -254,7 +253,6 @@ Future<void> _importBackup(BuildContext context) async {
     final entries = await Backup.restore(prefs, json);
     diary.reload();
     await state.load();
-    await AlertsService.sync(state.alerts);
     if (context.mounted) _toast(context, 'Backup importato: $entries giorni di diario.');
     await state.refresh();
   } on FormatException catch (e) {

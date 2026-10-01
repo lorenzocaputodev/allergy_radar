@@ -114,7 +114,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         action: FilledButton(
           onPressed: () async {
             await context.read<AppState>().completeOnboarding(_place!, _allergens, _alerts);
-            await AlertsService.sync(_alerts);
+            await AlertsService.startBackground();
           },
           child: const Text('Vai a Oggi'),
         ),

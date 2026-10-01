@@ -22,11 +22,10 @@ class AlertsScreen extends StatelessWidget {
             onChanged: (a) async {
               if (a.anyEnabled && !state.alerts.anyEnabled) await AlertsService.requestPermission();
               await state.setAlerts(a);
-              await AlertsService.sync(a);
             },
           ),
           const SizedBox(height: 16),
-          const _BatteryNote(),
+          const _Check(),
         ],
       ),
     );
@@ -145,28 +144,63 @@ class AlertSettingsEditor extends StatelessWidget {
   }
 }
 
-class _BatteryNote extends StatelessWidget {
-  const _BatteryNote();
+/// Stato delle notifiche di Android e avviso di prova.
+class _Check extends StatefulWidget {
+  const _Check();
+
+  @override
+  State<_Check> createState() => _CheckState();
+}
+
+class _CheckState extends State<_Check> {
+  late final Future<bool> _enabled = AlertsService.enabled();
+
+  Future<void> _test() async {
+    final sent = await AlertsService.sendTest();
+    if (!mounted || sent) return;
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Le notifiche dell’app sono spente.')));
+  }
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: p.chip, borderRadius: BorderRadius.circular(16)),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(Icons.battery_alert_outlined, color: p.ink2, size: 20),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              'Possono arrivare con qualche minuto di ritardo. Se non arrivano, togli l’app dal risparmio batteria.',
-              style: TextStyle(fontSize: 13, height: 1.45, color: p.ink2),
-            ),
+    return FutureBuilder<bool>(
+      future: _enabled,
+      builder: (context, snap) {
+        final off = AlertsService.isSupported && snap.data == false;
+        return Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(color: p.chip, borderRadius: BorderRadius.circular(16)),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(off ? Icons.notifications_off_outlined : Icons.schedule, color: p.ink2, size: 20),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      off
+                          ? 'Le notifiche dell’app sono spente: riattivale da Impostazioni › App › Allergy Radar.'
+                          : 'Arrivano all’orario scelto anche ad app chiusa, al massimo con qualche minuto di ritardo.',
+                      style: TextStyle(fontSize: 13, height: 1.45, color: p.ink2),
+                    ),
+                  ),
+                ],
+              ),
+              if (AlertsService.isSupported && !off) ...[
+                const SizedBox(height: 10),
+                OutlinedButton.icon(
+                  onPressed: _test,
+                  icon: const Icon(Icons.notifications_active_outlined, size: 18),
+                  label: const Text('Manda un avviso di prova'),
+                ),
+              ],
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

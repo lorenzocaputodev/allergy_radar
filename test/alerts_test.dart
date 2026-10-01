@@ -19,58 +19,73 @@ void main() {
 
   final parietaria = AllergenStatus(allergen: Allergens.parietaria, kind: DataKind.estimate, level: Level.high);
 
-  List<AlertMessage> plan(
+  List<AlertMessage> schedule(
     DateTime now, {
     AlertSettings settings = const AlertSettings(),
     List<AllergenStatus>? followed,
     bool diaryDone = false,
-    Map<AlertKind, DateTime> sent = const {},
-  }) => planner.plan(
+  }) => planner.schedule(
     now: now,
     settings: settings,
     placeName: 'Lecce',
     followed: followed ?? [grass(Level.low, Level.moderate, 14), parietaria],
     thresholdOf: (_) => Level.moderate,
     diaryDoneToday: diaryDone,
-    sentOn: sent,
   );
 
-  test('briefing dopo le 7:30 e non prima', () {
-    expect(plan(DateTime(2026, 9, 30, 7, 0)), isEmpty);
-    final m = plan(DateTime(2026, 9, 30, 8, 10));
-    expect(m.single.kind, AlertKind.briefing);
-    expect(m.single.title, 'Pollini oggi a Lecce');
-    expect(m.single.body, contains('Parietaria: alto (media storica)'));
-    expect(m.single.body, contains('Sopra la tua soglia: Parietaria.'));
+  AlertMessage? of(List<AlertMessage> list, AlertKind k) => list.where((m) => m.kind == k).firstOrNull;
+
+  test('ogni tipo attivo ha la sua prossima occorrenza', () {
+    final list = schedule(DateTime(2026, 9, 30, 7));
+    expect(of(list, AlertKind.briefing)!.at, DateTime(2026, 9, 30, 7, 30));
+    expect(of(list, AlertKind.tomorrow)!.at, DateTime(2026, 9, 30, 19));
+    expect(of(list, AlertKind.diary)!.at, DateTime(2026, 9, 30, 21));
   });
 
-  test('briefing: non si ripete nello stesso giorno, né fuori finestra', () {
-    expect(plan(DateTime(2026, 9, 30, 8), sent: {AlertKind.briefing: DateTime(2026, 9, 30, 7, 40)}), isEmpty);
-    expect(plan(DateTime(2026, 9, 30, 11)), isEmpty);
-    expect(plan(DateTime(2026, 10, 1, 8), sent: {AlertKind.briefing: DateTime(2026, 9, 30, 7, 40)}), hasLength(1));
+  test('briefing: testo del giorno in cui arriva', () {
+    final today = of(schedule(DateTime(2026, 9, 30, 7)), AlertKind.briefing)!;
+    expect(today.title, 'Pollini oggi a Lecce');
+    expect(today.body, 'Graminacee: basso. Parietaria: alto (media storica). Sopra la tua soglia: Parietaria.');
+
+    // Dopo le 7:30 si programma per domani, con la previsione di domani.
+    final next = of(schedule(DateTime(2026, 9, 30, 9)), AlertKind.briefing)!;
+    expect(next.at, DateTime(2026, 10, 1, 7, 30));
+    expect(next.body, contains('Graminacee: moderato'));
+    expect(next.body, contains('Sopra la tua soglia: Graminacee, Parietaria.'));
   });
 
   test('briefing solo sopra soglia', () {
     const s = AlertSettings(briefingOnlyAbove: true);
-    expect(plan(DateTime(2026, 9, 30, 8), settings: s, followed: [grass(Level.low, Level.low, 2)]), isEmpty);
-    expect(plan(DateTime(2026, 9, 30, 8), settings: s), hasLength(1));
+    expect(
+      of(
+        schedule(DateTime(2026, 9, 30, 7), settings: s, followed: [grass(Level.low, Level.low, 2)]),
+        AlertKind.briefing,
+      ),
+      isNull,
+    );
+    expect(of(schedule(DateTime(2026, 9, 30, 7), settings: s), AlertKind.briefing), isNotNull);
   });
 
   test('domani peggiora: solo se sale e supera la soglia', () {
-    final m = plan(DateTime(2026, 9, 30, 19, 30));
-    expect(m.single.kind, AlertKind.tomorrow);
-    expect(m.single.body, 'Graminacee: da basso a moderato (14 granuli/m³).');
-    expect(plan(DateTime(2026, 9, 30, 19, 30), followed: [grass(Level.none, Level.low, 3)]), isEmpty);
+    final m = of(schedule(DateTime(2026, 9, 30, 12)), AlertKind.tomorrow)!;
+    expect(m.at, DateTime(2026, 9, 30, 19));
+    expect(m.body, 'Graminacee: da basso a moderato (14 granuli/m³).');
+    expect(
+      of(schedule(DateTime(2026, 9, 30, 12), followed: [grass(Level.none, Level.low, 3)]), AlertKind.tomorrow),
+      isNull,
+    );
+    // Dopo le 19 servirebbe la previsione di dopodomani, che qui non c'è.
+    expect(of(schedule(DateTime(2026, 9, 30, 20)), AlertKind.tomorrow), isNull);
   });
 
-  test('diario: solo se oggi non c’è una voce', () {
-    const onlyDiary = AlertSettings(briefing: false, tomorrow: false);
-    expect(plan(DateTime(2026, 9, 30, 21, 5), settings: onlyDiary).single.kind, AlertKind.diary);
-    expect(plan(DateTime(2026, 9, 30, 21, 5), settings: onlyDiary, diaryDone: true), isEmpty);
+  test('diario: oggi se manca la voce, altrimenti domani', () {
+    expect(of(schedule(DateTime(2026, 9, 30, 12)), AlertKind.diary)!.at, DateTime(2026, 9, 30, 21));
+    expect(of(schedule(DateTime(2026, 9, 30, 12), diaryDone: true), AlertKind.diary)!.at, DateTime(2026, 10, 1, 21));
+    expect(of(schedule(DateTime(2026, 9, 30, 22)), AlertKind.diary)!.at, DateTime(2026, 10, 1, 21));
   });
 
   test('tutto spento: nessun avviso', () {
-    expect(plan(DateTime(2026, 9, 30, 8), settings: AlertSettings.off), isEmpty);
+    expect(schedule(DateTime(2026, 9, 30, 8), settings: AlertSettings.off), isEmpty);
     expect(AlertSettings.off.anyEnabled, isFalse);
   });
 

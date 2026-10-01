@@ -38,8 +38,8 @@ class NotificationsScreen extends StatelessWidget {
         future: SharedPreferences.getInstance(),
         builder: (context, snap) {
           if (!snap.hasData) return const Center(child: CircularProgressIndicator());
-          final log = AlertLog.read(snap.data!);
           final now = DateTime.now();
+          final log = AlertLog.read(snap.data!, now);
           return ListView(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
             children: [
