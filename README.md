@@ -2,16 +2,18 @@
 
 # 🌾 Allergy Radar
 
-[![CI](https://github.com/lorenzocaputodev/allergy_radar/actions/workflows/ci.yml/badge.svg)](https://github.com/lorenzocaputodev/allergy_radar/actions/workflows/ci.yml) ![License](https://img.shields.io/badge/license-MIT-blue) ![Flutter](https://img.shields.io/badge/built%20with-Flutter-02569B)
+[![CI](https://github.com/lorenzocaputodev/allergy_radar/actions/workflows/ci.yml/badge.svg)](https://github.com/lorenzocaputodev/allergy_radar/actions/workflows/ci.yml) [![Release](https://img.shields.io/github/v/release/lorenzocaputodev/allergy_radar)](https://github.com/lorenzocaputodev/allergy_radar/releases/latest) [![License](https://img.shields.io/github/license/lorenzocaputodev/allergy_radar)](LICENSE) ![Flutter](https://img.shields.io/badge/built%20with-Flutter-02569B)
 
 > **Scopri quanti pollini ci sono nella tua zona e quali ti danno davvero fastidio.**
 
-- 🌿 Graminacee, Parietaria e altri 8 allergeni in tutta Italia, con la fonte di ogni dato sempre in vista
+- 🌿 Graminacee, Parietaria e altri 8 allergeni in tutta Italia: sai sempre se è una previsione, una misura o una stima
 - 🔒 Senza account e senza pubblicità: i tuoi dati restano solo sul tuo telefono
 
 ## 📲 Scarica l’app
 
-L’app è in sviluppo e non c’è ancora una versione pubblicata. Quando uscirà, l’APK sarà nella pagina delle **[release](https://github.com/lorenzocaputodev/allergy_radar/releases)**; per ora si compila dal sorgente, come spiegato più sotto.
+Vuoi solo installarla? Scarica l’APK dall’**[ultima versione pubblicata](https://github.com/lorenzocaputodev/allergy_radar/releases/latest)** e aprilo dal telefono: Android ti chiederà di consentire l’installazione di app scaricate dal browser.
+
+Serve Android 7.0 o successivo.
 
 ## 📸 Schermate
 
@@ -30,13 +32,13 @@ L’app è in sviluppo e non c’è ancora una versione pubblicata. Quando uscir
 
 - 🧭 Oggi: livello della giornata, i tuoi allergeni, i prossimi giorni, l’aria e gli altri pollini in zona
 - 🏷️ Ogni valore dice se è una **previsione**, una **misura** o una **stima**
-- 🔎 Dettaglio di ogni allergene con andamento, stagione e soglia personale
-- 📓 Diario dei sintomi da 10 secondi, con farmaci, sonno e ore all’aperto
-- 📈 Andamento: per ogni allergene, se stai peggio quando sale, e giorno per giorno
+- 🔎 Dettaglio di ogni allergene: ora per ora, prossimi giorni, stagione e il livello da cui ti dà fastidio
+- 📓 Diario dei sintomi da 10 secondi, con i farmaci più usati già in lista, sonno e ore all’aperto
+- 📈 Andamento: per ogni allergene, se stai peggio quando ce n’è di più, e giorno per giorno
 - 🗓️ Calendario stagionale per **Nord**, **Centro** e **Sud e Isole**
 - 📍 Luogo da ricerca città o dalla posizione approssimativa, con il nome del comune
-- 📲 Widget Android per la schermata Home
-- 🔔 Avvisi, proposti già al primo avvio, e l’elenco di quelli ricevuti
+- 📲 Widget Android per la schermata Home, con le pagine degli allergeni e il tasto per aggiornare
+- 🔔 Avvisi, proposti già al primo avvio, e l’elenco di quelli ricevuti, che cancelli con uno swipe
 - 📄 PDF per l’allergologo, diario in CSV, backup e ripristino
 - 🎨 Tema **scuro / chiaro / sistema**
 - 🔒 Dati salvati localmente sul dispositivo
@@ -45,11 +47,13 @@ L’app è in sviluppo e non c’è ancora una versione pubblicata. Quando uscir
 
 ## 🔔 Sistema notifiche
 
-L’app può mandare tre avvisi, ognuno con il suo orario:
+L’app può mandare tre avvisi, ognuno con il suo orario, anche ad app chiusa:
 
-- ☀️ Briefing del mattino, anche solo nei giorni sopra la tua soglia
-- 📈 Domani peggiora, la sera
-- 📓 Promemoria del diario, se oggi non hai ancora registrato
+- ☀️ **Pollini di oggi**, la mattina: cosa ti dà fastidio oggi, anche solo nei giorni in cui serve
+- 📈 **Allerta per domani**, la sera: se domani un tuo allergene arriva al livello che ti dà fastidio
+- 📓 **Promemoria diario**, se oggi non hai ancora registrato
+
+Con il permesso «Sveglie e promemoria» arrivano all’orario esatto; senza, possono tardare fino a un’ora.
 
 Le notifiche sono gestite su Android tramite:
 
@@ -130,6 +134,7 @@ flutter run
 - Nessun account richiesto
 - Nessun backend: l’app usa solo i dati aperti di Open-Meteo e ISPRA
 - Posizione solo approssimativa, e solo se la chiedi tu; il nome del comune lo ricava il telefono
+- Le misure ISPRA arrivano una volta a settimana: quando sono più vecchie di due settimane, o non c’è una stazione vicina, l’app usa il valore tipico del mese e lo dichiara come **stima**
 - Dati salvati localmente sul dispositivo
 
 Previsioni © Copernicus/CAMS tramite Open-Meteo e misure della rete POLLnet-SNPA di ISPRA, entrambe con licenza CC BY 4.0.
