@@ -96,4 +96,20 @@ void main() {
       expect(d.insight(Allergens.parietaria, today), isNull);
     });
   });
+
+  group('farmaci', () {
+    test('la lista iniziale delle prime versioni passa ai principi attivi comuni', () async {
+      SharedPreferences.setMockInitialValues({
+        DiaryState.kMeds: ['Antistaminico', 'Spray nasale', 'Collirio'],
+      });
+      expect(DiaryState(await SharedPreferences.getInstance()).medications, DiaryState.defaultMedications);
+    });
+
+    test('una lista modificata da chi usa l’app resta com’è', () async {
+      SharedPreferences.setMockInitialValues({
+        DiaryState.kMeds: ['Antistaminico', 'Mometasone'],
+      });
+      expect(DiaryState(await SharedPreferences.getInstance()).medications, ['Antistaminico', 'Mometasone']);
+    });
+  });
 }

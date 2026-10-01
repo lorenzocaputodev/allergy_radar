@@ -45,7 +45,19 @@ class DiaryState extends ChangeNotifier {
   static const kEntries = 'diary';
   static const kMeds = 'medications';
   static const backupKeys = [kEntries, kMeds];
-  static const defaultMedications = ['Antistaminico', 'Spray nasale', 'Collirio'];
+
+  /// I principi attivi più usati in Italia per le allergie; ognuno può aggiungere i suoi.
+  static const defaultMedications = [
+    'Cetirizina',
+    'Levocetirizina',
+    'Loratadina',
+    'Desloratadina',
+    'Bilastina',
+    'Fexofenadina',
+    'Spray nasale al cortisone',
+    'Collirio antistaminico',
+  ];
+  static const _oldDefaults = ['Antistaminico', 'Spray nasale', 'Collirio'];
 
   /// Servono almeno questi giorni registrati per un confronto.
   static const minDaysForInsight = 14;
@@ -62,7 +74,9 @@ class DiaryState extends ChangeNotifier {
         _entries[entry.key] = entry;
       }
     }
-    medications = _prefs.getStringList(kMeds) ?? defaultMedications;
+    final saved = _prefs.getStringList(kMeds);
+    // La lista iniziale delle prime versioni, mai modificata, passa a quella nuova.
+    medications = saved == null || listEquals(saved, _oldDefaults) ? defaultMedications : saved;
   }
 
   /// Rilegge tutto dalle preferenze, per esempio dopo un ripristino.

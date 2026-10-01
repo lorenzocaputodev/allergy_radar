@@ -336,7 +336,7 @@ List<Map<String, dynamic>> _sampleDiary() {
         eyes: sym > 0 ? sym - 1 : 0,
         throat: i % 3 == 0 ? 1 : 0,
         badSleep: sym == 3,
-        meds: sym >= 2 ? const ['Antistaminico'] : const [],
+        meds: sym >= 2 ? const ['Cetirizina'] : const [],
         pollen: {'parietaria': par, 'grass': 1},
       ).toJson(),
     );
