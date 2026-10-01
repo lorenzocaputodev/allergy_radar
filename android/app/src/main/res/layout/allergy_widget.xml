@@ -96,7 +96,7 @@
             android:id="@+id/widget_row2"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
+            android:layout_marginTop="2dp"
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
@@ -113,7 +113,7 @@
             android:id="@+id/widget_row3"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
+            android:layout_marginTop="2dp"
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
@@ -124,6 +124,87 @@
             <TextView
                 android:id="@+id/widget_row3_level"
                 style="@style/WidgetRowLevel" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/widget_row4"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/widget_row4_name"
+                style="@style/WidgetRowName" />
+
+            <TextView
+                android:id="@+id/widget_row4_level"
+                style="@style/WidgetRowLevel" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/widget_row5"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/widget_row5_name"
+                style="@style/WidgetRowName" />
+
+            <TextView
+                android:id="@+id/widget_row5_level"
+                style="@style/WidgetRowLevel" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/widget_row6"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/widget_row6_name"
+                style="@style/WidgetRowName" />
+
+            <TextView
+                android:id="@+id/widget_row6_level"
+                style="@style/WidgetRowLevel" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/widget_pager"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/widget_prev"
+                style="@style/WidgetPagerArrow"
+                android:contentDescription="@string/widget_prev"
+                android:text="‹" />
+
+            <TextView
+                android:id="@+id/widget_page"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:layout_marginEnd="12dp"
+                android:textColor="@color/widget_muted"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/widget_next"
+                style="@style/WidgetPagerArrow"
+                android:contentDescription="@string/widget_next"
+                android:text="›" />
         </LinearLayout>
     </LinearLayout>
 </FrameLayout>

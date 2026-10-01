@@ -25,8 +25,8 @@ class WidgetBridge {
       'level': app.dayLevel.index,
       'levelLabel': app.dayLevel.label,
       'allergens': [
-        // Ci stanno tre righe: prima i livelli più alti.
-        for (final s in ([...app.followedStatuses]..sort((a, b) => b.level.index.compareTo(a.level.index))).take(3))
+        // Tutti, dal livello più alto: il widget ne mostra quanti ci stanno e scorre gli altri con le frecce.
+        for (final s in [...app.followedStatuses]..sort((a, b) => b.level.index.compareTo(a.level.index)))
           {
             'name': s.allergen.name,
             'level': s.level.index,
