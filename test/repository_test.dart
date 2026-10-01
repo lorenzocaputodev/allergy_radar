@@ -18,7 +18,8 @@ void main() {
     expect(grass.kind, DataKind.forecast);
     expect(grass.level, Level.none);
     expect(grass.series, hasLength(3));
-    expect(grass.hourly, hasLength(24));
+    expect(grass.hourly, hasLength(25), reason: 'dalle 0 alle 24');
+    expect(grass.hourly.last.date, DateTime(2026, 10, 1));
 
     final mugwort = snap[Allergens.mugwort.id]!;
     expect(mugwort.value, closeTo(7.0, 0.01));

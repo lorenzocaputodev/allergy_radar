@@ -36,7 +36,7 @@ class AllergenStatus {
   /// Previsione: oggi e i giorni seguenti. Misura: storico, dal più vecchio.
   final List<DayValue> series;
 
-  /// Solo previsione: valori orari di oggi.
+  /// Solo previsione: valori orari di oggi, dalle 0 alle 24 (mezzanotte di domani).
   final List<DayValue> hourly;
 
   final NearStation? station;

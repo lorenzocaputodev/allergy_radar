@@ -127,10 +127,11 @@ class AllergenDetailScreen extends StatelessWidget {
                 children: [
                   Text('Ora per ora', style: Theme.of(context).textTheme.titleLarge),
                   _Bars(
-                    values: s.hourly.where((h) => h.date.hour % 2 == 0).toList(),
-                    label: (d) => '${d.date.hour}',
+                    values: s.hourly.where((h) => h.date.hour.isEven).toList(),
+                    label: (d) => d.date.day == s.hourly.first.date.day ? '${d.date.hour}' : '24',
                     height: 110,
                     thresholds: t,
+                    current: (d) => d.date.day == now.day && d.date.hour == now.hour - now.hour % 2,
                   ),
                 ],
               ),
@@ -208,11 +209,20 @@ class AllergenDetailScreen extends StatelessWidget {
 }
 
 class _Bars extends StatelessWidget {
-  const _Bars({required this.values, required this.label, required this.height, required this.thresholds});
+  const _Bars({
+    required this.values,
+    required this.label,
+    required this.height,
+    required this.thresholds,
+    this.current,
+  });
 
   final List<DayValue> values;
   final String Function(DayValue) label;
   final double height;
+
+  /// La barra dell'ora attuale, se c'è: quelle prima si attenuano.
+  final bool Function(DayValue)? current;
 
   /// La scala arriva almeno alla soglia «alto»: così 0,1 granuli non sembrano una barra piena.
   final Thresholds thresholds;
@@ -222,19 +232,20 @@ class _Bars extends StatelessWidget {
     final p = context.palette;
     final max = values.fold<double>(thresholds.high, (m, v) => v.value > m ? v.value : m);
     final refBottom = thresholds.moderate / max * height;
+    final now = current == null ? -1 : values.indexWhere(current!);
     return Column(
       children: [
         SizedBox(
           height: height + 18,
           child: Stack(
             children: [
-              _barRow(p, max),
               Positioned(
                 left: 0,
                 right: 0,
                 bottom: refBottom,
                 child: Container(height: 1.5, color: p.text(Level.moderate).withValues(alpha: 0.8)),
               ),
+              _barRow(p, max, now),
             ],
           ),
         ),
@@ -242,12 +253,14 @@ class _Bars extends StatelessWidget {
         const SizedBox(height: 6),
         Row(
           children: [
-            for (final v in values) ...[
+            for (final (i, v) in values.indexed) ...[
               Expanded(
                 child: Text(
                   label(v),
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 11, color: p.ink3),
+                  style: i == now
+                      ? TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: p.ink)
+                      : TextStyle(fontSize: 11, color: p.ink3),
                 ),
               ),
               if (v != values.last) const SizedBox(width: 5),
@@ -269,24 +282,31 @@ class _Bars extends StatelessWidget {
     );
   }
 
-  Widget _barRow(AppPalette p, double max) => Row(
+  Widget _barRow(AppPalette p, double max, int now) => Row(
     crossAxisAlignment: CrossAxisAlignment.end,
     children: [
-      for (final v in values) ...[
+      for (final (i, v) in values.indexed) ...[
         Expanded(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              Text(Fmt.number(v.value), style: TextStyle(fontSize: 10, color: p.ink3)),
-              const SizedBox(height: 2),
-              Container(
-                height: (v.value / max * height).clamp(3, height),
-                decoration: BoxDecoration(
-                  color: v.level == Level.none ? p.track : p.fill(v.level),
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(6), bottom: Radius.circular(2)),
+          child: Opacity(
+            opacity: i < now ? 0.45 : 1,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                // Fondo pieno: il valore resta leggibile anche sopra la linea della soglia.
+                ColoredBox(
+                  color: p.card,
+                  child: Text(Fmt.number(v.value), maxLines: 1, style: TextStyle(fontSize: 10, color: p.ink3)),
                 ),
-              ),
-            ],
+                const SizedBox(height: 2),
+                Container(
+                  height: (v.value / max * height).clamp(3, height),
+                  decoration: BoxDecoration(
+                    color: v.level == Level.none ? p.track : p.fill(v.level),
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(6), bottom: Radius.circular(2)),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
         if (v != values.last) const SizedBox(width: 5),

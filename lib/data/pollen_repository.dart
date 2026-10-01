@@ -134,11 +134,13 @@ class PollenRepository {
         if (!e.key.isBefore(today)) _day(a, e.key, e.value.reduce((x, y) => x + y) / e.value.length),
     ];
     if (series.isEmpty) return null;
+    // Tutto oggi, fino alle 24: l'ultima ora è la mezzanotte di domani.
+    final midnight = today.add(const Duration(days: 1));
     final hourly = <DayValue>[];
     for (var i = 0; i < om.times.length; i++) {
       final t = om.times[i];
       final v = om.valueAt(a.openMeteoKeys, i);
-      if (v != null && DateTime(t.year, t.month, t.day) == today) hourly.add(_day(a, t, v));
+      if (v != null && (DateTime(t.year, t.month, t.day) == today || t == midnight)) hourly.add(_day(a, t, v));
     }
     final first = series.first;
     return AllergenStatus(
