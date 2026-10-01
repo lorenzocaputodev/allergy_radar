@@ -111,7 +111,7 @@ class _Progress extends StatelessWidget {
       children: [
         Text(
           enough
-              ? 'Servono giorni diversi'
+              ? 'Servono livelli diversi'
               : need - logged == 1
               ? 'Ancora 1 giorno'
               : 'Ancora ${need - logged} giorni',
@@ -119,8 +119,8 @@ class _Progress extends StatelessWidget {
         ),
         Text(
           enough
-              ? 'Per il confronto servono giorni con ${allergen.name} sia alto sia basso.'
-              : 'Con $need giorni di diario ti dico se ${allergen.name} ti dà fastidio.',
+              ? 'Per il confronto servono giorni con ${allergen.name} a livello basso e altri a livello moderato o più.'
+              : 'Registra $need giorni e ti diciamo se ${allergen.name} ti dà fastidio.',
           style: TextStyle(fontSize: 14, height: 1.4, color: p.ink2),
         ),
         ClipRRect(
@@ -199,13 +199,13 @@ class _Answer extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'Intensità media dei sintomi $period',
+            'Come stai in media $period (0 = bene, 3 = sintomi forti)',
             style: TextStyle(fontSize: 13, color: p.onHero.withValues(alpha: 0.85)),
           ),
           const SizedBox(height: 16),
-          bar('Giorni con ${a.name} da moderato in su', insight.highMean, insight.highDays, p.fill(Level.high)),
+          bar('Giorni con ${a.name} a livello moderato o più', insight.highMean, insight.highDays, p.fill(Level.high)),
           const SizedBox(height: 14),
-          bar('Altri giorni', insight.lowMean, insight.lowDays, p.fill(Level.low)),
+          bar('Giorni con ${a.name} a livello basso', insight.lowMean, insight.lowDays, p.fill(Level.low)),
         ],
       ),
     );
@@ -213,33 +213,64 @@ class _Answer extends StatelessWidget {
 }
 
 /// Ogni colonna è un giorno: sopra il livello del polline, sotto i sintomi, in fondo i farmaci.
-class _DayByDay extends StatelessWidget {
+/// Ultimo mese, un giorno per colonna. Si sceglie un giorno toccando o trascinando ovunque sul grafico:
+/// colonne strette non vanno mirate, e la riga sotto dice cosa è successo quel giorno.
+class _DayByDay extends StatefulWidget {
   const _DayByDay({required this.allergen, required this.days, required this.diary});
 
   final Allergen allergen;
   final List<DateTime> days;
   final DiaryState diary;
 
+  @override
+  State<_DayByDay> createState() => _DayByDayState();
+}
+
+class _DayByDayState extends State<_DayByDay> {
   static const _barHeight = 90.0;
+  late int _selected = widget.days.length - 1;
+
+  void _pick(double dx, double width) {
+    final i = (dx / width * widget.days.length).floor().clamp(0, widget.days.length - 1);
+    if (i != _selected) setState(() => _selected = i);
+  }
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final days = widget.days;
+    final diary = widget.diary;
+    final allergen = widget.allergen;
     TextStyle label() => TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: p.ink2);
 
     Widget columns(Widget Function(DateTime d, DiaryEntry? e) cell) => Row(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        for (final d in days) ...[
-          Expanded(child: cell(d, diary.entryFor(d))),
+        for (final (i, d) in days.indexed) ...[
+          Expanded(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: i == _selected ? p.pine.withValues(alpha: 0.22) : null,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: cell(d, diary.entryFor(d)),
+            ),
+          ),
           if (d != days.last) const SizedBox(width: 2),
         ],
       ],
     );
 
-    void open(DateTime d) =>
-        Navigator.of(context)
-            .push(MaterialPageRoute<void>(builder: (_) => LogEntryScreen(date: d), fullscreenDialog: true));
+    final day = days[_selected];
+    final entry = diary.entryFor(day);
+    final pollen = entry?.pollen[allergen.id];
+    final detail = entry == null
+        ? 'Non registrato'
+        : [
+            'Sintomi ${DiaryEntry.severityNames[entry.severity].toLowerCase()}',
+            if (pollen != null) '${allergen.name} ${Level.fromIndex(pollen).label.toLowerCase()}',
+            if (entry.meds.isNotEmpty) entry.meds.join(', '),
+          ].join(' · ');
 
     return SectionCard(
       gap: 10,
@@ -249,74 +280,97 @@ class _DayByDay extends StatelessWidget {
           children: [
             Text('Giorno per giorno', style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 2),
-            Text(
-              'Ogni colonna è un giorno. Toccala per aprire la voce.',
-              style: TextStyle(fontSize: 13, color: p.ink3),
-            ),
+            Text('Tocca o trascina sul grafico per vedere un giorno.', style: TextStyle(fontSize: 13, color: p.ink3)),
           ],
         ),
-        Text(allergen.name, style: label()),
-        columns((d, e) {
-          final l = e?.pollen[allergen.id];
-          return Container(
-            height: 16,
-            decoration: BoxDecoration(
-              color: l == null ? null : p.fill(Level.fromIndex(l)),
-              borderRadius: BorderRadius.circular(3),
-              border: l == null ? Border.all(color: p.line) : null,
-            ),
-          );
-        }),
-        Text('Sintomi', style: label()),
-        SizedBox(
-          height: _barHeight,
-          child: columns(
-            (d, e) => GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () => open(d),
-              child: SizedBox(
-                height: _barHeight,
-                child: Align(
-                  alignment: Alignment.bottomCenter,
-                  child: Container(
-                    height: e == null || e.severity == 0 ? 3 : e.severity / 3 * _barHeight,
+        LayoutBuilder(
+          builder: (context, c) => GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTapDown: (d) => _pick(d.localPosition.dx, c.maxWidth),
+            onHorizontalDragUpdate: (d) => _pick(d.localPosition.dx, c.maxWidth),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(allergen.name, style: label()),
+                const SizedBox(height: 6),
+                columns((d, e) {
+                  final l = e?.pollen[allergen.id];
+                  return Container(
+                    height: 16,
                     decoration: BoxDecoration(
-                      color: e == null ? p.line : p.symFill[e.severity == 0 ? 1 : e.severity],
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(3)),
+                      color: l == null ? null : p.fill(Level.fromIndex(l)),
+                      borderRadius: BorderRadius.circular(3),
+                      border: l == null ? Border.all(color: p.line) : null,
+                    ),
+                  );
+                }),
+                const SizedBox(height: 10),
+                Text('Sintomi', style: label()),
+                const SizedBox(height: 6),
+                SizedBox(
+                  height: _barHeight,
+                  child: columns(
+                    (d, e) => Align(
+                      alignment: Alignment.bottomCenter,
+                      child: Container(
+                        height: e == null || e.severity == 0 ? 3 : e.severity / 3 * _barHeight,
+                        decoration: BoxDecoration(
+                          color: e == null ? p.line : p.symFill[e.severity == 0 ? 1 : e.severity],
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(3)),
+                        ),
+                      ),
                     ),
                   ),
                 ),
-              ),
+                const SizedBox(height: 6),
+                // Una data ogni settimana, contando all'indietro da oggi, centrata sotto la sua colonna.
+                columns((d, e) {
+                  final back = days.last.difference(d).inDays;
+                  if (back % 7 != 0) return const SizedBox(height: 14);
+                  return SizedBox(
+                    height: 14,
+                    child: OverflowBox(
+                      maxWidth: 48,
+                      alignment: back == 0 ? Alignment.centerRight : Alignment.center,
+                      child: Text(
+                        back == 0 ? 'Oggi' : '${d.day}/${d.month}',
+                        softWrap: false,
+                        style: TextStyle(fontSize: 10, color: p.ink3),
+                      ),
+                    ),
+                  );
+                }),
+              ],
             ),
           ),
         ),
-        // Una data ogni settimana, contando all'indietro da oggi, centrata sotto la sua colonna.
-        columns((d, e) {
-          final back = days.last.difference(d).inDays;
-          if (back % 7 != 0) return const SizedBox(height: 14);
-          return SizedBox(
-            height: 14,
-            child: OverflowBox(
-              maxWidth: 48,
-              alignment: back == 0 ? Alignment.centerRight : Alignment.center,
-              child: Text(
-                back == 0 ? 'Oggi' : '${d.day}/${d.month}',
-                softWrap: false,
-                style: TextStyle(fontSize: 10, color: p.ink3),
-              ),
-            ),
-          );
-        }),
-        Text('Farmaci', style: label()),
-        columns(
-          (d, e) => Center(
-            child: Container(
-              width: 7,
-              height: 7,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: (e?.meds.isNotEmpty ?? false) ? p.ink2 : null,
-                border: Border.all(color: (e?.meds.isNotEmpty ?? false) ? p.ink2 : p.line),
+        Material(
+          color: p.chip,
+          borderRadius: BorderRadius.circular(14),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(14),
+            onTap: () =>
+                Navigator.of(context)
+                    .push(MaterialPageRoute<void>(builder: (_) => LogEntryScreen(date: day), fullscreenDialog: true)),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(14, 10, 8, 10),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(Fmt.longDate(day), style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                        Text(detail, style: TextStyle(fontSize: 13, height: 1.35, color: p.ink2)),
+                      ],
+                    ),
+                  ),
+                  Text(
+                    entry == null ? 'Registra' : 'Apri',
+                    style: TextStyle(fontWeight: FontWeight.w600, color: p.pineText),
+                  ),
+                  Icon(Icons.chevron_right, color: p.pineText),
+                ],
               ),
             ),
           ),
