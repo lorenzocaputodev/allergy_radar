@@ -45,13 +45,12 @@ void main() {
   test('briefing: testo del giorno in cui arriva', () {
     final today = of(schedule(DateTime(2026, 9, 30, 7)), AlertKind.briefing)!;
     expect(today.title, 'Pollini di oggi a Lecce');
-    expect(today.body, 'Graminacee: basso. Parietaria: alto (stima). Ti danno fastidio: Parietaria.');
+    expect(today.body, 'Al livello che ti dà fastidio: Parietaria. Gli altri sono più bassi.');
 
     // Dopo le 7:30 si programma per domani, con la previsione di domani.
     final next = of(schedule(DateTime(2026, 9, 30, 9)), AlertKind.briefing)!;
     expect(next.at, DateTime(2026, 10, 1, 7, 30));
-    expect(next.body, contains('Graminacee: moderato'));
-    expect(next.body, contains('Ti danno fastidio: Graminacee, Parietaria.'));
+    expect(next.body, 'Al livello che ti dà fastidio: Graminacee e Parietaria.');
   });
 
   test('briefing solo sopra soglia', () {
@@ -70,7 +69,7 @@ void main() {
     final m = of(schedule(DateTime(2026, 9, 30, 12)), AlertKind.tomorrow)!;
     expect(m.at, DateTime(2026, 9, 30, 19));
     expect(m.title, 'Domani a Lecce');
-    expect(m.body, 'Ti daranno fastidio: Graminacee moderato (14 granuli/m³).');
+    expect(m.body, 'Al livello che ti dà fastidio: Graminacee moderato (14 granuli/m³).');
     expect(
       of(schedule(DateTime(2026, 9, 30, 12), followed: [grass(Level.none, Level.low, 3)]), AlertKind.tomorrow),
       isNull,

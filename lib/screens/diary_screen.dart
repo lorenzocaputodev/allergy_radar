@@ -157,14 +157,12 @@ class _TodayCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            e == null
-                ? 'Oggi non hai ancora registrato'
-                : 'Oggi: sintomi ${DiaryEntry.severityNames[e.severity].toLowerCase()}',
+            e == null ? 'Oggi non hai ancora registrato' : 'Oggi: ${DiaryEntry.symptomNames[e.severity].toLowerCase()}',
             style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 4),
           Text(
-            e == null ? 'Bastano 10 secondi.' : 'Puoi modificarlo fino a stasera.',
+            e == null ? 'Bastano 10 secondi.' : 'Puoi modificarlo quando vuoi.',
             style: TextStyle(fontSize: 14, color: p.ink2),
           ),
           const SizedBox(height: 14),
@@ -243,7 +241,7 @@ class _MonthGrid extends StatelessWidget {
     final c = e?.severity;
     final label = e == null
         ? '${d.day}, ${future ? 'futuro' : 'non registrato'}'
-        : '${d.day}, sintomi ${DiaryEntry.severityNames[c!].toLowerCase()}';
+        : '${d.day}, ${DiaryEntry.symptomNames[c!].toLowerCase()}';
     return Semantics(
       label: label,
       button: !future,
@@ -401,7 +399,7 @@ class _EntryCard extends StatelessWidget {
                           const SizedBox(width: 6),
                         ],
                         Text(
-                          'Sintomi ${DiaryEntry.severityNames[e.severity].toLowerCase()}',
+                          DiaryEntry.symptomNames[e.severity],
                           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: p.symOnFill[e.severity]),
                         ),
                       ],

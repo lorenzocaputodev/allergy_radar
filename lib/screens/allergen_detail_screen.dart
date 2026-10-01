@@ -182,7 +182,10 @@ class AllergenDetailScreen extends StatelessWidget {
             children: [
               Text('Stagione', style: Theme.of(context).textTheme.titleLarge),
               SeasonStrip(a.calendarFor(state.area), month: now.month),
-              Text('Media del mese, area ${state.area.label}.', style: TextStyle(fontSize: 13, color: p.ink3)),
+              Text(
+                'Valore tipico di ogni mese, area ${state.area.label}.',
+                style: TextStyle(fontSize: 13, color: p.ink3),
+              ),
             ],
           ),
           const SizedBox(height: 14),
@@ -220,7 +223,7 @@ class _Bars extends StatelessWidget {
   final String Function(DayValue) label;
   final double height;
 
-  /// La barra dell'ora attuale, se c'è: quelle prima si attenuano.
+  /// La barra dell'ora attuale, se c'è: ha il bordo.
   final bool Function(DayValue)? current;
 
   /// La scala arriva almeno a una volta e mezza la soglia «moderato»: 0,1 granuli non sembrano una barra piena,
@@ -273,7 +276,7 @@ class _Bars extends StatelessWidget {
             Container(width: 16, height: 1.5, color: p.text(Level.moderate)),
             const SizedBox(width: 6),
             Text(
-              'Da qui il livello è moderato (${Fmt.number(thresholds.moderate)} granuli/m³)',
+              'Sopra la linea il livello è almeno moderato (${Fmt.number(thresholds.moderate)} granuli/m³)',
               style: TextStyle(fontSize: 12, color: p.ink2),
             ),
           ],
@@ -287,26 +290,26 @@ class _Bars extends StatelessWidget {
     children: [
       for (final (i, v) in values.indexed) ...[
         Expanded(
-          child: Opacity(
-            opacity: i < now ? 0.45 : 1,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                // Fondo pieno: il valore resta leggibile anche sopra la linea della soglia.
-                ColoredBox(
-                  color: p.card,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              // Fondo pieno: il valore resta leggibile anche sopra la linea della soglia.
+              ColoredBox(
+                color: p.card,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 2),
                   child: Text(Fmt.number(v.value), maxLines: 1, style: TextStyle(fontSize: 10, color: p.ink3)),
                 ),
-                const SizedBox(height: 2),
-                Container(
-                  height: (v.value / max * height).clamp(3, height),
-                  decoration: BoxDecoration(
-                    color: v.level == Level.none ? p.track : p.fill(v.level),
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(6), bottom: Radius.circular(2)),
-                  ),
+              ),
+              Container(
+                height: (v.value / max * height).clamp(3, height),
+                decoration: BoxDecoration(
+                  color: v.level == Level.none ? p.track : p.fill(v.level),
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(6), bottom: Radius.circular(2)),
+                  border: i == now ? Border.all(color: p.ink, width: 2) : null,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
         if (v != values.last) const SizedBox(width: 5),

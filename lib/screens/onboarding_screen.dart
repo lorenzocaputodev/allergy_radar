@@ -181,7 +181,7 @@ class _Welcome extends StatelessWidget {
               ),
               const SizedBox(height: 22),
               const Text(
-                'Sappi prima cosa c’è nell’aria.',
+                'Scopri prima cosa c’è nell’aria.',
                 style: TextStyle(fontFamily: AppFonts.display, fontSize: 40, height: 1.05, fontWeight: FontWeight.w500),
               ),
               const SizedBox(height: 14),
@@ -193,7 +193,7 @@ class _Welcome extends StatelessWidget {
               point(
                 Icons.layers_outlined,
                 'Oggi e i prossimi giorni',
-                '10 allergeni, con la fonte sempre in vista: previsione, misura o media storica.',
+                '10 allergeni. Sai sempre se è una previsione, una misura o una stima.',
               ),
               point(
                 Icons.book_outlined,
@@ -313,7 +313,7 @@ class _AllergenChoice extends StatelessWidget {
         onChanged: (v) => onChanged(v ?? false),
         secondary: AllergenGlyph(allergen, size: 44),
         title: Text(allergen.name, style: const TextStyle(fontWeight: FontWeight.w700)),
-        subtitle: Text(allergen.hasForecast ? 'Previsione giornaliera' : 'Misura o media storica'),
+        subtitle: Text(allergen.hasForecast ? 'Previsione giornaliera' : 'Misura o stima'),
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       ),
     );
@@ -360,9 +360,9 @@ class _Summary extends StatelessWidget {
     final names = Allergens.all.where((a) => allergens.contains(a.id)).map((a) => a.name).join(', ');
     final t = AlertSettingsEditor.time;
     final alertsText = [
-      if (alerts.briefing) 'Mattino alle ${t(alerts.briefingAt)}',
-      if (alerts.tomorrow) 'Sera alle ${t(alerts.tomorrowAt)}',
-      if (alerts.diary) 'Diario alle ${t(alerts.diaryAt)}',
+      if (alerts.briefing) 'Pollini di oggi alle ${t(alerts.briefingAt)}',
+      if (alerts.tomorrow) 'Allerta per domani alle ${t(alerts.tomorrowAt)}',
+      if (alerts.diary) 'Promemoria diario alle ${t(alerts.diaryAt)}',
     ].join('\n');
     Widget row(IconData i, String k, String v) => Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),

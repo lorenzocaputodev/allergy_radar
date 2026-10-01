@@ -28,8 +28,9 @@ class InfoScreen extends StatelessWidget {
               ),
               _Item(
                 icon: Icons.calendar_month_outlined,
-                title: 'Media storica',
-                text: 'Se mancano previsione e misura: media del mese nella tua area, 2016–2025.',
+                title: 'Stima',
+                text:
+                    'Se mancano previsione e misura: il valore tipico del mese nella tua area, dalla media 2016–2025.',
               ),
             ],
           ),

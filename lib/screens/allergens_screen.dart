@@ -27,7 +27,7 @@ class AllergensScreen extends StatelessWidget {
           ListTile(
             leading: AllergenGlyph(a, size: 40),
             title: Text(a.name, style: const TextStyle(fontWeight: FontWeight.w600)),
-            subtitle: Text(a.hasForecast ? 'Previsione giornaliera' : 'Misura o media storica'),
+            subtitle: Text(a.hasForecast ? 'Previsione giornaliera' : 'Misura o stima'),
             trailing: Switch(value: on, onChanged: (v) => state.setFollowed(a, v)),
             onTap: () =>
                 Navigator.of(context)

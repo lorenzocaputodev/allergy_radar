@@ -160,7 +160,7 @@ class _LogEntryScreenState extends State<LogEntryScreen> {
                     child: Text.rich(
                       TextSpan(
                         children: [
-                          TextSpan(text: _isToday ? 'Salvato con i pollini di oggi: ' : 'Pollini di quel giorno: '),
+                          TextSpan(text: _isToday ? 'Pollini di oggi: ' : 'Pollini di quel giorno: '),
                           for (final (i, (a, l)) in pollenLine.indexed) ...[
                             if (i > 0) const TextSpan(text: ', '),
                             TextSpan(

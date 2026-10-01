@@ -189,12 +189,9 @@ class _Hero extends StatelessWidget {
     if (followed.isEmpty) {
       summary = 'Scegli i tuoi allergeni da Profilo.';
     } else if (above.isEmpty) {
-      summary = 'Nessun tuo allergene ti dà fastidio oggi.';
+      summary = 'Oggi nessuno dei tuoi allergeni è al livello che ti dà fastidio.';
     } else {
-      final names = Fmt.list([for (final s in above) s.allergen.name]);
-      summary = above.length == 1
-          ? '$names è al livello che ti dà fastidio.'
-          : '$names sono al livello che ti dà fastidio.';
+      summary = 'Al livello che ti dà fastidio: ${Fmt.list([for (final s in above) s.allergen.name])}.';
     }
     final estimated = followed.where((s) => s.kind == DataKind.estimate).map((s) => s.allergen.name).toList();
 
@@ -234,9 +231,7 @@ class _Hero extends StatelessWidget {
             if (estimated.isNotEmpty) ...[
               const SizedBox(height: 10),
               Text(
-                estimated.length == 1
-                    ? '${estimated.single} è una stima: non ci sono stazioni di misura vicine.'
-                    : 'Alcuni valori sono stime: non ci sono stazioni di misura vicine.',
+                'Stima per ${Fmt.list(estimated)}: non ci sono stazioni di misura vicine.',
                 style: TextStyle(fontSize: 13, color: p.onHero.withValues(alpha: 0.85)),
               ),
             ],
@@ -438,7 +433,7 @@ class _Air extends StatelessWidget {
           children: [
             Text('Aria', style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 2),
-            Text('Possono peggiorare i sintomi.', style: TextStyle(fontSize: 13, color: p.ink3)),
+            Text('Smog e polvere possono peggiorare i sintomi.', style: TextStyle(fontSize: 13, color: p.ink3)),
           ],
         ),
         IntrinsicHeight(
@@ -500,8 +495,8 @@ class _OthersState extends State<_Others> {
                         const SizedBox(height: 2),
                         Text(
                           notable == 0
-                              ? '${statuses.length} pollini, nessuno oltre il livello basso'
-                              : '${statuses.length} pollini, $notable da moderato in su',
+                              ? '${statuses.length} pollini, tutti bassi o assenti'
+                              : '${statuses.length} pollini, $notable sopra il livello basso',
                           style: TextStyle(fontSize: 13, color: p.ink3),
                         ),
                       ],
@@ -577,9 +572,9 @@ class _DiaryCta extends StatelessWidget {
     final e = diary.entryFor(today);
     final yesterday = diary.entryFor(today.subtract(const Duration(days: 1)));
     final sub = e != null
-        ? 'Sintomi ${DiaryEntry.severityNames[e.severity].toLowerCase()} · tocca per modificare'
+        ? '${DiaryEntry.symptomNames[e.severity]} · tocca per modificare'
         : yesterday != null
-        ? 'Registra i sintomi in 10 secondi · ieri: ${DiaryEntry.severityNames[yesterday.severity].toLowerCase()}'
+        ? 'Registra i sintomi in 10 secondi · ieri: ${DiaryEntry.symptomNames[yesterday.severity].toLowerCase()}'
         : 'Registra i sintomi in 10 secondi';
     return Material(
       color: p.pineSoft,

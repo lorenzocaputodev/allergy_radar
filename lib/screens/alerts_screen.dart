@@ -10,8 +10,28 @@ import '../state/app_state.dart';
 import '../state/diary_state.dart';
 import '../theme/palette.dart';
 
-class AlertsScreen extends StatelessWidget {
+class AlertsScreen extends StatefulWidget {
   const AlertsScreen({super.key});
+
+  @override
+  State<AlertsScreen> createState() => _AlertsScreenState();
+}
+
+class _AlertsScreenState extends State<AlertsScreen> {
+  // I «Prossimo: …» dipendono dall'ora: si ricalcolano tornando nell'app.
+  late final AppLifecycleListener _lifecycle;
+
+  @override
+  void initState() {
+    super.initState();
+    _lifecycle = AppLifecycleListener(onResume: () => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _lifecycle.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -150,7 +170,7 @@ class AlertSettingsEditor extends StatelessWidget {
           block(
             icon: Icons.wb_sunny_outlined,
             title: 'Pollini di oggi',
-            subtitle: 'La mattina, i livelli dei tuoi allergeni.',
+            subtitle: 'La mattina, cosa ti dà fastidio oggi.',
             on: value.briefing,
             toggle: (v) => onChanged(value.copyWith(briefing: v)),
             at: value.briefingAt,
@@ -243,7 +263,7 @@ class _CheckState extends State<_Check> {
                       off
                           ? 'Le notifiche dell’app sono spente: riattivale da Impostazioni › App › Allergy Radar.'
                           : delayed
-                          ? 'Ora possono arrivare con fino a un’ora di ritardo.'
+                          ? 'Possono arrivare fino a un’ora in ritardo.'
                           : 'Arrivano all’orario scelto, anche ad app chiusa.',
                       style: TextStyle(fontSize: 13, height: 1.45, color: p.ink2),
                     ),

@@ -135,7 +135,7 @@ void main() {
 
   testWidgets('primo avvio: allergeni, luogo, poi Oggi', (tester) async {
     await pumpApp(tester, onboarded: false);
-    expect(find.text('Sappi prima cosa c’è nell’aria.'), findsOneWidget);
+    expect(find.text('Scopri prima cosa c’è nell’aria.'), findsOneWidget);
     await tester.tap(find.text('Inizia'));
     await tester.pumpAndSettle();
 

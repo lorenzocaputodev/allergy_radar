@@ -195,7 +195,7 @@ class PlacePrivacyNote extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'I dati valgono per un’area di circa 11 km. La posizione esce dal telefono solo arrotondata.',
+              'Usiamo solo la zona, di circa 11 km: la tua posizione esatta non lascia il telefono.',
               style: TextStyle(fontSize: 13, height: 1.45, color: p.ink2),
             ),
           ),

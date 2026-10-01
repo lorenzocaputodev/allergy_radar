@@ -139,8 +139,8 @@ class CalendarScreen extends StatelessWidget {
             Text('In ${Fmt.month(month)}', style: Theme.of(context).textTheme.titleLarge),
             Text(
               active.isEmpty
-                  ? 'Mese tranquillo: nessun polline di solito sopra il livello basso.'
-                  : 'Di solito attivi: ${active.join(', ')}.',
+                  ? 'Mese tranquillo: di solito nessun polline supera il livello basso.'
+                  : 'Di solito sopra il livello basso: ${Fmt.list(active)}.',
               style: TextStyle(fontSize: 15, height: 1.5, color: p.ink2),
             ),
           ],

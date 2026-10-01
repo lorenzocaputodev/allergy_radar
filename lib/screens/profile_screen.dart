@@ -30,9 +30,9 @@ class ProfileScreen extends StatelessWidget {
     final a = state.alerts;
     final t = AlertSettingsEditor.time;
     final alertsText = [
-      if (a.briefing) 'Mattino ${t(a.briefingAt)}',
-      if (a.tomorrow) 'Sera ${t(a.tomorrowAt)}',
-      if (a.diary) 'Diario ${t(a.diaryAt)}',
+      if (a.briefing) 'Pollini di oggi ${t(a.briefingAt)}',
+      if (a.tomorrow) 'Allerta per domani ${t(a.tomorrowAt)}',
+      if (a.diary) 'Promemoria diario ${t(a.diaryAt)}',
     ].join(' · ');
 
     void go(Widget screen) => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => screen));
@@ -257,7 +257,8 @@ Future<void> _importBackup(BuildContext context) async {
     final entries = await Backup.restore(prefs, json);
     diary.reload();
     await state.load();
-    if (context.mounted) _toast(context, 'Backup importato: $entries giorni di diario.');
+    final days = entries == 1 ? '1 giorno' : '$entries giorni';
+    if (context.mounted) _toast(context, 'Backup importato: $days di diario.');
     await state.refresh();
   } on FormatException catch (e) {
     if (context.mounted) _toast(context, e.message);

@@ -56,13 +56,16 @@ class _TrendScreenState extends State<TrendScreen> {
                 ),
             ],
           ),
-          const SizedBox(height: 12),
-          SegmentedButton<int>(
-            segments: [for (final e in _periods.entries) ButtonSegment(value: e.key, label: Text(e.value))],
-            selected: {_period},
-            showSelectedIcon: false,
-            onSelectionChanged: (v) => setState(() => _period = v.first),
-          ),
+          // Il periodo conta solo quando il diario basta per un confronto.
+          if (diary.entries.length >= DiaryState.minDaysForInsight) ...[
+            const SizedBox(height: 12),
+            SegmentedButton<int>(
+              segments: [for (final e in _periods.entries) ButtonSegment(value: e.key, label: Text(e.value))],
+              selected: {_period},
+              showSelectedIcon: false,
+              onSelectionChanged: (v) => setState(() => _period = v.first),
+            ),
+          ],
           const SizedBox(height: 14),
           if (insight == null)
             _Progress(allergen: a, logged: logged)
@@ -119,7 +122,7 @@ class _Progress extends StatelessWidget {
         Text(
           enough
               ? 'Per il confronto servono giorni con ${allergen.name} a livello basso e altri a livello moderato o più.'
-              : 'Registra $need giorni e ti diciamo se ${allergen.name} ti dà fastidio.',
+              : 'Dopo $need giorni di diario vedi se i sintomi peggiorano con ${allergen.name}.',
           style: TextStyle(fontSize: 14, height: 1.4, color: p.ink2),
         ),
         ClipRRect(
@@ -150,8 +153,8 @@ class _Answer extends StatelessWidget {
     final headline = !insight.clear
         ? 'Nessuna differenza netta con ${a.name}'
         : insight.highMean > insight.lowMean
-        ? 'Quando ${a.name} sale, stai peggio'
-        : 'Quando ${a.name} sale, non stai peggio';
+        ? 'Con più ${a.name} nell’aria stai peggio'
+        : 'Con più ${a.name} nell’aria non stai peggio';
 
     Widget bar(String label, double value, int days, Color color) => Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -265,7 +268,7 @@ class _DayByDayState extends State<_DayByDay> {
     final detail = entry == null
         ? 'Non registrato'
         : [
-            'Sintomi ${DiaryEntry.severityNames[entry.severity].toLowerCase()}',
+            DiaryEntry.symptomNames[entry.severity],
             if (pollen != null) '${allergen.name} ${Level.fromIndex(pollen).label.toLowerCase()}',
             if (entry.meds.isNotEmpty) entry.meds.join(', '),
           ].join(' · ');

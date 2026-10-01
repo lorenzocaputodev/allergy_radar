@@ -33,6 +33,7 @@ class DiaryEntry {
   final Map<String, int> pollen;
 
   static const severityNames = ['Nessuno', 'Lievi', 'Medi', 'Forti'];
+  static const symptomNames = ['Nessun sintomo', 'Sintomi lievi', 'Sintomi medi', 'Sintomi forti'];
 
   static DateTime day(DateTime d) => DateTime(d.year, d.month, d.day);
 

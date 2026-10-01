@@ -2,6 +2,7 @@ import '../models/alert_settings.dart';
 import '../models/allergen.dart';
 import '../models/level.dart';
 import '../models/pollen_snapshot.dart';
+import '../utils/format.dart';
 
 enum AlertKind { briefing, tomorrow, diary }
 
@@ -41,16 +42,11 @@ class AlertPlanner {
       final levels = {for (final s in followed) s.allergen: _levelOn(s, dayOf(when))};
       final over = followed.where((s) => above(s.allergen, levels[s.allergen]!)).toList();
       if (!settings.briefingOnlyAbove || over.isNotEmpty) {
-        final text = followed
-            .map((s) {
-              final estimate = s.kind == DataKind.estimate ? ' (stima)' : '';
-              return '${s.allergen.name}: ${levels[s.allergen]!.label.toLowerCase()}$estimate';
-            })
-            .join('. ');
-        final tail = over.isEmpty
-            ? 'Niente che ti dia fastidio.'
-            : 'Ti danno fastidio: ${over.map((s) => s.allergen.name).join(', ')}.';
-        out.add(AlertMessage(AlertKind.briefing, when, 'Pollini di oggi a $placeName', '$text. $tail'));
+        final others = over.length < followed.length ? ' Gli altri sono più bassi.' : '';
+        final body = over.isEmpty
+            ? 'Oggi nessuno dei tuoi allergeni è al livello che ti dà fastidio.'
+            : 'Al livello che ti dà fastidio: ${Fmt.list([for (final s in over) s.allergen.name])}.$others';
+        out.add(AlertMessage(AlertKind.briefing, when, 'Pollini di oggi a $placeName', body));
       }
     }
 
@@ -70,7 +66,7 @@ class AlertPlanner {
             AlertKind.tomorrow,
             when,
             'Domani a $placeName',
-            'Ti daranno fastidio: ${bothering.join(', ')}.',
+            'Al livello che ti dà fastidio: ${Fmt.list(bothering)}.',
           ),
         );
       }
