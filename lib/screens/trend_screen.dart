@@ -11,7 +11,7 @@ import '../utils/format.dart';
 import '../widgets/level_widgets.dart';
 import 'log_entry_screen.dart';
 
-/// Sintomi confrontati con un allergene negli ultimi 30 giorni: prima la risposta, poi i dettagli.
+/// Sintomi confrontati con un allergene nel periodo scelto: prima la risposta, poi i dettagli.
 class TrendScreen extends StatefulWidget {
   const TrendScreen({super.key});
 
@@ -20,8 +20,12 @@ class TrendScreen extends StatefulWidget {
 }
 
 class _TrendScreenState extends State<TrendScreen> {
+  /// Il grafico giorno per giorno mostra sempre l'ultimo mese; il confronto usa il periodo scelto.
   static const _days = 30;
+  static const _periods = {30: '30 giorni', 90: '3 mesi', 365: '1 anno'};
+  static const _since = {30: 'negli ultimi 30 giorni', 90: 'negli ultimi 3 mesi', 365: 'nell’ultimo anno'};
   String? _allergenId;
+  int _period = 30;
 
   @override
   Widget build(BuildContext context) {
@@ -33,8 +37,8 @@ class _TrendScreenState extends State<TrendScreen> {
     final a = Allergens.byId(_allergenId ?? '') ?? _mostTelling(diary, choices, now) ?? choices.first;
     final today = DiaryEntry.day(now);
     final days = [for (var i = _days - 1; i >= 0; i--) today.subtract(Duration(days: i))];
-    final insight = diary.insight(a, now, days: _days);
-    final logged = diary.between(days.first, today).length;
+    final insight = diary.insight(a, now, days: _period);
+    final logged = diary.between(today.subtract(Duration(days: _period - 1)), today).length;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Andamento')),
@@ -53,8 +57,18 @@ class _TrendScreenState extends State<TrendScreen> {
                 ),
             ],
           ),
+          const SizedBox(height: 12),
+          SegmentedButton<int>(
+            segments: [for (final e in _periods.entries) ButtonSegment(value: e.key, label: Text(e.value))],
+            selected: {_period},
+            showSelectedIcon: false,
+            onSelectionChanged: (v) => setState(() => _period = v.first),
+          ),
           const SizedBox(height: 14),
-          if (insight == null) _Progress(allergen: a, logged: logged) else _Answer(insight: insight),
+          if (insight == null)
+            _Progress(allergen: a, logged: logged)
+          else
+            _Answer(insight: insight, period: _since[_period]!),
           const SizedBox(height: 14),
           _DayByDay(allergen: a, days: days, diary: diary),
           const SizedBox(height: 12),
@@ -71,7 +85,7 @@ class _TrendScreenState extends State<TrendScreen> {
     Allergen? best;
     var gap = 0.0;
     for (final c in choices) {
-      final i = diary.insight(c, now, days: _days);
+      final i = diary.insight(c, now, days: _period);
       if (i != null && (i.highMean - i.lowMean) > gap) {
         gap = i.highMean - i.lowMean;
         best = c;
@@ -126,9 +140,10 @@ class _Progress extends StatelessWidget {
 
 /// La risposta in una frase e il confronto a due barre.
 class _Answer extends StatelessWidget {
-  const _Answer({required this.insight});
+  const _Answer({required this.insight, required this.period});
 
   final DiaryInsight insight;
+  final String period;
 
   @override
   Widget build(BuildContext context) {
@@ -184,7 +199,7 @@ class _Answer extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'Intensità media dei sintomi, ultimi 30 giorni',
+            'Intensità media dei sintomi $period',
             style: TextStyle(fontSize: 13, color: p.onHero.withValues(alpha: 0.85)),
           ),
           const SizedBox(height: 16),
@@ -275,15 +290,23 @@ class _DayByDay extends StatelessWidget {
             ),
           ),
         ),
-        columns(
-          (d, e) => Text(
-            d == days.first || d.difference(days.first).inDays % 7 == 0 ? '${d.day}/${d.month}' : '',
-            textAlign: TextAlign.left,
-            softWrap: false,
-            overflow: TextOverflow.visible,
-            style: TextStyle(fontSize: 10, color: p.ink3),
-          ),
-        ),
+        // Una data ogni settimana, contando all'indietro da oggi, centrata sotto la sua colonna.
+        columns((d, e) {
+          final back = days.last.difference(d).inDays;
+          if (back % 7 != 0) return const SizedBox(height: 14);
+          return SizedBox(
+            height: 14,
+            child: OverflowBox(
+              maxWidth: 48,
+              alignment: back == 0 ? Alignment.centerRight : Alignment.center,
+              child: Text(
+                back == 0 ? 'Oggi' : '${d.day}/${d.month}',
+                softWrap: false,
+                style: TextStyle(fontSize: 10, color: p.ink3),
+              ),
+            ),
+          );
+        }),
         Text('Farmaci', style: label()),
         columns(
           (d, e) => Center(
