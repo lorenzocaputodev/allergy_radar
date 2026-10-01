@@ -15,7 +15,6 @@ import 'info_screen.dart';
 import 'medications_screen.dart';
 import 'place_search_screen.dart';
 
-/// Indice delle impostazioni: luogo in testa, poi profilo, notifiche, dati e app.
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 

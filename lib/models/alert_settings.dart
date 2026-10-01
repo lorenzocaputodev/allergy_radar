@@ -10,18 +10,14 @@ class AlertSettings {
     this.diaryAt = 21 * 60,
   });
 
-  /// Briefing del mattino: livelli di oggi.
   final bool briefing;
   final int briefingAt;
 
-  /// Briefing solo nei giorni con un allergene sopra la tua soglia.
   final bool briefingOnlyAbove;
 
-  /// Sera: domani un tuo allergene sale sopra soglia.
   final bool tomorrow;
   final int tomorrowAt;
 
-  /// Promemoria del diario, se oggi non hai ancora registrato.
   final bool diary;
   final int diaryAt;
 

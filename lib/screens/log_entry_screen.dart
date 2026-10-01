@@ -9,7 +9,6 @@ import '../state/diary_state.dart';
 import '../theme/palette.dart';
 import '../utils/format.dart';
 
-/// Registra o modifica la voce del diario di un giorno.
 class LogEntryScreen extends StatefulWidget {
   const LogEntryScreen({super.key, required this.date});
 

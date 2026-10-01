@@ -8,7 +8,6 @@ import '../services/location_service.dart';
 import '../services/open_meteo_client.dart';
 import '../theme/palette.dart';
 
-/// Campo di ricerca città con risultati (geocoding Open-Meteo, solo Italia).
 class PlaceSearch extends StatefulWidget {
   const PlaceSearch({super.key, required this.onSelected, this.selected, this.autofocus = false});
 
@@ -27,7 +26,6 @@ class _PlaceSearchState extends State<PlaceSearch> {
   bool _loading = false;
   bool _locating = false;
 
-  /// Luogo trovato con il GPS, in attesa di conferma.
   Place? _found;
 
   @override
@@ -143,7 +141,6 @@ class _PlaceSearchState extends State<PlaceSearch> {
   }
 }
 
-/// Conferma del luogo trovato con il GPS: si vede quale comune ha capito l'app.
 class _FoundPlace extends StatelessWidget {
   const _FoundPlace({required this.place});
 
@@ -182,7 +179,6 @@ class _FoundPlace extends StatelessWidget {
   }
 }
 
-/// Nota su area delle previsioni e privacy della posizione.
 class PlacePrivacyNote extends StatelessWidget {
   const PlacePrivacyNote({super.key});
 

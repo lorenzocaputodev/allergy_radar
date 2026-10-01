@@ -1,6 +1,6 @@
 // Ricava i calendari stagionali per area dagli storici POLLnet (ISPRA, CC BY 4.0).
 //
-//   node tool/build_calendar.mjs > tool/calendar.txt      (Node 18+)
+//   node tool/build_calendar.mjs      (Node 18+)
 //
 // Per ogni area e allergene: media giornaliera per mese su ogni stazione, poi
 // mediana tra le stazioni, classificata con le soglie POLLnet (0 assente … 3 alto).

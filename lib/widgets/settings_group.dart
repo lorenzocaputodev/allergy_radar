@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../theme/palette.dart';
 
-/// Titolo di sezione delle schermate di impostazioni.
 class SettingsLabel extends StatelessWidget {
   const SettingsLabel(this.text, {super.key});
 
@@ -18,7 +17,6 @@ class SettingsLabel extends StatelessWidget {
   );
 }
 
-/// Righe raggruppate in una card, separate da un divisore.
 class SettingsGroup extends StatelessWidget {
   const SettingsGroup(this.rows, {super.key});
 

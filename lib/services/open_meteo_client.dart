@@ -59,7 +59,6 @@ class OpenMeteoException implements Exception {
   String toString() => message;
 }
 
-/// Serie orarie già decodificate.
 class OpenMeteoData {
   OpenMeteoData(this.times, this.series);
 

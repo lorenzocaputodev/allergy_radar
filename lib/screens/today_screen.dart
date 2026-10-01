@@ -135,6 +135,7 @@ class TodayScreen extends StatelessWidget {
   }
 }
 
+// --- Elementi comuni ---
 class _SectionTitle extends StatelessWidget {
   const _SectionTitle(this.text);
 
@@ -171,6 +172,7 @@ class _Banner extends StatelessWidget {
   );
 }
 
+// --- Riquadro del giorno ---
 class _Hero extends StatelessWidget {
   const _Hero({required this.state});
 
@@ -245,7 +247,7 @@ class _Hero extends StatelessWidget {
   }
 }
 
-/// Una riga per allergene, sempre uguale: nome e fonte a sinistra, un quadrato per giorno.
+// --- Prossimi giorni ---
 class _Forecast extends StatelessWidget {
   const _Forecast({required this.state, required this.today});
 
@@ -351,7 +353,6 @@ class _Forecast extends StatelessWidget {
   }
 }
 
-/// Quadrato del livello con il valore sotto. Senza dato: grigio con «–».
 class _DayCell extends StatelessWidget {
   const _DayCell({this.level, this.label = ''});
 
@@ -388,6 +389,7 @@ class _DayCell extends StatelessWidget {
   }
 }
 
+// --- Aria ---
 class _Air extends StatelessWidget {
   const _Air({required this.air});
 
@@ -456,7 +458,7 @@ class _Air extends StatelessWidget {
   }
 }
 
-/// Pollini che non segui: chiusa di default, si apre al tocco.
+// --- Altri pollini ---
 class _Others extends StatefulWidget {
   const _Others({required this.statuses, required this.onTap});
 
@@ -563,6 +565,7 @@ String _othersNote(AllergenStatus s, Area area, DateTime today) {
   return s.kind == DataKind.estimate ? 'Stima (valore tipico)' : SourceChip.label(s.kind);
 }
 
+// --- Diario ---
 class _DiaryCta extends StatelessWidget {
   const _DiaryCta();
 

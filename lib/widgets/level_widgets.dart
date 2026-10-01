@@ -189,7 +189,6 @@ class SectionCard extends StatelessWidget {
   }
 }
 
-/// Striscia dei 12 mesi con il mese corrente evidenziato.
 class SeasonStrip extends StatelessWidget {
   const SeasonStrip(this.calendar, {super.key, required this.month});
 

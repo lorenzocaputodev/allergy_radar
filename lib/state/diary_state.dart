@@ -7,7 +7,6 @@ import '../models/allergen.dart';
 import '../models/diary_entry.dart';
 import '../models/level.dart';
 
-/// Confronto tra sintomi e un allergene nel periodo.
 class DiaryInsight {
   const DiaryInsight({
     required this.allergen,
@@ -20,7 +19,6 @@ class DiaryInsight {
 
   final Allergen allergen;
 
-  /// Giorni registrati nel periodo.
   final int days;
 
   /// Giorni con l'allergene da moderato in su, e sotto.
@@ -59,12 +57,12 @@ class DiaryState extends ChangeNotifier {
   ];
   static const _oldDefaults = ['Antistaminico', 'Spray nasale', 'Collirio'];
 
-  /// Servono almeno questi giorni registrati per un confronto.
   static const minDaysForInsight = 14;
 
   final Map<String, DiaryEntry> _entries = {};
   List<String> medications = defaultMedications;
 
+  // --- Caricamento ---
   void _read() {
     _entries.clear();
     final raw = _prefs.getString(kEntries);
@@ -85,6 +83,7 @@ class DiaryState extends ChangeNotifier {
     notifyListeners();
   }
 
+  // --- Voci ---
   DiaryEntry? entryFor(DateTime d) => _entries[DiaryEntry.keyOf(d)];
 
   /// Dal più recente.
@@ -106,6 +105,7 @@ class DiaryState extends ChangeNotifier {
     await _persist();
   }
 
+  // --- Farmaci ---
   Future<void> addMedication(String name) async {
     final n = name.trim();
     if (n.isEmpty || medications.contains(n)) return;
@@ -122,6 +122,7 @@ class DiaryState extends ChangeNotifier {
 
   Future<void> _persist() => _prefs.setString(kEntries, jsonEncode(_entries.values.map((e) => e.toJson()).toList()));
 
+  // --- Confronto ---
   /// Sintomi con l'allergene da moderato in su contro sotto, negli ultimi [days] giorni.
   /// Null se i dati non bastano.
   DiaryInsight? insight(Allergen a, DateTime now, {int days = 30}) {

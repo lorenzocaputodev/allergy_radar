@@ -11,7 +11,6 @@ import '../utils/format.dart';
 import 'alerts_screen.dart';
 import 'log_entry_screen.dart';
 
-/// Gli avvisi arrivati, dal più recente. L'ingranaggio porta alle impostazioni.
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
 

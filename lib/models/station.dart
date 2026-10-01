@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'area.dart';
 import 'place.dart';
 
-/// Stazione della rete POLLnet.
 class Station {
   const Station({
     required this.id,

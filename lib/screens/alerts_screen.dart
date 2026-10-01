@@ -146,7 +146,6 @@ class AlertSettingsEditor extends StatelessWidget {
   }
 }
 
-/// Stato delle notifiche di Android e avviso di prova.
 class _Check extends StatefulWidget {
   const _Check();
 

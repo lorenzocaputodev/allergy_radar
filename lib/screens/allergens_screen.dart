@@ -9,7 +9,6 @@ import '../widgets/level_widgets.dart';
 import '../widgets/settings_group.dart';
 import 'allergen_detail_screen.dart';
 
-/// Quali allergeni seguire e da quale livello danno fastidio.
 class AllergensScreen extends StatelessWidget {
   const AllergensScreen({super.key});
 

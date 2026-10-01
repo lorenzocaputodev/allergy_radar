@@ -11,7 +11,6 @@ import '../utils/format.dart';
 import '../widgets/level_widgets.dart';
 import 'log_entry_screen.dart';
 
-/// Sintomi confrontati con un allergene nel periodo scelto: prima la risposta, poi i dettagli.
 class TrendScreen extends StatefulWidget {
   const TrendScreen({super.key});
 
@@ -95,7 +94,7 @@ class _TrendScreenState extends State<TrendScreen> {
   }
 }
 
-/// Dati non ancora sufficienti: quanto manca.
+// --- Risposta ---
 class _Progress extends StatelessWidget {
   const _Progress({required this.allergen, required this.logged});
 
@@ -138,7 +137,6 @@ class _Progress extends StatelessWidget {
   }
 }
 
-/// La risposta in una frase e il confronto a due barre.
 class _Answer extends StatelessWidget {
   const _Answer({required this.insight, required this.period});
 
@@ -212,7 +210,7 @@ class _Answer extends StatelessWidget {
   }
 }
 
-/// Ogni colonna è un giorno: sopra il livello del polline, sotto i sintomi, in fondo i farmaci.
+// --- Giorno per giorno ---
 /// Ultimo mese, un giorno per colonna. Si sceglie un giorno toccando o trascinando ovunque sul grafico:
 /// colonne strette non vanno mirate, e la riga sotto dice cosa è successo quel giorno.
 class _DayByDay extends StatefulWidget {

@@ -65,6 +65,7 @@ class ReportPdf {
     final insights = [for (final a in allergens) ?diary.insight(a, now, days: days)]
       ..sort((x, y) => (y.highMean - y.lowMean).compareTo(x.highMean - x.lowMean));
 
+    // --- Stili e celle ---
     pw.Widget small(String s, {PdfColor color = _muted}) =>
         pw.Text(s, style: pw.TextStyle(fontSize: 8.5, color: color));
     pw.Widget heading(String s) => pw.Padding(
@@ -136,6 +137,7 @@ class ReportPdf {
       ],
     );
 
+    // --- Documento ---
     final doc = pw.Document(title: 'Diario allergie', author: 'Allergy Radar');
     doc.addPage(
       pw.MultiPage(
@@ -308,6 +310,7 @@ class ReportPdf {
     return doc.save();
   }
 
+  // --- Marchio ---
   /// Il marchio dell'app, come `RadarPainter`, con l'asse y del PDF rivolto verso l'alto.
   static void _mark(PdfGraphics g, PdfPoint size) {
     final s = size.x / 48;

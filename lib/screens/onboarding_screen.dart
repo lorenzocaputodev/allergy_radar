@@ -125,6 +125,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 }
 
+// --- Benvenuto ---
 class _Welcome extends StatelessWidget {
   const _Welcome({required this.onStart});
 
@@ -215,6 +216,7 @@ class _Welcome extends StatelessWidget {
   }
 }
 
+// --- Passi ---
 class _Step extends StatelessWidget {
   const _Step({
     required this.step,
@@ -344,6 +346,7 @@ class _Hint extends StatelessWidget {
   }
 }
 
+// --- Riepilogo ---
 class _Summary extends StatelessWidget {
   const _Summary({required this.place, required this.allergens, required this.alerts});
 

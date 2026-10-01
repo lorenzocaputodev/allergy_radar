@@ -8,7 +8,6 @@ import 'package:path_provider/path_provider.dart';
 
 enum FileResult { saved, cancelled, unsupported }
 
-/// Salvataggio e apertura di file: finestra di sistema su Android e Windows.
 class FileService {
   static bool get _isWindows => !kIsWeb && Platform.isWindows;
   static bool get _isAndroid => !kIsWeb && Platform.isAndroid;

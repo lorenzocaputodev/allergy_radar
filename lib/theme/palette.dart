@@ -7,7 +7,6 @@ abstract final class AppFonts {
   static const display = 'Fraunces';
 }
 
-/// Token del sistema visivo (vedi tavola «Sistema visivo» della canvas).
 @immutable
 class AppPalette extends ThemeExtension<AppPalette> {
   const AppPalette({

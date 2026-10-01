@@ -138,6 +138,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
   }
 }
 
+// --- Oggi ---
 class _TodayCard extends StatelessWidget {
   const _TodayCard({required this.entry, required this.onOpen, required this.onNoSymptoms});
 
@@ -198,6 +199,7 @@ class _TodayCard extends StatelessWidget {
   }
 }
 
+// --- Calendario del mese ---
 class _MonthGrid extends StatelessWidget {
   const _MonthGrid({required this.month, required this.today, required this.diary, required this.onTap});
 
@@ -318,6 +320,7 @@ class _Legend extends StatelessWidget {
   }
 }
 
+// --- Ultimi giorni ---
 const _outdoor = ['meno di 1 ora', '1–3 ore', 'più di 3 ore'];
 
 class _EntryCard extends StatelessWidget {

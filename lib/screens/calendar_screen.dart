@@ -22,7 +22,6 @@ class CalendarScreen extends StatelessWidget {
     final mine = state.followedAllergens;
     final others = Allergens.all.where((a) => !state.followed.contains(a.id)).toList();
     const nameStyle = TextStyle(fontSize: 13, fontWeight: FontWeight.w600);
-    // Icona, spazio e nome più lungo, senza superare il 40% dello schermo.
     final nameWidth = (36 + widestText(context, Allergens.all.map((a) => a.name), nameStyle) + 8)
         .clamp(0, MediaQuery.sizeOf(context).width * 0.4)
         .toDouble();

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// Il marchio dell'app: due cerchi, il centro, la lancetta e un'eco.
 /// Lo stesso disegno genera l'icona (test_screens/icons_test.dart).
 class RadarMark extends StatelessWidget {
   const RadarMark({super.key, required this.size, required this.color, this.stroke = 3.4, this.inner = true});

@@ -10,7 +10,6 @@ import '../models/level.dart';
 import '../models/place.dart';
 import '../models/pollen_snapshot.dart';
 
-/// Luogo, allergeni seguiti, soglie, preferenze e ultimi dati sui pollini.
 class AppState extends ChangeNotifier {
   AppState(this._repo, this._prefs);
 
@@ -37,14 +36,12 @@ class AppState extends ChangeNotifier {
   ThemeMode themeMode = ThemeMode.system;
   AlertSettings alerts = const AlertSettings();
 
-  /// Primo avvio completato: luogo e allergeni scelti.
   bool onboarded = false;
 
   PollenSnapshot? snapshot;
   bool loading = false;
   String? error;
 
-  /// Area del calendario stagionale per il luogo scelto.
   Area get area => snapshot?.area ?? _repo.stations.areaOf(place);
 
   List<Allergen> get followedAllergens => Allergens.all.where((a) => followed.contains(a.id)).toList();
@@ -69,6 +66,7 @@ class AppState extends ChangeNotifier {
 
   bool get isStale => snapshot == null || DateTime.now().difference(snapshot!.fetchedAt) > freshFor;
 
+  // --- Caricamento e dati ---
   /// Legge preferenze e cache, senza rete.
   Future<void> load() async {
     onboarded = _prefs.getBool(kOnboarded) ?? false;
@@ -130,6 +128,7 @@ class AppState extends ChangeNotifier {
     }
   }
 
+  // --- Impostazioni ---
   Future<void> setPlace(Place p) async {
     place = p;
     snapshot = null;
