@@ -28,6 +28,19 @@ abstract final class AlertLog {
     await prefs.setString(pendingKey, _encode(pending));
   }
 
+  /// Toglie un avviso arrivato dal registro (swipe nella campanella).
+  static Future<void> remove(SharedPreferences prefs, AlertMessage m, DateTime now) async {
+    bool same(AlertMessage x) => x.kind == m.kind && x.at == m.at;
+    await prefs.setString(key, _encode(_decode(prefs.getString(key)).where((x) => !same(x)).toList()));
+    // Fra i programmati si toglie solo se è già arrivato: quelli futuri devono restare.
+    final pending = _decode(prefs.getString(pendingKey)).where((x) => !(same(x) && !x.at.isAfter(now))).toList();
+    await prefs.setString(pendingKey, _encode(pending));
+  }
+
+  /// Rimette un avviso tolto per sbaglio («Annulla»).
+  static Future<void> restore(SharedPreferences prefs, AlertMessage m) =>
+      prefs.setString(key, _encode([..._decode(prefs.getString(key)), m]));
+
   static String _encode(List<AlertMessage> list) => jsonEncode([
     for (final m in list) {'kind': m.kind.name, 'at': m.at.toIso8601String(), 'title': m.title, 'body': m.body},
   ]);

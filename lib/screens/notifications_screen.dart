@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/alert_log.dart';
 import '../models/diary_entry.dart';
+import '../models/level.dart';
 import '../services/alert_planner.dart';
 import '../state/app_state.dart';
 import '../theme/palette.dart';
@@ -104,46 +107,52 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 0.8, color: p.ink3),
                     ),
                   ),
-                Card(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  color: p.card,
-                  elevation: 0,
-                  clipBehavior: Clip.antiAlias,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    side: BorderSide(color: p.line),
-                  ),
-                  child: InkWell(
-                    onTap: () => _open(e),
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(14, 14, 6, 14),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Icon(NotificationsScreen.iconOf(e.kind), color: p.pineText, size: 22),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        e.title,
-                                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                Dismissible(
+                  key: ValueKey('${e.kind.name} ${e.at.toIso8601String()}'),
+                  background: _deleteBackground(p, Alignment.centerLeft),
+                  secondaryBackground: _deleteBackground(p, Alignment.centerRight),
+                  onDismissed: (_) => _delete(snap.data!, e),
+                  child: Card(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    color: p.card,
+                    elevation: 0,
+                    clipBehavior: Clip.antiAlias,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      side: BorderSide(color: p.line),
+                    ),
+                    child: InkWell(
+                      onTap: () => _open(e),
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(14, 14, 6, 14),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(NotificationsScreen.iconOf(e.kind), color: p.pineText, size: 22),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          e.title,
+                                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                                        ),
                                       ),
-                                    ),
-                                    Text(Fmt.time(e.at), style: TextStyle(fontSize: 12, color: p.ink3)),
-                                  ],
-                                ),
-                                const SizedBox(height: 4),
-                                Text(e.body, style: TextStyle(fontSize: 14, height: 1.4, color: p.ink2)),
-                              ],
+                                      Text(Fmt.time(e.at), style: TextStyle(fontSize: 12, color: p.ink3)),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(e.body, style: TextStyle(fontSize: 14, height: 1.4, color: p.ink2)),
+                                ],
+                              ),
                             ),
-                          ),
-                          Icon(Icons.chevron_right, color: p.ink3),
-                        ],
+                            Icon(Icons.chevron_right, color: p.ink3),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -154,6 +163,34 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         },
       ),
     );
+  }
+
+  Widget _deleteBackground(AppPalette p, Alignment side) => Container(
+    margin: const EdgeInsets.only(bottom: 8),
+    padding: const EdgeInsets.symmetric(horizontal: 20),
+    alignment: side,
+    decoration: BoxDecoration(color: p.fill(Level.high), borderRadius: BorderRadius.circular(16)),
+    child: const Icon(Icons.delete_outline, color: Colors.white),
+  );
+
+  void _delete(SharedPreferences prefs, AlertMessage m) {
+    // SharedPreferences aggiorna subito la sua copia in memoria: la lista ridisegnata non ha più l'avviso.
+    unawaited(AlertLog.remove(prefs, m, DateTime.now()));
+    setState(() {});
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: const Text('Avviso eliminato.'),
+          action: SnackBarAction(
+            label: 'Annulla',
+            onPressed: () async {
+              await AlertLog.restore(prefs, m);
+              if (mounted) setState(() {});
+            },
+          ),
+        ),
+      );
   }
 
   /// Il promemoria apre il diario di quel giorno; gli avvisi sui pollini riportano a Oggi.
