@@ -245,19 +245,45 @@ class _Hero extends StatelessWidget {
   }
 }
 
+/// Una riga per allergene, sempre uguale: nome e fonte a sinistra, un quadrato per giorno.
 class _Forecast extends StatelessWidget {
   const _Forecast({required this.state, required this.today});
 
   final AppState state;
   final DateTime today;
 
+  static const _nameStyle = TextStyle(fontSize: 14, fontWeight: FontWeight.w600);
+
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    final withForecast = state.followedStatuses.where((s) => s.kind == DataKind.forecast).toList();
-    final without = state.followedStatuses.where((s) => s.kind != DataKind.forecast).toList();
-    if (state.followedStatuses.isEmpty) return const SizedBox.shrink();
-    final days = withForecast.isEmpty ? <DateTime>[] : withForecast.first.series.take(5).map((d) => d.date).toList();
+    final statuses = [
+      ...state.followedStatuses.where((s) => s.kind == DataKind.forecast),
+      ...state.followedStatuses.where((s) => s.kind != DataKind.forecast),
+    ];
+    if (statuses.isEmpty) return const SizedBox.shrink();
+    final forecast = statuses.first.kind == DataKind.forecast ? statuses.first : null;
+    final days = forecast != null
+        ? forecast.series.take(5).map((d) => d.date).toList()
+        : [for (var i = 0; i < 4; i++) today.add(Duration(days: i))];
+
+    String source(AllergenStatus s) => switch (s.kind) {
+      DataKind.forecast => 'previsione',
+      DataKind.measured => 'misura del ${s.date!.day}/${s.date!.month}',
+      DataKind.estimate => 'stima del mese',
+    };
+
+    _DayCell cell(AllergenStatus s, DateTime d) {
+      switch (s.kind) {
+        case DataKind.forecast:
+          final v = s.series.where((x) => x.date == d).firstOrNull;
+          return _DayCell(level: v?.level, label: v == null ? '–' : Fmt.number(v.value));
+        case DataKind.measured:
+          return d == days.first ? _DayCell(level: s.level, label: Fmt.number(s.value!)) : const _DayCell(label: '–');
+        case DataKind.estimate:
+          return _DayCell(level: s.level);
+      }
+    }
 
     return SectionCard(
       children: [
@@ -267,99 +293,96 @@ class _Forecast extends StatelessWidget {
             Text('granuli/m³', style: TextStyle(fontSize: 12, color: p.ink3)),
           ],
         ),
-        if (days.isNotEmpty)
-          Row(
-            children: [
-              const SizedBox(width: 96),
-              for (final d in days)
-                Expanded(
-                  child: Text(
-                    Fmt.weekday(d, today),
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: p.ink2,
-                      fontWeight: d == days.first ? FontWeight.w700 : FontWeight.w500,
-                    ),
-                  ),
+        LayoutBuilder(
+          builder: (context, c) {
+            final widest = widestText(context, statuses.map((s) => s.allergen.name), _nameStyle);
+            final nameWidth = (widest + 12).clamp(0, c.maxWidth * 0.42).toDouble();
+            return Column(
+              children: [
+                Row(
+                  children: [
+                    SizedBox(width: nameWidth),
+                    for (final d in days)
+                      Expanded(
+                        child: Text(
+                          Fmt.weekday(d, today),
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: p.ink2,
+                            fontWeight: d == days.first ? FontWeight.w700 : FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
-            ],
-          ),
-        for (final s in withForecast)
-          Row(
-            children: [
-              SizedBox(
-                width: 96,
-                child: Text(s.allergen.name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-              ),
-              for (final d in days) Expanded(child: _DayCell(value: s.series.where((x) => x.date == d).firstOrNull)),
-            ],
-          ),
-        for (final s in without)
-          Row(
-            children: [
-              SizedBox(
-                width: 96,
-                child: Text(s.allergen.name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-              ),
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: p.line, width: 1.5),
-                  ),
-                  child: Text.rich(
-                    TextSpan(
+                for (final s in statuses)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 12),
+                    child: Row(
                       children: [
-                        TextSpan(
-                          text: s.kind == DataKind.measured
-                              ? 'Nessuna previsione. Ultima misura: '
-                              : 'Nessuna previsione. Stima: ',
+                        SizedBox(
+                          width: nameWidth,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(s.allergen.name, style: _nameStyle, maxLines: 1, overflow: TextOverflow.ellipsis),
+                              Text(
+                                source(s),
+                                style: TextStyle(fontSize: 12, color: p.ink3),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
                         ),
-                        TextSpan(
-                          text: s.level.label,
-                          style: TextStyle(fontWeight: FontWeight.w700, color: p.text(s.level)),
-                        ),
+                        for (final d in days) Expanded(child: cell(s, d)),
                       ],
                     ),
-                    style: TextStyle(fontSize: 13, color: p.ink2, height: 1.35),
                   ),
-                ),
-              ),
-            ],
+              ],
+            );
+          },
+        ),
+        if (statuses.any((s) => s.kind == DataKind.estimate))
+          Text(
+            'La stima è la media storica del mese: vale per tutti i giorni.',
+            style: TextStyle(fontSize: 12, color: p.ink3),
           ),
       ],
     );
   }
 }
 
+/// Quadrato del livello con il valore sotto. Senza dato: grigio con «–».
 class _DayCell extends StatelessWidget {
-  const _DayCell({required this.value});
+  const _DayCell({this.level, this.label = ''});
 
-  final DayValue? value;
+  final Level? level;
+  final String label;
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    final v = value;
+    final l = level;
     return Column(
       children: [
         Tooltip(
-          message: v?.level.label ?? 'Nessun dato',
+          message: l?.label ?? 'Nessun dato',
           child: Container(
-            width: 30,
-            height: 30,
+            width: 28,
+            height: 28,
             decoration: BoxDecoration(
-              color: v == null ? p.track : p.fill(v.level),
-              borderRadius: BorderRadius.circular(9),
+              color: l == null ? p.track : p.fill(l),
+              borderRadius: BorderRadius.circular(8),
+              border: l == null || l == Level.none ? Border.all(color: p.line, width: 1.5) : null,
             ),
           ),
         ),
         const SizedBox(height: 4),
         Text(
-          v == null ? '–' : Fmt.number(v.value),
-          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: p.ink2),
+          label,
+          style: TextStyle(fontSize: 12, height: 1.2, fontWeight: FontWeight.w600, color: p.ink2),
         ),
       ],
     );
@@ -510,10 +533,17 @@ class _OthersState extends State<_Others> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(s.allergen.name, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                          Text(
+                            s.allergen.name,
+                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                           Text(
                             _othersNote(s, context.read<AppState>().area, DateTime.now()),
                             style: TextStyle(fontSize: 12, color: p.ink3),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ),

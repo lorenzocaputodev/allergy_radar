@@ -4,6 +4,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:allergy_radar/models/allergen.dart';
 import 'package:allergy_radar/models/diary_entry.dart';
 import 'package:allergy_radar/models/place.dart';
 import 'package:allergy_radar/screens/alerts_screen.dart';
@@ -47,9 +48,16 @@ void main() {
     ]);
   });
 
-  Future<AppState> state(Place place, DateTime now, {bool diary = false, bool onboarded = true}) async {
+  Future<AppState> state(
+    Place place,
+    DateTime now, {
+    bool diary = false,
+    bool onboarded = true,
+    bool all = false,
+  }) async {
     SharedPreferences.setMockInitialValues({
       'onboarded': onboarded,
+      if (all) 'followed': [for (final a in Allergens.all) a.id],
       'place': '{"name":"${place.name}","region":null,"lat":${place.lat},"lon":${place.lon}}',
       if (diary) 'diary': jsonEncode(_sampleDiary()),
     });
@@ -64,9 +72,10 @@ void main() {
     required AppState s,
     Brightness b = Brightness.light,
     double height = 915,
+    double width = 412,
     Future<void> Function()? before,
   }) async {
-    tester.view.physicalSize = Size(412, height) * 2;
+    tester.view.physicalSize = Size(width, height) * 2;
     tester.view.devicePixelRatio = 2;
     addTearDown(tester.view.reset);
     await tester.runAsync(s.init);
@@ -97,11 +106,40 @@ void main() {
     });
   }
 
+  for (final (b, w) in [(Brightness.light, 412.0), (Brightness.dark, 412.0), (Brightness.light, 360.0)]) {
+    final t = '${b == Brightness.light ? 'chiaro' : 'scuro'}_${w.round()}';
+    testWidgets('oggi tutti $t', (tester) async {
+      await shot(
+        tester,
+        '01_oggi_tutti_$t',
+        const HomeShell(),
+        s: await state(Place.lecce, lecceNow, all: true),
+        b: b,
+        width: w,
+        height: 3400,
+      );
+    });
+  }
+
+  testWidgets('oggi bologna tutti', (tester) async {
+    await shot(
+      tester,
+      '02_oggi_bologna_tutti',
+      const HomeShell(),
+      s: await state(bologna, bolognaNow, all: true),
+      height: 3400,
+    );
+  });
+
   testWidgets('oggi bologna', (tester) async {
     await shot(tester, '02_oggi_bologna', const HomeShell(), s: await state(bologna, bolognaNow), height: 2300);
   });
 
-  for (final (id, place, now) in [('parietaria', Place.lecce, lecceNow), ('grass', Place.lecce, lecceNow)]) {
+  for (final (id, place, now) in [
+    ('parietaria', Place.lecce, lecceNow),
+    ('grass', Place.lecce, lecceNow),
+    ('mugwort', Place.lecce, lecceNow),
+  ]) {
     testWidgets('dettaglio $id', (tester) async {
       await shot(
         tester,

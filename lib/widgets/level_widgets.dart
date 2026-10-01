@@ -4,6 +4,21 @@ import '../models/allergen.dart';
 import '../models/level.dart';
 import '../theme/palette.dart';
 
+/// Larghezza del testo più lungo: per colonne di nomi che non vanno mai a capo.
+double widestText(BuildContext context, Iterable<String> texts, TextStyle style) {
+  var widest = 0.0;
+  for (final t in texts) {
+    final painter = TextPainter(
+      text: TextSpan(text: t, style: style),
+      textDirection: TextDirection.ltr,
+      textScaler: MediaQuery.textScalerOf(context),
+    )..layout();
+    if (painter.width > widest) widest = painter.width;
+    painter.dispose();
+  }
+  return widest;
+}
+
 /// Barra a 4 segmenti: il livello si legge anche senza colore.
 class RiskBar extends StatelessWidget {
   const RiskBar(this.level, {super.key, this.height = 8, this.track});

@@ -40,7 +40,11 @@ class AllergenCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(a.name, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(a.name, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
+                        ),
                         const SizedBox(height: 2),
                         Text(a.family, style: TextStyle(fontSize: 13, color: p.ink3)),
                       ],

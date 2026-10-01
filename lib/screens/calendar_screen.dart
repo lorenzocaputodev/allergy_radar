@@ -21,10 +21,15 @@ class CalendarScreen extends StatelessWidget {
     final area = state.area;
     final mine = state.followedAllergens;
     final others = Allergens.all.where((a) => !state.followed.contains(a.id)).toList();
+    const nameStyle = TextStyle(fontSize: 13, fontWeight: FontWeight.w600);
+    // Icona, spazio e nome più lungo, senza superare il 40% dello schermo.
+    final nameWidth = (36 + widestText(context, Allergens.all.map((a) => a.name), nameStyle) + 8)
+        .clamp(0, MediaQuery.sizeOf(context).width * 0.4)
+        .toDouble();
 
     Widget header() => Row(
       children: [
-        const SizedBox(width: 124),
+        SizedBox(width: nameWidth),
         for (var i = 0; i < 12; i++)
           Expanded(
             child: Text(
@@ -48,13 +53,13 @@ class CalendarScreen extends StatelessWidget {
         child: Row(
           children: [
             SizedBox(
-              width: 124,
+              width: nameWidth,
               child: Row(
                 children: [
                   AllergenGlyph(a, size: 28),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: Text(a.name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                    child: Text(a.name, style: nameStyle, maxLines: 1, overflow: TextOverflow.ellipsis),
                   ),
                 ],
               ),
