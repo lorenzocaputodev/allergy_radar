@@ -52,6 +52,13 @@ Future<void> main() async {
   state.addListener(reschedule);
   diary.addListener(reschedule);
 
+  // Tornando all'app (anche dal widget) i dati più vecchi di un'ora si riscaricano: aggiornano anche il widget.
+  AppLifecycleListener(
+    onResume: () {
+      if (state.onboarded && state.isStale) state.refresh();
+    },
+  );
+
   // Toccando il promemoria del diario si apre direttamente la voce di oggi.
   AlertsService.opened.addListener(() {
     if (AlertsService.opened.value != AlertKind.diary) return;

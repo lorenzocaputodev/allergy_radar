@@ -3,11 +3,13 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/alert_log.dart';
+import '../models/diary_entry.dart';
 import '../services/alert_planner.dart';
 import '../state/app_state.dart';
 import '../theme/palette.dart';
 import '../utils/format.dart';
 import 'alerts_screen.dart';
+import 'log_entry_screen.dart';
 
 /// Gli avvisi arrivati, dal più recente. L'ingranaggio porta alle impostazioni.
 class NotificationsScreen extends StatefulWidget {
@@ -103,40 +105,48 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 0.8, color: p.ink3),
                     ),
                   ),
-                Container(
+                Card(
                   margin: const EdgeInsets.only(bottom: 8),
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: p.card,
+                  color: p.card,
+                  elevation: 0,
+                  clipBehavior: Clip.antiAlias,
+                  shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: p.line),
+                    side: BorderSide(color: p.line),
                   ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Icon(NotificationsScreen.iconOf(e.kind), color: p.pineText, size: 22),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
+                  child: InkWell(
+                    onTap: () => _open(e),
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(14, 14, 6, 14),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(NotificationsScreen.iconOf(e.kind), color: p.pineText, size: 22),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Expanded(
-                                  child: Text(
-                                    e.title,
-                                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-                                  ),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        e.title,
+                                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                                      ),
+                                    ),
+                                    Text(Fmt.time(e.at), style: TextStyle(fontSize: 12, color: p.ink3)),
+                                  ],
                                 ),
-                                Text(Fmt.time(e.at), style: TextStyle(fontSize: 12, color: p.ink3)),
+                                const SizedBox(height: 4),
+                                Text(e.body, style: TextStyle(fontSize: 14, height: 1.4, color: p.ink2)),
                               ],
                             ),
-                            const SizedBox(height: 4),
-                            Text(e.body, style: TextStyle(fontSize: 14, height: 1.4, color: p.ink2)),
-                          ],
-                        ),
+                          ),
+                          Icon(Icons.chevron_right, color: p.ink3),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
               ],
@@ -145,6 +155,18 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         },
       ),
     );
+  }
+
+  /// Il promemoria apre il diario di quel giorno; gli avvisi sui pollini riportano a Oggi.
+  void _open(AlertMessage m) {
+    final nav = Navigator.of(context);
+    if (m.kind == AlertKind.diary) {
+      nav.push(
+        MaterialPageRoute<void>(builder: (_) => LogEntryScreen(date: DiaryEntry.day(m.at)), fullscreenDialog: true),
+      );
+    } else {
+      nav.popUntil((r) => r.isFirst);
+    }
   }
 
   static bool _sameDay(DateTime a, DateTime b) => a.year == b.year && a.month == b.month && a.day == b.day;
