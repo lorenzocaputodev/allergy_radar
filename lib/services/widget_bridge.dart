@@ -17,9 +17,15 @@ class WidgetBridge {
   static bool get _isAndroid => !kIsWeb && Platform.isAndroid;
 
   static Future<void> save(SharedPreferences prefs, AppState app) async {
+    final data = encode(app);
+    if (data != null) await prefs.setString(_key, data);
+  }
+
+  /// Quello che mostra il widget, in JSON. Null se non ci sono ancora dati.
+  static String? encode(AppState app) {
     final snap = app.snapshot;
-    if (snap == null) return;
-    final data = {
+    if (snap == null) return null;
+    return jsonEncode({
       'place': app.place.name,
       'updated': snap.fetchedAt.toIso8601String(),
       'level': app.dayLevel.index,
@@ -34,8 +40,7 @@ class WidgetBridge {
             'estimate': s.kind == DataKind.estimate,
           },
       ],
-    };
-    await prefs.setString(_key, jsonEncode(data));
+    });
   }
 
   /// Chiede al widget di ridisegnarsi. Solo dall'app aperta: in background basta [save].
