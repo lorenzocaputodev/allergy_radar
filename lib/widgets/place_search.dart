@@ -25,6 +25,7 @@ class _PlaceSearchState extends State<PlaceSearch> {
   String? _error;
   bool _loading = false;
   bool _locating = false;
+  int _query = 0;
 
   Place? _found;
 
@@ -40,14 +41,19 @@ class _PlaceSearchState extends State<PlaceSearch> {
   }
 
   Future<void> _search(String q) async {
+    final query = ++_query;
     if (q.length < 2) {
-      setState(() => _results = const []);
+      setState(() {
+        _results = const [];
+        _loading = false;
+      });
       return;
     }
     setState(() {
       _loading = true;
       _error = null;
     });
+    bool current() => mounted && query == _query;
     try {
       final r = await context.read<OpenMeteoClient>().searchPlaces(q);
       final seen = <String>{};
@@ -55,11 +61,11 @@ class _PlaceSearchState extends State<PlaceSearch> {
         for (final p in r)
           if (seen.add('${p.name}|${p.region}')) p,
       ];
-      if (mounted) setState(() => _results = unique);
+      if (current()) setState(() => _results = unique);
     } on Object {
-      if (mounted) setState(() => _error = 'Ricerca non riuscita. Controlla la connessione.');
+      if (current()) setState(() => _error = 'Ricerca non riuscita. Controlla la connessione.');
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (current()) setState(() => _loading = false);
     }
   }
 
