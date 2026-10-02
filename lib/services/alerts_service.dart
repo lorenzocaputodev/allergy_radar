@@ -26,8 +26,8 @@ void alertsCallbackDispatcher() {
     WidgetsFlutterBinding.ensureInitialized();
     try {
       await AlertsService.runInBackground(force: task == AlertsService.refreshTask);
-    } on Object {
-      // Un giro andato male non deve bloccare i successivi.
+    } on Object catch (e) {
+      debugPrint('Controllo in background non riuscito: $e');
     }
     return true;
   });
@@ -38,8 +38,7 @@ class AlertsService {
 
   static const refreshTask = 'widget_refresh';
   static const _work = 'pollen_check_hourly';
-  static const _testId = 99;
-  static const _testBody = 'Gli avvisi di Allergy Radar arrivano così.';
+  static const _lateBy = Duration(hours: 1);
 
   static const _pollenChannel = AndroidNotificationChannel(
     'pollen',
@@ -126,14 +125,7 @@ class AlertsService {
     return exact();
   }
 
-  // --- Prova e lavoro in background ---
-  static Future<bool> sendTest() async {
-    if (!await enabled()) return false;
-    await _plugin.show(_testId, 'Avviso di prova', _testBody, _details(AlertKind.briefing, _testBody));
-    return true;
-  }
-
-  /// Avvia il controllo orario in background (dati, widget, avvisi).
+  // --- Lavoro in background ---
   static Future<void> startBackground() async {
     if (!await init()) return;
     try {
@@ -152,7 +144,7 @@ class AlertsService {
   static Future<void> reschedule(SharedPreferences prefs, AppState app, DiaryState diary) async {
     if (!_ready || !app.onboarded) return;
     final now = DateTime.now();
-    final messages = const AlertPlanner().schedule(
+    final planned = const AlertPlanner().schedule(
       now: now,
       settings: app.alerts,
       placeName: app.place.name,
@@ -161,8 +153,16 @@ class AlertsService {
       diaryDoneToday: diary.entryFor(DiaryEntry.day(now)) != null,
     );
     try {
-      final mode = await exact() ? AndroidScheduleMode.exactAllowWhileIdle : AndroidScheduleMode.inexactAllowWhileIdle;
-      for (final k in AlertKind.values) {
+      final exactMode = await exact();
+      final waiting = exactMode
+          ? const <AlertKind>{}
+          : {
+              for (final m in await AlertLog.pending(prefs))
+                if (!m.at.isAfter(now) && now.difference(m.at) < _lateBy) m.kind,
+            };
+      final messages = await enabled() ? planned.where((m) => !waiting.contains(m.kind)).toList() : <AlertMessage>[];
+      final mode = exactMode ? AndroidScheduleMode.exactAllowWhileIdle : AndroidScheduleMode.inexactAllowWhileIdle;
+      for (final k in AlertKind.values.where((k) => !waiting.contains(k))) {
         await _plugin.cancel(_id(k));
       }
       for (final m in messages) {

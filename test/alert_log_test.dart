@@ -39,8 +39,9 @@ void main() {
     await AlertLog.setPending(prefs, [at(9), at(21, AlertKind.diary)], day.add(const Duration(hours: 8, minutes: 30)));
 
     await AlertLog.remove(prefs, at(8), now);
-    await AlertLog.remove(prefs, at(9), now);
+    final removing = AlertLog.remove(prefs, at(9), now);
     expect(AlertLog.read(prefs, now), isEmpty);
+    await removing;
     expect(AlertLog.read(prefs, day.add(const Duration(hours: 22))).single.kind, AlertKind.diary);
 
     await AlertLog.restore(prefs, at(8));

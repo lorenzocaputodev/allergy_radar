@@ -17,7 +17,11 @@ abstract final class AlertLog {
     return all.take(max).toList();
   }
 
-  /// Sostituisce gli avvisi programmati; quelli già arrivati passano nel registro.
+  static Future<List<AlertMessage>> pending(SharedPreferences prefs) async {
+    await prefs.reload();
+    return _decode(prefs.getString(pendingKey));
+  }
+
   static Future<void> setPending(SharedPreferences prefs, List<AlertMessage> pending, DateTime now) async {
     await prefs.reload();
     await prefs.setString(key, _encode(read(prefs, now)));
@@ -26,10 +30,9 @@ abstract final class AlertLog {
 
   static Future<void> remove(SharedPreferences prefs, AlertMessage m, DateTime now) async {
     bool same(AlertMessage x) => x.kind == m.kind && x.at == m.at;
-    await prefs.setString(key, _encode(_decode(prefs.getString(key)).where((x) => !same(x)).toList()));
-    // Fra i programmati si toglie solo se è già arrivato: quelli futuri devono restare.
+    final log = _decode(prefs.getString(key)).where((x) => !same(x)).toList();
     final pending = _decode(prefs.getString(pendingKey)).where((x) => !(same(x) && !x.at.isAfter(now))).toList();
-    await prefs.setString(pendingKey, _encode(pending));
+    await Future.wait([prefs.setString(key, _encode(log)), prefs.setString(pendingKey, _encode(pending))]);
   }
 
   static Future<void> restore(SharedPreferences prefs, AlertMessage m) =>

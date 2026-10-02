@@ -10,6 +10,7 @@ import '../models/level.dart';
 import '../services/alert_planner.dart';
 import '../state/app_state.dart';
 import '../theme/palette.dart';
+import '../utils/days.dart';
 import '../utils/format.dart';
 import '../widgets/page_list.dart';
 import 'alerts_screen.dart';
@@ -171,7 +172,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     padding: const EdgeInsets.symmetric(horizontal: 20),
     alignment: side,
     decoration: BoxDecoration(color: p.fill(Level.high), borderRadius: BorderRadius.circular(16)),
-    child: const Icon(Icons.delete_outline, color: Colors.white),
+    child: Icon(Icons.delete_outline, color: p.onFill(Level.high)),
   );
 
   void _delete(SharedPreferences prefs, AlertMessage m) {
@@ -208,7 +209,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   static String _dayLabel(DateTime d, DateTime now) {
     if (_sameDay(d, now)) return 'Oggi';
-    if (_sameDay(d, now.subtract(const Duration(days: 1)))) return 'Ieri';
+    if (_sameDay(d, now.plusDays(-1))) return 'Ieri';
     return Fmt.longDate(d);
   }
 }
