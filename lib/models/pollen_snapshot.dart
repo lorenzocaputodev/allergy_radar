@@ -101,4 +101,7 @@ class PollenSnapshot {
   final NearStation? nearestStation;
 
   AllergenStatus? operator [](String id) => statuses[id];
+
+  /// Livello (0–4) di ogni allergene, come lo salva il diario.
+  Map<String, int> get levels => {for (final e in statuses.entries) e.key: e.value.level.index};
 }

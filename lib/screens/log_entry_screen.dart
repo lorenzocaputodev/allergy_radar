@@ -44,7 +44,7 @@ class _LogEntryScreenState extends State<LogEntryScreen> {
   Map<String, int> _pollenNow() {
     final snap = context.read<AppState>().snapshot;
     if (!_isToday || snap == null) return _entry.pollen;
-    return {for (final e in snap.statuses.entries) e.key: e.value.level.index};
+    return snap.levels;
   }
 
   Future<void> _save({bool noSymptoms = false}) async {
