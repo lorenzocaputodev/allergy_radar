@@ -109,22 +109,38 @@ class AppState extends ChangeNotifier {
     await setPlace(p);
   }
 
+  /// Un aggiornamento chiesto mentre un altro era in corso, per esempio cambiando luogo.
+  bool _again = false;
+
   Future<void> refresh() async {
-    if (loading) return;
+    if (loading) {
+      _again = true;
+      return;
+    }
     loading = true;
     error = null;
     notifyListeners();
+    final asked = place;
     try {
-      final raw = await _repo.fetch(place);
-      snapshot = _repo.build(raw);
-      await _prefs.setString(_kCache, raw.encode());
+      final raw = await _repo.fetch(asked);
+      // Il luogo è cambiato durante il download: questi dati non sono più suoi.
+      if (place.cacheKey == asked.cacheKey) {
+        snapshot = _repo.build(raw);
+        await _prefs.setString(_kCache, raw.encode());
+      }
     } on Object {
-      error = snapshot == null
-          ? 'Dati non disponibili. Controlla la connessione e riprova.'
-          : 'Sei offline o le fonti non rispondono: mostro gli ultimi dati.';
+      if (place.cacheKey == asked.cacheKey) {
+        error = snapshot == null
+            ? 'Dati non disponibili. Controlla la connessione e riprova.'
+            : 'Sei offline o le fonti non rispondono: mostro gli ultimi dati.';
+      }
     } finally {
       loading = false;
       notifyListeners();
+    }
+    if (_again) {
+      _again = false;
+      await refresh();
     }
   }
 
