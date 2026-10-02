@@ -313,7 +313,7 @@ List<Map<String, dynamic>> _sampleDiary() {
   final today = DiaryEntry.day(DateTime.now());
   final out = <Map<String, dynamic>>[];
   for (var i = 1; i < 30; i++) {
-    if (i % 9 == 0) continue; // qualche giorno dimenticato
+    if (i % 9 == 0) continue;
     final par = i < 10
         ? 3
         : i < 20

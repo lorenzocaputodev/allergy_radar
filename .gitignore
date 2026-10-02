@@ -49,3 +49,4 @@ app.*.map.json
 
 # Screenshot di revisione (test_screens)
 /test_screens/out/
+/test_screens/failures/
