@@ -53,6 +53,7 @@ Future<void> main() async {
 
   AppLifecycleListener(
     onResume: () {
+      reschedule();
       if (state.onboarded && state.isStale) state.refresh();
     },
   );

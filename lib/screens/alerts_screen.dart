@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/alert_settings.dart';
 import '../models/diary_entry.dart';
@@ -10,6 +9,7 @@ import '../state/app_state.dart';
 import '../state/diary_state.dart';
 import '../theme/palette.dart';
 import '../widgets/page_list.dart';
+import '../widgets/settings_group.dart';
 
 class AlertsScreen extends StatefulWidget {
   const AlertsScreen({super.key});
@@ -50,8 +50,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
               await state.setAlerts(a);
             },
           ),
-          const SizedBox(height: 16),
-          const _Check(),
+          if (AlertsService.isSupported && state.alerts.anyEnabled) const _Punctuality(),
         ],
       ),
     );
@@ -207,14 +206,14 @@ class AlertSettingsEditor extends StatelessWidget {
   }
 }
 
-class _Check extends StatefulWidget {
-  const _Check();
+class _Punctuality extends StatefulWidget {
+  const _Punctuality();
 
   @override
-  State<_Check> createState() => _CheckState();
+  State<_Punctuality> createState() => _PunctualityState();
 }
 
-class _CheckState extends State<_Check> {
+class _PunctualityState extends State<_Punctuality> {
   late Future<(bool, bool)> _status = _read();
   late final AppLifecycleListener _lifecycle;
 
@@ -232,76 +231,48 @@ class _CheckState extends State<_Check> {
 
   static Future<(bool, bool)> _read() async => (await AlertsService.enabled(), await AlertsService.exact());
 
-  Future<void> _test() async {
-    final sent = await AlertsService.sendTest();
-    if (!mounted || sent) return;
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Le notifiche dell’app sono spente.')));
-  }
-
-  Future<void> _makeExact() async {
-    final app = context.read<AppState>();
-    final diary = context.read<DiaryState>();
-    if (await AlertsService.requestExact()) {
-      await AlertsService.reschedule(await SharedPreferences.getInstance(), app, diary);
-    }
-    if (mounted) setState(() => _status = _read());
-  }
-
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
     return FutureBuilder<(bool, bool)>(
       future: _status,
       builder: (context, snap) {
-        final (enabled, exact) = snap.data ?? (true, true);
-        final off = AlertsService.isSupported && !enabled;
-        final delayed = AlertsService.isSupported && enabled && !exact;
-        return Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(color: p.chip, borderRadius: BorderRadius.circular(16)),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(off ? Icons.notifications_off_outlined : Icons.schedule, color: p.ink2, size: 20),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      off
-                          ? 'Le notifiche dell’app sono spente: riattivale da Impostazioni › App › Allergy Radar.'
-                          : delayed
-                          ? 'Possono arrivare fino a un’ora in ritardo.'
-                          : 'Arrivano all’orario scelto, anche ad app chiusa.',
-                      style: TextStyle(fontSize: 13, height: 1.45, color: p.ink2),
-                    ),
+        final status = snap.data;
+        if (status == null) return const SizedBox.shrink();
+        final (enabled, exact) = status;
+        final Widget row;
+        if (!enabled) {
+          row = ListTile(
+            contentPadding: const EdgeInsets.fromLTRB(16, 6, 16, 6),
+            leading: Icon(Icons.notifications_off_outlined, color: p.ink2),
+            title: const Text('Notifiche spente', style: TextStyle(fontWeight: FontWeight.w700)),
+            subtitle: const Text('Gli avvisi non arrivano: riattivale da Impostazioni › App › Allergy Radar.'),
+          );
+        } else {
+          row = ListTile(
+            contentPadding: const EdgeInsets.fromLTRB(16, 6, 12, 6),
+            leading: Icon(exact ? Icons.alarm_on : Icons.schedule, color: p.ink2),
+            title: const Text('Avvisi puntuali', style: TextStyle(fontWeight: FontWeight.w700)),
+            subtitle: Text(
+              exact
+                  ? 'Arrivano all’orario scelto, anche ad app chiusa.'
+                  : 'Ora possono arrivare fino a un’ora in ritardo.',
+            ),
+            trailing: exact
+                ? Icon(Icons.check_circle, color: p.pineText)
+                : FilledButton.tonal(
+                    onPressed: AlertsService.requestExact,
+                    style: FilledButton.styleFrom(minimumSize: const Size(0, 40)),
+                    child: const Text('Attiva'),
                   ),
-                ],
-              ),
-              if (AlertsService.isSupported && !off) ...[
-                const SizedBox(height: 10),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    if (delayed)
-                      FilledButton.tonalIcon(
-                        onPressed: _makeExact,
-                        style: FilledButton.styleFrom(minimumSize: const Size(0, 40)),
-                        icon: const Icon(Icons.alarm_on, size: 18),
-                        label: const Text('Falli arrivare in orario'),
-                      ),
-                    OutlinedButton.icon(
-                      onPressed: _test,
-                      icon: const Icon(Icons.notifications_active_outlined, size: 18),
-                      label: const Text('Avviso di prova'),
-                    ),
-                  ],
-                ),
-              ],
-            ],
-          ),
+          );
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SettingsLabel('Puntualità'),
+            SettingsGroup([row]),
+          ],
         );
       },
     );
