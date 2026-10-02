@@ -327,7 +327,7 @@ String _whyText(AllergenStatus s, NearStation? nearest, Area area, DateTime now)
   final why = s.allergen.hasForecast
       ? 'Oggi la previsione non è disponibile'
       : nearest != null
-      ? 'Per questo polline non c’è una previsione e la stazione di ${nearest.station.name} non ha misure recenti'
+      ? 'Per questo polline non c’è una previsione e le stazioni vicine non hanno misure recenti'
       : 'Per questo polline non c’è una previsione e non ci sono stazioni di misura vicine';
   return '$why: mostriamo il valore tipico di ${Fmt.month(now.month)} nell’area ${area.label}.';
 }

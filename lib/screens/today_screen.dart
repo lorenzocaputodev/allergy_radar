@@ -154,22 +154,26 @@ class _Banner extends StatelessWidget {
   final String message;
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
-    child: Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: const Color(0xFF2B3430), borderRadius: BorderRadius.circular(16)),
-      child: Row(
-        children: [
-          const Icon(Icons.wifi_off, color: Colors.white),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(message, style: const TextStyle(color: Colors.white, fontSize: 14)),
-          ),
-        ],
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    // Colori invertiti rispetto alla pagina, come una snackbar: si nota in entrambi i temi.
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(color: p.ink, borderRadius: BorderRadius.circular(16)),
+        child: Row(
+          children: [
+            Icon(Icons.wifi_off, color: p.bg),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(message, style: TextStyle(color: p.bg, fontSize: 14)),
+            ),
+          ],
+        ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 // --- Riquadro del giorno ---
@@ -193,8 +197,11 @@ class _Hero extends StatelessWidget {
     } else {
       summary = 'Al livello che ti dà fastidio: ${Fmt.list([for (final s in above) s.allergen.name])}.';
     }
-    final estimated = followed.where((s) => s.kind == DataKind.estimate).map((s) => s.allergen.name).toList();
-    final nearest = state.snapshot?.nearestStation;
+    // Due cause diverse: per i pollini solo misurati manca una misura recente, per gli altri la previsione.
+    final estimated = followed.where((s) => s.kind == DataKind.estimate).map((s) => s.allergen);
+    final noMeasure = [for (final a in estimated.where((a) => !a.hasForecast)) a.name];
+    final noForecast = [for (final a in estimated.where((a) => a.hasForecast)) a.name];
+    final noStation = state.snapshot?.nearestStation == null;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -229,14 +236,15 @@ class _Hero extends StatelessWidget {
             RiskBar(level, track: p.heroTrack),
             const SizedBox(height: 14),
             Text(summary),
-            if (estimated.isNotEmpty) ...[
+            for (final note in [
+              if (noMeasure.isNotEmpty)
+                noStation
+                    ? 'Stima per ${Fmt.list(noMeasure)}: non ci sono stazioni di misura vicine.'
+                    : 'Stima per ${Fmt.list(noMeasure)}: nessuna misura recente dalle stazioni vicine.',
+              if (noForecast.isNotEmpty) 'Stima per ${Fmt.list(noForecast)}: la previsione non è disponibile.',
+            ]) ...[
               const SizedBox(height: 10),
-              Text(
-                nearest == null
-                    ? 'Stima per ${Fmt.list(estimated)}: non ci sono stazioni di misura vicine.'
-                    : 'Stima per ${Fmt.list(estimated)}: la stazione di ${nearest.station.name} non ha misure recenti.',
-                style: TextStyle(fontSize: 13, color: p.onHero.withValues(alpha: 0.85)),
-              ),
+              Text(note, style: TextStyle(fontSize: 13, color: p.onHero.withValues(alpha: 0.85))),
             ],
           ],
         ),
