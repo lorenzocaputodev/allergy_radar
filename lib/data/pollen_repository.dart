@@ -65,31 +65,8 @@ class PollenRepository {
 
   Future<RawPollenData> fetch(Place place) async {
     final now = _now();
-    final om = await openMeteo.fetchForecast(place);
-
-    String? csv;
-    NearStation? used;
-    final ids = Allergens.measuredOnly.map((a) => a.pollnetId);
-    // La stazione più vicina può essere ferma: si prova la successiva, fino a tre.
-    for (final near in stations.near(place).take(3)) {
-      try {
-        final body = await pollnet.fetchCsv(near.station.id, ids, now.subtract(const Duration(days: historyDays)), now);
-        final recent = PollnetClient.parseCsv(body)
-            .any((m) => m.value != null && now.difference(m.date).inDays <= maxMeasureAgeDays);
-        if (recent) {
-          csv = body;
-          used = near;
-          break;
-        }
-      } on PollnetException {
-        // Errore o CSV strano su una sola stazione: le altre possono rispondere.
-        continue;
-      } on Exception {
-        // ISPRA non raggiungibile: si resta sulle stime, la previsione vale comunque.
-        break;
-      }
-    }
-
+    // Le due fonti sono indipendenti: si interrogano insieme.
+    final (om, (csv, used)) = await (openMeteo.fetchForecast(place), _measures(place, now)).wait;
     return RawPollenData(
       place: place,
       fetchedAt: now,
@@ -98,6 +75,27 @@ class PollenRepository {
       stationId: used?.station.id,
       stationKm: used?.km,
     );
+  }
+
+  /// CSV della stazione più vicina con misure recenti, se c'è.
+  Future<(String?, NearStation?)> _measures(Place place, DateTime now) async {
+    final ids = Allergens.measuredOnly.map((a) => a.pollnetId);
+    // La stazione più vicina può essere ferma: si prova la successiva, fino a tre.
+    for (final near in stations.near(place).take(3)) {
+      try {
+        final body = await pollnet.fetchCsv(near.station.id, ids, now.subtract(const Duration(days: historyDays)), now);
+        final recent = PollnetClient.parseCsv(body)
+            .any((m) => m.value != null && now.difference(m.date).inDays <= maxMeasureAgeDays);
+        if (recent) return (body, near);
+      } on PollnetException {
+        // Errore su una sola stazione: le altre possono rispondere.
+        continue;
+      } on Exception {
+        // ISPRA non raggiungibile: si resta sulle stime, la previsione vale comunque.
+        break;
+      }
+    }
+    return (null, null);
   }
 
   PollenSnapshot build(RawPollenData raw) {
