@@ -1,20 +1,14 @@
 import 'dart:convert';
-import 'dart:io';
 
-import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/allergen.dart';
 import '../state/app_state.dart';
 
 /// Dati per il widget Android. Il widget nativo li legge dalle SharedPreferences
-/// (chiave «flutter.widget_data»), quindi funziona anche quando l'app è chiusa.
+/// (chiave «flutter.widget_data») e si ridisegna da solo quando cambiano, anche ad app chiusa.
 class WidgetBridge {
-  static const _channel = MethodChannel('dev.lorenzocaputo.allergyradar/widget');
   static const _key = 'widget_data';
-
-  static bool get _isAndroid => !kIsWeb && Platform.isAndroid;
 
   static Future<void> save(SharedPreferences prefs, AppState app) async {
     final data = encode(app);
@@ -41,15 +35,5 @@ class WidgetBridge {
           },
       ],
     });
-  }
-
-  /// Chiede al widget di ridisegnarsi. Solo dall'app aperta: in background basta [save].
-  static Future<void> refresh() async {
-    if (!_isAndroid) return;
-    try {
-      await _channel.invokeMethod<void>('updateWidgets');
-    } on PlatformException {
-      // Nessun widget sulla Home: niente da aggiornare.
-    }
   }
 }

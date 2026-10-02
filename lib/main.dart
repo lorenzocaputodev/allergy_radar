@@ -34,13 +34,13 @@ Future<void> main() async {
   final state = AppState(repo, prefs);
   final diary = DiaryState(prefs);
 
-  // Non solo dati nuovi: anche gli allergeni seguiti cambiano quello che mostra il widget.
+  // Anche gli allergeni seguiti cambiano il widget, non solo i dati nuovi.
   String? shown;
   state.addListener(() {
     final data = WidgetBridge.encode(state);
     if (data == null || data == shown) return;
     shown = data;
-    WidgetBridge.save(prefs, state).then((_) => WidgetBridge.refresh());
+    unawaited(WidgetBridge.save(prefs, state));
   });
 
   // Dati, impostazioni o diario cambiati: gli avvisi programmati si rifanno, una volta sola per raffica.
