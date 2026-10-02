@@ -2,9 +2,11 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../models/alert_settings.dart';
 import '../models/allergen.dart';
 import '../models/diary_entry.dart';
 import '../models/level.dart';
+import '../models/place.dart';
 import '../state/app_state.dart';
 import '../state/diary_state.dart';
 
@@ -42,35 +44,55 @@ class Backup {
     }
     final data = (root['data'] as Map).cast<String, Object?>();
     // Prima si verifica tutto, poi si scrive: un file a metà non lascia l'app a metà.
-    for (final e in data.entries) {
-      if (!_keys.contains(e.key)) continue;
-      final v = e.value;
-      if (v is! String && v is! bool && v is! int && v is! double && v is! List) {
+    // Si leggono i valori come li leggerà l'app: un diario rotto bloccherebbe ogni avvio.
+    final values = <String, Object>{};
+    for (final k in _keys) {
+      final v = data[k];
+      if (v == null) continue;
+      try {
+        values[k] = _check(k, v);
+      } on Object {
         throw const FormatException('Il backup contiene dati non validi.');
       }
     }
-    final diaryRaw = data[DiaryState.kEntries];
+    final diaryRaw = values[DiaryState.kEntries];
     final entries = diaryRaw is String ? (jsonDecode(diaryRaw) as List).length : 0;
     for (final k in _keys) {
       await prefs.remove(k);
     }
-    for (final e in data.entries) {
-      if (!_keys.contains(e.key)) continue;
-      final v = e.value;
-      switch (v) {
+    for (final MapEntry(:key, :value) in values.entries) {
+      switch (value) {
         case final String s:
-          await prefs.setString(e.key, s);
+          await prefs.setString(key, s);
         case final bool b:
-          await prefs.setBool(e.key, b);
-        case final int i:
-          await prefs.setInt(e.key, i);
-        case final double d:
-          await prefs.setDouble(e.key, d);
-        case final List l:
-          await prefs.setStringList(e.key, l.cast<String>());
+          await prefs.setBool(key, b);
+        case final List<String> l:
+          await prefs.setStringList(key, l);
       }
     }
     return entries;
+  }
+
+  /// Il valore da salvare per la chiave [k], se è quello che l'app si aspetta. Altrimenti lancia.
+  static Object _check(String k, Object v) {
+    Map<String, dynamic> map(Object s) => jsonDecode(s as String) as Map<String, dynamic>;
+    switch (k) {
+      case AppState.kPlace:
+        Place.fromJson(map(v));
+      case AppState.kThresholds:
+        map(v).forEach((_, l) => Level.fromIndex(l as int));
+      case AppState.kAlerts:
+        AlertSettings.fromJson(map(v));
+      case DiaryState.kEntries:
+        for (final e in jsonDecode(v as String) as List) {
+          DiaryEntry.fromJson(e as Map<String, dynamic>);
+        }
+      case AppState.kFollowed || DiaryState.kMeds:
+        return (v as List).cast<String>().toList();
+      case AppState.kOnboarded:
+        return v as bool;
+    }
+    return v as String;
   }
 
   /// Diario in CSV: separatore «;» e BOM UTF-8, come si aspetta Excel in italiano.

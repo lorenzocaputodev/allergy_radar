@@ -48,6 +48,27 @@ void main() {
     expect(prefs.getBool('onboarded'), isTrue);
   });
 
+  test('rifiuta backup con contenuti rotti, senza toccare i dati', () async {
+    final prefs = await SharedPreferences.getInstance();
+    String backup(Map<String, Object?> data) => jsonEncode({'app': 'allergy_radar', 'format': 1, 'data': data});
+    for (final data in [
+      {'diary': '[{"nose":1}]'},
+      {'diary': 'non è json'},
+      {'place': 'x'},
+      {'place': '{"name":"Lecce"}'},
+      {
+        'followed': [1, 2],
+      },
+      {'thresholds': '{"grass":"alto"}'},
+      {'onboarded': 'sì'},
+    ]) {
+      await expectLater(Backup.restore(prefs, backup(data)), throwsA(isA<FormatException>()), reason: '$data');
+    }
+    expect(prefs.getBool('onboarded'), isTrue);
+    expect(prefs.getStringList('followed'), ['grass', 'parietaria']);
+    expect(DiaryState(prefs).entries, hasLength(1));
+  });
+
   test('CSV: intestazione, separatore e campi con «;» tra virgolette', () async {
     final csv = Backup.diaryCsv(
       DiaryState(await SharedPreferences.getInstance()).entries,
