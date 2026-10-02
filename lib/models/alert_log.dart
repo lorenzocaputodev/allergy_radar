@@ -8,6 +8,9 @@ import '../services/alert_planner.dart';
 ///
 /// Un avviso programmato arriva senza far girare l'app: si salva quando lo si programma
 /// ([setPending]) e conta come arrivato quando il suo orario è passato.
+///
+/// Lo scrive anche il controllo in background, da un altro isolate: la copia in memoria dell'app aperta
+/// va riletta ([SharedPreferences.reload]), altrimenti riscrivendo il registro cancellerebbe i suoi avvisi.
 abstract final class AlertLog {
   static const key = 'alerts_log';
   static const pendingKey = 'alerts_pending';
@@ -24,6 +27,7 @@ abstract final class AlertLog {
 
   /// Sostituisce gli avvisi programmati; quelli già arrivati passano nel registro.
   static Future<void> setPending(SharedPreferences prefs, List<AlertMessage> pending, DateTime now) async {
+    await prefs.reload();
     await prefs.setString(key, _encode(read(prefs, now)));
     await prefs.setString(pendingKey, _encode(pending));
   }
@@ -40,6 +44,13 @@ abstract final class AlertLog {
   /// Rimette un avviso tolto per sbaglio («Annulla»).
   static Future<void> restore(SharedPreferences prefs, AlertMessage m) =>
       prefs.setString(key, _encode([..._decode(prefs.getString(key)), m]));
+
+  /// Le preferenze rilette, per mostrare (e poi modificare) il registro con quanto scritto in background.
+  static Future<SharedPreferences> fresh() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.reload();
+    return prefs;
+  }
 
   static String _encode(List<AlertMessage> list) => jsonEncode([
     for (final m in list) {'kind': m.kind.name, 'at': m.at.toIso8601String(), 'title': m.title, 'body': m.body},

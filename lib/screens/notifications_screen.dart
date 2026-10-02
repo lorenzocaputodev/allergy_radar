@@ -30,11 +30,12 @@ class NotificationsScreen extends StatefulWidget {
 class _NotificationsScreenState extends State<NotificationsScreen> {
   // Un avviso può arrivare mentre la schermata è aperta: si rilegge quando l'app torna in primo piano.
   late final AppLifecycleListener _lifecycle;
+  Future<SharedPreferences> _prefs = AlertLog.fresh();
 
   @override
   void initState() {
     super.initState();
-    _lifecycle = AppLifecycleListener(onResume: () => setState(() {}));
+    _lifecycle = AppLifecycleListener(onResume: () => setState(() => _prefs = AlertLog.fresh()));
   }
 
   @override
@@ -62,7 +63,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         ],
       ),
       body: FutureBuilder<SharedPreferences>(
-        future: SharedPreferences.getInstance(),
+        future: _prefs,
         builder: (context, snap) {
           if (!snap.hasData) return const Center(child: CircularProgressIndicator());
           final now = DateTime.now();
