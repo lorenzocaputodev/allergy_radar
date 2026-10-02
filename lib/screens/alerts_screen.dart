@@ -221,6 +221,21 @@ class _Check extends StatefulWidget {
 class _CheckState extends State<_Check> {
   late Future<(bool, bool)> _status = _read();
 
+  // Permessi cambiati dalle impostazioni di Android: si rileggono al ritorno nell'app.
+  late final AppLifecycleListener _lifecycle;
+
+  @override
+  void initState() {
+    super.initState();
+    _lifecycle = AppLifecycleListener(onResume: () => setState(() => _status = _read()));
+  }
+
+  @override
+  void dispose() {
+    _lifecycle.dispose();
+    super.dispose();
+  }
+
   static Future<(bool, bool)> _read() async => (await AlertsService.enabled(), await AlertsService.exact());
 
   Future<void> _test() async {
