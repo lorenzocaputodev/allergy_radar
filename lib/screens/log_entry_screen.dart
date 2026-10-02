@@ -306,7 +306,7 @@ class _LogEntryScreenState extends State<LogEntryScreen> {
 Future<String?> askMedication(BuildContext context) =>
     showDialog<String>(context: context, builder: (_) => const _MedicationDialog());
 
-// Il controller vive con il dialogo: liberato alla chiusura del Future, servirebbe ancora durante l'animazione.
+// Il controller vive quanto il dialogo, animazione di chiusura compresa.
 class _MedicationDialog extends StatefulWidget {
   const _MedicationDialog();
 

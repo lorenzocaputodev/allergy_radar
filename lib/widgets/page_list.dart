@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 
-/// Contenuto a scorrimento di una pagina aperta sopra le schede.
-///
-/// ListView aggiunge da sola le aree di sistema (barra di navigazione, notch) solo se non riceve
-/// un [padding]: qui si sommano al margine della pagina, anche ai lati per l'orizzontale.
-/// Le si legge dal contesto del corpo, dove l'AppBar ha già tolto quella in alto.
+/// Contenuto a scorrimento di una pagina aperta sopra le schede. Con un [padding] esplicito ListView non
+/// aggiunge più le aree di sistema (barre, notch): qui si sommano al margine, anche ai lati.
 class PageList extends StatelessWidget {
   const PageList({super.key, required this.padding, required this.children});
 

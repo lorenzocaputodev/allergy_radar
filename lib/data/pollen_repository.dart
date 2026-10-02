@@ -65,7 +65,6 @@ class PollenRepository {
 
   Future<RawPollenData> fetch(Place place) async {
     final now = _now();
-    // Le due fonti sono indipendenti: si interrogano insieme.
     final (om, (csv, used)) = await (openMeteo.fetchForecast(place), _measures(place, now)).wait;
     return RawPollenData(
       place: place,

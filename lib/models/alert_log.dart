@@ -9,8 +9,8 @@ import '../services/alert_planner.dart';
 /// Un avviso programmato arriva senza far girare l'app: si salva quando lo si programma
 /// ([setPending]) e conta come arrivato quando il suo orario è passato.
 ///
-/// Lo scrive anche il controllo in background, da un altro isolate: la copia in memoria dell'app aperta
-/// va riletta ([SharedPreferences.reload]), altrimenti riscrivendo il registro cancellerebbe i suoi avvisi.
+/// Lo scrive anche il controllo in background, da un altro isolate: l'app aperta lo rilegge ([fresh])
+/// prima di mostrarlo, e [setPending] prima di riscriverlo.
 abstract final class AlertLog {
   static const key = 'alerts_log';
   static const pendingKey = 'alerts_pending';
@@ -45,7 +45,7 @@ abstract final class AlertLog {
   static Future<void> restore(SharedPreferences prefs, AlertMessage m) =>
       prefs.setString(key, _encode([..._decode(prefs.getString(key)), m]));
 
-  /// Le preferenze rilette, per mostrare (e poi modificare) il registro con quanto scritto in background.
+  /// Le preferenze rilette, con quanto scritto in background.
   static Future<SharedPreferences> fresh() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.reload();

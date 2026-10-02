@@ -63,7 +63,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
         _TodayCard(
           entry: todayEntry,
           onOpen: () => _open(today),
-          // Con i pollini di oggi, come dalla voce completa: senza, il giorno non entra nei confronti.
+          // Senza i pollini il giorno resterebbe fuori dai confronti.
           onNoSymptoms: () =>
               diary.save(DiaryEntry(date: today, pollen: context.read<AppState>().snapshot?.levels ?? const {})),
         ),

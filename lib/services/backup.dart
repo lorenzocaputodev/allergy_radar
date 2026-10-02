@@ -44,7 +44,7 @@ class Backup {
     }
     final data = (root['data'] as Map).cast<String, Object?>();
     // Prima si verifica tutto, poi si scrive: un file a metà non lascia l'app a metà.
-    // Si leggono i valori come li leggerà l'app: un diario rotto bloccherebbe ogni avvio.
+    // Ogni valore si legge come lo leggerà l'app: un diario rotto bloccherebbe l'avvio.
     final values = <String, Object>{};
     for (final k in _keys) {
       final v = data[k];

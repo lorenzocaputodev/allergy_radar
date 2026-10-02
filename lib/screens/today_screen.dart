@@ -156,7 +156,6 @@ class _Banner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    // Colori invertiti rispetto alla pagina, come una snackbar: si nota in entrambi i temi.
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
       child: Container(
@@ -197,7 +196,7 @@ class _Hero extends StatelessWidget {
     } else {
       summary = 'Al livello che ti dà fastidio: ${Fmt.list([for (final s in above) s.allergen.name])}.';
     }
-    // Due cause diverse: per i pollini solo misurati manca una misura recente, per gli altri la previsione.
+    // Ai pollini solo misurati manca la misura, agli altri la previsione.
     final estimated = followed.where((s) => s.kind == DataKind.estimate).map((s) => s.allergen);
     final noMeasure = [for (final a in estimated.where((a) => !a.hasForecast)) a.name];
     final noForecast = [for (final a in estimated.where((a) => a.hasForecast)) a.name];
