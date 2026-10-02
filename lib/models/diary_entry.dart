@@ -85,7 +85,7 @@ class DiaryEntry {
     throat: j['throat'] as int? ?? 0,
     breath: j['breath'] as int? ?? 0,
     badSleep: j['badSleep'] as bool? ?? false,
-    meds: (j['meds'] as List?)?.cast<String>() ?? const [],
+    meds: [for (final m in j['meds'] as List? ?? const []) m as String],
     outdoor: j['outdoor'] as int?,
     note: j['note'] as String? ?? '',
     pollen: (j['pollen'] as Map?)?.map((k, v) => MapEntry(k as String, v as int)) ?? const {},

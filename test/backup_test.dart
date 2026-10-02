@@ -53,6 +53,10 @@ void main() {
     String backup(Map<String, Object?> data) => jsonEncode({'app': 'allergy_radar', 'format': 1, 'data': data});
     for (final data in [
       {'diary': '[{"nose":1}]'},
+      {'diary': '[{"date":"2026-09-29","nose":5}]'},
+      {'diary': '[{"date":"2026-09-29","meds":[1]}]'},
+      {'diary': '[{"date":"2026-09-29","pollen":{"grass":9}}]'},
+      {'alerts': '{"briefingAt":5000}'},
       {'diary': 'non è json'},
       {'place': 'x'},
       {'place': '{"name":"Lecce"}'},

@@ -74,12 +74,22 @@ class Backup {
       case AppState.kPlace:
         Place.fromJson(map(v));
       case AppState.kThresholds:
-        map(v).forEach((_, l) => Level.fromIndex(l as int));
+        map(v).forEach((_, l) => _range(l as int, 4));
       case AppState.kAlerts:
-        AlertSettings.fromJson(map(v));
+        final a = AlertSettings.fromJson(map(v));
+        for (final t in [a.briefingAt, a.tomorrowAt, a.diaryAt]) {
+          _range(t, 24 * 60 - 1);
+        }
       case DiaryState.kEntries:
-        for (final e in jsonDecode(v as String) as List) {
-          DiaryEntry.fromJson(e as Map<String, dynamic>);
+        for (final j in jsonDecode(v as String) as List) {
+          final e = DiaryEntry.fromJson(j as Map<String, dynamic>);
+          for (final s in [e.nose, e.eyes, e.throat, e.breath]) {
+            _range(s, 3);
+          }
+          if (e.outdoor != null) _range(e.outdoor!, 2);
+          for (final l in e.pollen.values) {
+            _range(l, 4);
+          }
         }
       case AppState.kFollowed || DiaryState.kMeds:
         return (v as List).cast<String>().toList();
@@ -89,8 +99,10 @@ class Backup {
     return v as String;
   }
 
-  /// Diario in CSV: separatore «;» e BOM UTF-8, come si aspetta Excel in italiano.
-  /// Colonne dei pollini: prima gli allergeni seguiti, poi gli altri.
+  static void _range(int v, int max) {
+    if (v < 0 || v > max) throw RangeError.range(v, 0, max);
+  }
+
   static String diaryCsv(List<DiaryEntry> entries, {List<Allergen> followed = const []}) {
     final allergens = [...followed, ...Allergens.all.where((a) => !followed.contains(a))];
     String cell(Object? v) {
