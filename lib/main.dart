@@ -79,11 +79,11 @@ Future<void> main() async {
     ),
   );
 
-  // Prima lo stato: un problema con le notifiche non deve mai riportare l'app al primo avvio.
-  await state.init();
+  await state.load();
   await AlertsService.init();
   if (state.onboarded) await AlertsService.startBackground();
   reschedule();
+  if (state.onboarded && state.isStale) await state.refresh();
 }
 
 class AllergyRadarApp extends StatelessWidget {
