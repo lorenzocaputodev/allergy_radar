@@ -7,6 +7,7 @@ import '../models/pollen_snapshot.dart';
 import '../models/station.dart';
 import '../services/open_meteo_client.dart';
 import '../services/pollnet_client.dart';
+import '../utils/days.dart';
 
 class RawPollenData {
   const RawPollenData({
@@ -77,9 +78,9 @@ class PollenRepository {
     final ids = Allergens.measuredOnly.map((a) => a.pollnetId);
     for (final near in stations.near(place).take(3)) {
       try {
-        final body = await pollnet.fetchCsv(near.station.id, ids, now.subtract(const Duration(days: historyDays)), now);
+        final body = await pollnet.fetchCsv(near.station.id, ids, now.plusDays(-historyDays), now);
         final recent = PollnetClient.parseCsv(body)
-            .any((m) => m.value != null && now.difference(m.date).inDays <= maxMeasureAgeDays);
+            .any((m) => m.value != null && now.daysSince(m.date) <= maxMeasureAgeDays);
         if (recent) return (body, near);
       } on PollnetException {
         continue;
@@ -128,8 +129,7 @@ class PollenRepository {
         if (!e.key.isBefore(today)) _day(a, e.key, e.value.reduce((x, y) => x + y) / e.value.length),
     ];
     if (series.isEmpty) return null;
-    // Tutto oggi, fino alle 24: l'ultima ora è la mezzanotte di domani.
-    final midnight = today.add(const Duration(days: 1));
+    final midnight = today.plusDays(1);
     final hourly = <DayValue>[];
     for (var i = 0; i < om.times.length; i++) {
       final t = om.times[i];
@@ -154,7 +154,7 @@ class PollenRepository {
       ..sort((x, y) => x.date.compareTo(y.date));
     if (valid.isEmpty) return null;
     final last = valid.last;
-    if (today.difference(last.date).inDays > maxMeasureAgeDays) return null;
+    if (today.daysSince(last.date) > maxMeasureAgeDays) return null;
     return AllergenStatus(
       allergen: a,
       kind: DataKind.measured,

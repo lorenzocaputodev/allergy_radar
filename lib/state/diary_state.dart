@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/allergen.dart';
 import '../models/diary_entry.dart';
 import '../models/level.dart';
+import '../utils/days.dart';
 
 class DiaryInsight {
   const DiaryInsight({
@@ -117,7 +118,7 @@ class DiaryState extends ChangeNotifier {
 
   // --- Confronto ---
   DiaryInsight? insight(Allergen a, DateTime now, {int days = 30}) {
-    final list = between(now.subtract(Duration(days: days - 1)), now).where((e) => e.pollen.containsKey(a.id)).toList();
+    final list = between(now.plusDays(1 - days), now).where((e) => e.pollen.containsKey(a.id)).toList();
     if (list.length < minDaysForInsight) return null;
     final high = list.where((e) => e.pollen[a.id]! >= Level.moderate.index).toList();
     final low = list.where((e) => e.pollen[a.id]! < Level.moderate.index).toList();

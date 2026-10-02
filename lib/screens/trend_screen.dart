@@ -7,6 +7,7 @@ import '../models/level.dart';
 import '../state/app_state.dart';
 import '../state/diary_state.dart';
 import '../theme/palette.dart';
+import '../utils/days.dart';
 import '../utils/format.dart';
 import '../widgets/level_widgets.dart';
 import '../widgets/page_list.dart';
@@ -34,9 +35,9 @@ class _TrendScreenState extends State<TrendScreen> {
     final now = DateTime.now();
     final a = Allergens.byId(_allergenId ?? '') ?? _mostTelling(diary, choices, now) ?? choices.first;
     final today = DiaryEntry.day(now);
-    final days = [for (var i = _days - 1; i >= 0; i--) today.subtract(Duration(days: i))];
+    final days = [for (var i = _days - 1; i >= 0; i--) today.plusDays(-i)];
     final insight = diary.insight(a, now, days: _period);
-    final logged = diary.between(today.subtract(Duration(days: _period - 1)), today).length;
+    final logged = diary.between(today.plusDays(1 - _period), today).length;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Andamento')),
@@ -321,7 +322,7 @@ class _DayByDayState extends State<_DayByDay> {
                 ),
                 const SizedBox(height: 6),
                 columns((d, e) {
-                  final back = days.last.difference(d).inDays;
+                  final back = days.last.daysSince(d);
                   if (back % 7 != 0) return const SizedBox(height: 14);
                   return SizedBox(
                     height: 14,

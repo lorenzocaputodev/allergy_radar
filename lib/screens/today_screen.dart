@@ -8,6 +8,7 @@ import '../models/pollen_snapshot.dart';
 import '../state/app_state.dart';
 import '../state/diary_state.dart';
 import '../theme/palette.dart';
+import '../utils/days.dart';
 import '../utils/format.dart';
 import '../widgets/allergen_card.dart';
 import '../widgets/level_widgets.dart';
@@ -271,7 +272,7 @@ class _Forecast extends StatelessWidget {
     final forecast = statuses.first.kind == DataKind.forecast ? statuses.first : null;
     final days = forecast != null
         ? forecast.series.take(5).map((d) => d.date).toList()
-        : [for (var i = 0; i < 4; i++) today.add(Duration(days: i))];
+        : [for (var i = 0; i < 4; i++) today.plusDays(i)];
 
     String source(AllergenStatus s) => switch (s.kind) {
       DataKind.forecast => 'previsione',
@@ -579,7 +580,7 @@ class _DiaryCta extends StatelessWidget {
     final today = DiaryEntry.day(DateTime.now());
     final diary = context.watch<DiaryState>();
     final e = diary.entryFor(today);
-    final yesterday = diary.entryFor(today.subtract(const Duration(days: 1)));
+    final yesterday = diary.entryFor(today.plusDays(-1));
     final sub = e != null
         ? '${DiaryEntry.symptomNames[e.severity]} · tocca per modificare'
         : yesterday != null

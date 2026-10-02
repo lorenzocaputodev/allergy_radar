@@ -2,6 +2,7 @@ import '../models/alert_settings.dart';
 import '../models/allergen.dart';
 import '../models/level.dart';
 import '../models/pollen_snapshot.dart';
+import '../utils/days.dart';
 import '../utils/format.dart';
 
 enum AlertKind { briefing, tomorrow, diary }
@@ -27,7 +28,7 @@ class AlertPlanner {
     required bool diaryDoneToday,
   }) {
     final today = DateTime(now.year, now.month, now.day);
-    final tomorrow = today.add(const Duration(days: 1));
+    final tomorrow = today.plusDays(1);
     DateTime at(DateTime day, int minutes) => DateTime(day.year, day.month, day.day, minutes ~/ 60, minutes % 60);
     DateTime next(int minutes) => at(today, minutes).isAfter(now) ? at(today, minutes) : at(tomorrow, minutes);
     DateTime dayOf(DateTime t) => DateTime(t.year, t.month, t.day);
@@ -50,7 +51,7 @@ class AlertPlanner {
 
     if (settings.tomorrow) {
       final when = next(settings.tomorrowAt);
-      final target = dayOf(when).add(const Duration(days: 1));
+      final target = dayOf(when).plusDays(1);
       final bothering = <String>[];
       for (final s in followed.where((s) => s.kind == DataKind.forecast)) {
         final v = _dayValue(s, target);

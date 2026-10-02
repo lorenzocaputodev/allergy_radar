@@ -42,6 +42,12 @@ void main() {
     expect(of(list, AlertKind.diary)!.at, DateTime(2026, 9, 30, 21));
   });
 
+  test('nel giorno del cambio d’ora «domani» è il giorno dopo', () {
+    final list = schedule(DateTime(2026, 10, 25, 8));
+    expect(of(list, AlertKind.briefing)!.at, DateTime(2026, 10, 26, 7, 30));
+    expect(of(list, AlertKind.diary)!.at, DateTime(2026, 10, 25, 21));
+  });
+
   test('briefing: testo del giorno in cui arriva', () {
     final today = of(schedule(DateTime(2026, 9, 30, 7)), AlertKind.briefing)!;
     expect(today.title, 'Pollini di oggi a Lecce');

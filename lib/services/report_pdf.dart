@@ -7,6 +7,7 @@ import '../models/diary_entry.dart';
 import '../models/level.dart';
 import '../state/diary_state.dart';
 import '../theme/palette.dart';
+import '../utils/days.dart';
 
 class ReportPdf {
   static const days = 90;
@@ -48,10 +49,10 @@ class ReportPdf {
     final bold = pw.Font.ttf(await rootBundle.load('assets/fonts/Figtree-700.ttf'));
     const palette = AppPalette.light;
     final today = DiaryEntry.day(now);
-    final from = today.subtract(const Duration(days: days - 1));
+    final from = today.plusDays(1 - days);
     final entries = diary.between(from, now);
     final start = entries.isEmpty ? from : entries.first.date;
-    final span = today.difference(start).inDays + 1;
+    final span = today.daysSince(start) + 1;
     final medDays = <String, int>{};
     for (final e in entries) {
       for (final m in e.meds) {
