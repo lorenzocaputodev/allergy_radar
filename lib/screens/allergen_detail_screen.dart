@@ -28,7 +28,7 @@ class AllergenDetailScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+        padding: EdgeInsets.fromLTRB(16, 0, 16, 32 + MediaQuery.paddingOf(context).bottom),
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(4, 0, 4, 16),

@@ -15,7 +15,7 @@ class MedicationsScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Farmaci')),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+        padding: EdgeInsets.fromLTRB(16, 0, 16, 24 + MediaQuery.paddingOf(context).bottom),
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(4, 4, 4, 12),

@@ -68,7 +68,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           final now = DateTime.now();
           final log = AlertLog.read(snap.data!, now);
           return ListView(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+            padding: EdgeInsets.fromLTRB(16, 8, 16, 24 + MediaQuery.paddingOf(context).bottom),
             children: [
               if (!alertsOn)
                 Padding(

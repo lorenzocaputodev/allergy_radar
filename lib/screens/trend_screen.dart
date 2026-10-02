@@ -42,7 +42,7 @@ class _TrendScreenState extends State<TrendScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Andamento')),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+        padding: EdgeInsets.fromLTRB(16, 4, 16, 24 + MediaQuery.paddingOf(context).bottom),
         children: [
           Wrap(
             spacing: 8,
