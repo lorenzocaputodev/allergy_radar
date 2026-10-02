@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/palette.dart';
 import '../widgets/level_widgets.dart';
+import '../widgets/page_list.dart';
 
 class InfoScreen extends StatelessWidget {
   const InfoScreen({super.key});
@@ -11,8 +12,8 @@ class InfoScreen extends StatelessWidget {
     final p = context.palette;
     return Scaffold(
       appBar: AppBar(title: const Text('Fonti e privacy')),
-      body: ListView(
-        padding: EdgeInsets.fromLTRB(16, 4, 16, 24 + MediaQuery.paddingOf(context).bottom),
+      body: PageList(
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
         children: [
           const SectionCard(
             children: [

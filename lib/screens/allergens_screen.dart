@@ -6,6 +6,7 @@ import '../models/level.dart';
 import '../state/app_state.dart';
 import '../theme/palette.dart';
 import '../widgets/level_widgets.dart';
+import '../widgets/page_list.dart';
 import '../widgets/settings_group.dart';
 import 'allergen_detail_screen.dart';
 
@@ -60,8 +61,8 @@ class AllergensScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('I miei allergeni')),
-      body: ListView(
-        padding: EdgeInsets.fromLTRB(16, 0, 16, 24 + MediaQuery.paddingOf(context).bottom),
+      body: PageList(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(4, 4, 4, 0),

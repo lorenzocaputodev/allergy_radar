@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../state/app_state.dart';
+import '../widgets/page_list.dart';
 import '../widgets/place_search.dart';
 
 class PlaceSearchScreen extends StatelessWidget {
@@ -12,8 +13,8 @@ class PlaceSearchScreen extends StatelessWidget {
     final current = context.watch<AppState>().place;
     return Scaffold(
       appBar: AppBar(title: const Text('Luogo')),
-      body: ListView(
-        padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + MediaQuery.paddingOf(context).bottom),
+      body: PageList(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
         children: [
           PlaceSearch(
             autofocus: true,

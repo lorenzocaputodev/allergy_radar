@@ -9,6 +9,7 @@ import '../state/app_state.dart';
 import '../theme/palette.dart';
 import '../utils/format.dart';
 import '../widgets/level_widgets.dart';
+import '../widgets/page_list.dart';
 
 class AllergenDetailScreen extends StatelessWidget {
   const AllergenDetailScreen({super.key, required this.allergenId});
@@ -27,8 +28,8 @@ class AllergenDetailScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(),
-      body: ListView(
-        padding: EdgeInsets.fromLTRB(16, 0, 16, 32 + MediaQuery.paddingOf(context).bottom),
+      body: PageList(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(4, 0, 4, 16),

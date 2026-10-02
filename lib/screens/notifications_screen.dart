@@ -11,6 +11,7 @@ import '../services/alert_planner.dart';
 import '../state/app_state.dart';
 import '../theme/palette.dart';
 import '../utils/format.dart';
+import '../widgets/page_list.dart';
 import 'alerts_screen.dart';
 import 'log_entry_screen.dart';
 
@@ -68,8 +69,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           if (!snap.hasData) return const Center(child: CircularProgressIndicator());
           final now = DateTime.now();
           final log = AlertLog.read(snap.data!, now);
-          return ListView(
-            padding: EdgeInsets.fromLTRB(16, 8, 16, 24 + MediaQuery.paddingOf(context).bottom),
+          return PageList(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
             children: [
               if (!alertsOn)
                 Padding(

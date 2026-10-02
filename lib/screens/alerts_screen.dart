@@ -9,6 +9,7 @@ import '../services/alerts_service.dart';
 import '../state/app_state.dart';
 import '../state/diary_state.dart';
 import '../theme/palette.dart';
+import '../widgets/page_list.dart';
 
 class AlertsScreen extends StatefulWidget {
   const AlertsScreen({super.key});
@@ -39,8 +40,8 @@ class _AlertsScreenState extends State<AlertsScreen> {
     final diary = context.watch<DiaryState>();
     return Scaffold(
       appBar: AppBar(title: const Text('Avvisi')),
-      body: ListView(
-        padding: EdgeInsets.fromLTRB(16, 8, 16, 24 + MediaQuery.paddingOf(context).bottom),
+      body: PageList(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
         children: [
           AlertSettingsEditor(
             value: state.alerts,

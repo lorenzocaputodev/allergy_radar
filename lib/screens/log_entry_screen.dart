@@ -8,6 +8,7 @@ import '../state/app_state.dart';
 import '../state/diary_state.dart';
 import '../theme/palette.dart';
 import '../utils/format.dart';
+import '../widgets/page_list.dart';
 
 class LogEntryScreen extends StatefulWidget {
   const LogEntryScreen({super.key, required this.date});
@@ -132,8 +133,8 @@ class _LogEntryScreenState extends State<LogEntryScreen> {
           const SizedBox(width: 8),
         ],
       ),
-      body: ListView(
-        padding: EdgeInsets.fromLTRB(16, 0, 16, 24 + MediaQuery.paddingOf(context).bottom),
+      body: PageList(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4),

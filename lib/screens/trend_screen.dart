@@ -9,6 +9,7 @@ import '../state/diary_state.dart';
 import '../theme/palette.dart';
 import '../utils/format.dart';
 import '../widgets/level_widgets.dart';
+import '../widgets/page_list.dart';
 import 'log_entry_screen.dart';
 
 class TrendScreen extends StatefulWidget {
@@ -41,8 +42,8 @@ class _TrendScreenState extends State<TrendScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Andamento')),
-      body: ListView(
-        padding: EdgeInsets.fromLTRB(16, 4, 16, 24 + MediaQuery.paddingOf(context).bottom),
+      body: PageList(
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
         children: [
           Wrap(
             spacing: 8,
