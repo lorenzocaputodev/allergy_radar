@@ -81,6 +81,9 @@ class PollenRepository {
           used = near;
           break;
         }
+      } on PollnetException {
+        // Errore o CSV strano su una sola stazione: le altre possono rispondere.
+        continue;
       } on Exception {
         // ISPRA non raggiungibile: si resta sulle stime, la previsione vale comunque.
         break;

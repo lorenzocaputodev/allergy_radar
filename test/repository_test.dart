@@ -2,7 +2,11 @@ import 'package:allergy_radar/data/pollen_repository.dart';
 import 'package:allergy_radar/models/allergen.dart';
 import 'package:allergy_radar/models/level.dart';
 import 'package:allergy_radar/models/place.dart';
+import 'package:allergy_radar/services/open_meteo_client.dart';
+import 'package:allergy_radar/services/pollnet_client.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 
 import 'helpers.dart';
 
@@ -65,6 +69,23 @@ void main() {
     final snap = repo.build(await repo.fetch(bologna));
     expect(snap[Allergens.grass.id]!.kind, DataKind.forecast);
     expect(snap[Allergens.parietaria.id]!.kind, DataKind.estimate);
+  });
+
+  test('una stazione in errore non ferma le altre', () async {
+    var calls = 0;
+    final client = MockClient((req) async {
+      if (req.url.host != 'sdi.isprambiente.it') return utf8Response(fixture('open_meteo_lecce.json'));
+      return ++calls == 1 ? http.Response('errore', 500) : utf8Response(fixture('pollnet_bologna.csv'));
+    });
+    final repo = PollenRepository(
+      openMeteo: OpenMeteoClient(client),
+      pollnet: PollnetClient(client),
+      stations: stationDirectory(),
+      clock: () => DateTime(2026, 9, 25, 10),
+    );
+    final snap = repo.build(await repo.fetch(bologna));
+    expect(calls, 2);
+    expect(snap[Allergens.parietaria.id]!.kind, DataKind.measured);
   });
 
   test('la cache si ricostruisce identica', () async {
