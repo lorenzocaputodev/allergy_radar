@@ -50,4 +50,22 @@ void main() {
     expect(state.snapshot!.place.name, 'Bologna');
     expect(state.loading, isFalse);
   });
+
+  test('le preferenze assenti tornano ai valori iniziali', () async {
+    SharedPreferences.setMockInitialValues({
+      'onboarded': true,
+      'thresholds': '{"grass":3}',
+      'followed': ['olive'],
+    });
+    final prefs = await SharedPreferences.getInstance();
+    final state = AppState(_SlowRepository(DateTime(2026, 9, 25, 10)), prefs);
+    await state.load();
+    expect(state.personal, isNotEmpty);
+
+    await prefs.remove('thresholds');
+    await prefs.remove('followed');
+    await state.load();
+    expect(state.personal, isEmpty);
+    expect(state.followed, {'grass', 'parietaria'});
+  });
 }

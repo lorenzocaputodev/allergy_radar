@@ -29,7 +29,9 @@ class AppState extends ChangeNotifier {
   static const freshFor = Duration(hours: 1);
 
   Place place = Place.lecce;
-  Set<String> followed = {Allergens.grass.id, Allergens.parietaria.id};
+  static final _defaultFollowed = {Allergens.grass.id, Allergens.parietaria.id};
+
+  Set<String> followed = {..._defaultFollowed};
   Map<String, Level> personal = {};
   ThemeMode themeMode = ThemeMode.system;
   AlertSettings alerts = const AlertSettings();
@@ -67,16 +69,16 @@ class AppState extends ChangeNotifier {
   Future<void> load() async {
     onboarded = _prefs.getBool(kOnboarded) ?? false;
     final p = _prefs.getString(kPlace);
-    if (p != null) place = Place.fromJson(jsonDecode(p) as Map<String, dynamic>);
+    place = p == null ? Place.lecce : Place.fromJson(jsonDecode(p) as Map<String, dynamic>);
     final f = _prefs.getStringList(kFollowed);
-    if (f != null) followed = f.where((id) => Allergens.byId(id) != null).toSet();
+    followed = f == null ? {..._defaultFollowed} : f.where((id) => Allergens.byId(id) != null).toSet();
     final t = _prefs.getString(kThresholds);
-    if (t != null) {
-      personal = (jsonDecode(t) as Map<String, dynamic>).map((k, v) => MapEntry(k, Level.fromIndex(v as int)));
-    }
+    personal = t == null
+        ? {}
+        : (jsonDecode(t) as Map<String, dynamic>).map((k, v) => MapEntry(k, Level.fromIndex(v as int)));
     themeMode = ThemeMode.values.asNameMap()[_prefs.getString(kTheme)] ?? ThemeMode.system;
     final a = _prefs.getString(kAlerts);
-    if (a != null) alerts = AlertSettings.fromJson(jsonDecode(a) as Map<String, dynamic>);
+    alerts = a == null ? const AlertSettings() : AlertSettings.fromJson(jsonDecode(a) as Map<String, dynamic>);
     final cached = _prefs.getString(_kCache);
     snapshot = null;
     if (cached != null) {
