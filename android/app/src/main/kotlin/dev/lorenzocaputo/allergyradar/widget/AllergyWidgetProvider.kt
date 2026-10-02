@@ -6,7 +6,6 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
 import android.os.Bundle
 import android.content.res.Configuration
 import android.text.SpannableStringBuilder
@@ -34,7 +33,7 @@ import java.time.format.DateTimeFormatter
  * Widget minimale: luogo e ora in alto, livello del giorno con barra a 4 segmenti, poi gli allergeni seguiti,
  * tanti quanti ne stanno nell'altezza; gli altri si scorrono con le frecce.
  * Legge i dati che l'app scrive in SharedPreferences (chiave flutter.widget_data) e si ridisegna
- * quando cambiano ([watch]), anche con l'app chiusa, dopo il controllo in background.
+ * quando cambiano (AllergyRadarApplication), anche con l'app chiusa, dopo il controllo in background.
  */
 class AllergyWidgetProvider : AppWidgetProvider() {
 
@@ -62,8 +61,8 @@ class AllergyWidgetProvider : AppWidgetProvider() {
     }
 
     companion object {
-        private const val PREFS = "FlutterSharedPreferences"
-        private const val KEY = "flutter.widget_data"
+        const val PREFS = "FlutterSharedPreferences"
+        const val KEY = "flutter.widget_data"
         private const val PAGES = "allergy_widget_pages"
         private const val ACTION_PAGE = "dev.lorenzocaputo.allergyradar.widget.PAGE"
         private const val EXTRA_STEP = "step"
@@ -172,17 +171,6 @@ class AllergyWidgetProvider : AppWidgetProvider() {
         }
 
         // --- Aggiornamento e pagine ---
-        // SharedPreferences tiene i listener con un riferimento debole: questo deve restare vivo.
-        private var onChange: SharedPreferences.OnSharedPreferenceChangeListener? = null
-
-        /** Ridisegna i widget a ogni nuovo dato, scritto dall'app aperta o dal controllo in background. */
-        fun watch(context: Context) {
-            val app = context.applicationContext
-            val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, key -> if (key == KEY) updateAll(app) }
-            onChange = listener
-            app.getSharedPreferences(PREFS, Context.MODE_PRIVATE).registerOnSharedPreferenceChangeListener(listener)
-        }
-
         /**
          * Scarica i dati nuovi con lo stesso compito Dart del controllo orario, poi ridisegna i widget.
          * Senza rete il primo passo aspetta che torni.
