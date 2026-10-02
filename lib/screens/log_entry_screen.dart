@@ -251,7 +251,9 @@ class _LogEntryScreenState extends State<LogEntryScreen> {
                           final name = await askMedication(context);
                           if (name == null || !context.mounted) return;
                           await context.read<DiaryState>().addMedication(name);
-                          setState(() => _entry = _entry.copyWith(meds: [..._entry.meds, name]));
+                          if (!_entry.meds.contains(name)) {
+                            setState(() => _entry = _entry.copyWith(meds: [..._entry.meds, name]));
+                          }
                         },
                       ),
                     ],
@@ -300,26 +302,44 @@ class _LogEntryScreenState extends State<LogEntryScreen> {
 }
 
 /// Chiede il nome di un nuovo farmaco. Null se annullato.
-Future<String?> askMedication(BuildContext context) {
-  final c = TextEditingController();
-  return showDialog<String>(
-    context: context,
-    builder: (ctx) => AlertDialog(
-      title: const Text('Nuovo farmaco'),
-      content: TextField(
-        controller: c,
-        autofocus: true,
-        textCapitalization: TextCapitalization.sentences,
-        decoration: const InputDecoration(hintText: 'Es. Cetirizina'),
-        onSubmitted: (v) => Navigator.of(ctx).pop(v.trim().isEmpty ? null : v.trim()),
-      ),
-      actions: [
-        TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Annulla')),
-        TextButton(
-          onPressed: () => Navigator.of(ctx).pop(c.text.trim().isEmpty ? null : c.text.trim()),
-          child: const Text('Aggiungi'),
-        ),
-      ],
+Future<String?> askMedication(BuildContext context) =>
+    showDialog<String>(context: context, builder: (_) => const _MedicationDialog());
+
+// Il controller vive con il dialogo: liberato alla chiusura del Future, servirebbe ancora durante l'animazione.
+class _MedicationDialog extends StatefulWidget {
+  const _MedicationDialog();
+
+  @override
+  State<_MedicationDialog> createState() => _MedicationDialogState();
+}
+
+class _MedicationDialogState extends State<_MedicationDialog> {
+  final _name = TextEditingController();
+
+  @override
+  void dispose() {
+    _name.dispose();
+    super.dispose();
+  }
+
+  void _done() {
+    final n = _name.text.trim();
+    Navigator.of(context).pop(n.isEmpty ? null : n);
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+    title: const Text('Nuovo farmaco'),
+    content: TextField(
+      controller: _name,
+      autofocus: true,
+      textCapitalization: TextCapitalization.sentences,
+      decoration: const InputDecoration(hintText: 'Es. Cetirizina'),
+      onSubmitted: (_) => _done(),
     ),
-  ).whenComplete(c.dispose);
+    actions: [
+      TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Annulla')),
+      TextButton(onPressed: _done, child: const Text('Aggiungi')),
+    ],
+  );
 }
