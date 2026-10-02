@@ -16,7 +16,6 @@ import 'helpers.dart';
 void main() {
   setUp(() => WidgetController.hitTestWarningShouldBeFatal = true);
 
-  // Telefono stretto: fa emergere gli overflow.
   Future<void> pumpApp(WidgetTester tester, {Brightness brightness = Brightness.light, bool onboarded = true}) async {
     tester.view.physicalSize = const Size(360, 780) * 3;
     tester.view.devicePixelRatio = 3;
@@ -88,7 +87,7 @@ void main() {
     await tester.tap(find.text('Registra'));
     await tester.pumpAndSettle();
     expect(find.text('Come stai oggi?'), findsOneWidget);
-    await tester.tap(find.text('Forte').first); // naso
+    await tester.tap(find.text('Forte').first);
     await tester.pump();
     final save = find.text('Salva');
     await tester.scrollUntilVisible(

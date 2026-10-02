@@ -1,4 +1,3 @@
-/// Livello di rischio 0–4, uguale per tutti gli allergeni.
 enum Level {
   none('Nessuno'),
   low('Basso'),
@@ -17,8 +16,6 @@ enum Level {
   static Level fromIndex(int i) => Level.values[i.clamp(0, 4)];
 }
 
-/// Soglie in granuli/m³: classi POLLnet (bassa, media, alta).
-/// «Molto alto» è un'estensione dell'app: 3 volte la soglia alta.
 class Thresholds {
   const Thresholds(this.low, this.moderate, this.high);
 

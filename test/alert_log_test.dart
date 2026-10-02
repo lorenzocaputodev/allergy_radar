@@ -15,7 +15,6 @@ void main() {
     expect(AlertLog.read(prefs, day.add(const Duration(hours: 7))), isEmpty);
     expect(AlertLog.read(prefs, day.add(const Duration(hours: 9))).single.title, 'Avviso delle 8');
 
-    // Riprogrammando alle 20 il promemoria delle 21 viene sostituito; quello delle 8 resta nel registro.
     await AlertLog.setPending(prefs, [at(45, AlertKind.diary)], day.add(const Duration(hours: 20)));
     final log = AlertLog.read(prefs, day.add(const Duration(hours: 22)));
     expect(log.map((m) => m.title), ['Avviso delle 8']);

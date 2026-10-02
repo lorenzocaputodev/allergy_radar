@@ -24,16 +24,12 @@ class Allergen {
   final String family;
   final IconData icon;
 
-  /// Variabili orarie di Open-Meteo; vuoto se il modello non lo calcola.
   final List<String> openMeteoKeys;
 
-  /// PART_ID della banca dati POLLnet (ISPRA).
   final int pollnetId;
 
   final Thresholds thresholds;
 
-  /// Livello tipico per mese (0–3), da gennaio a dicembre, per area: mediana delle medie
-  /// mensili delle stazioni POLLnet dell'area, 2016–2025. Si rigenera con tool/build_calendar.mjs.
   final Map<Area, List<int>> calendar;
 
   List<int> calendarFor(Area area) => calendar[area]!;

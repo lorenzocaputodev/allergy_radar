@@ -1,6 +1,3 @@
-// Genera le icone dell'app dal disegno del radar.
-// flutter test test_screens/icons_test.dart --update-goldens
-// Poi: dart run flutter_launcher_icons
 import 'package:allergy_radar/widgets/radar_mark.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -34,7 +31,6 @@ void main() {
   });
 
   testWidgets('icona adattiva, primo piano', (tester) async {
-    // Zona sicura delle icone adattive: il 66% centrale.
     await _icon(
       tester,
       '../assets/launcher/icon_foreground.png',

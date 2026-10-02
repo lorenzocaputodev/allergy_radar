@@ -10,7 +10,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'helpers.dart';
 
-/// Il primo download resta in attesa finché il test non lo lascia andare.
 class _SlowRepository extends PollenRepository {
   _SlowRepository(DateTime now)
     : super(

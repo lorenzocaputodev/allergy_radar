@@ -8,7 +8,6 @@ import '../models/level.dart';
 import '../state/diary_state.dart';
 import '../theme/palette.dart';
 
-/// PDF da portare all'allergologo: sintesi, confronti e diario giorno per giorno.
 class ReportPdf {
   static const days = 90;
 
@@ -61,7 +60,6 @@ class ReportPdf {
     }
     final withMeds = entries.where((e) => e.meds.isNotEmpty).length;
     final avg = entries.isEmpty ? null : entries.fold<double>(0, (s, e) => s + e.score) / entries.length;
-    // Prima le differenze più nette: sono quelle che interessano al medico.
     final insights = [for (final a in allergens) ?diary.insight(a, now, days: days)]
       ..sort((x, y) => (y.highMean - y.lowMean).compareTo(x.highMean - x.lowMean));
 
@@ -141,7 +139,6 @@ class ReportPdf {
     final doc = pw.Document(title: 'Diario allergie', author: 'Allergy Radar');
     doc.addPage(
       pw.MultiPage(
-        // Oltre 4 allergeni le colonne non stanno in verticale.
         pageFormat: allergens.length > 4 ? PdfPageFormat.a4.landscape : PdfPageFormat.a4,
         margin: const pw.EdgeInsets.fromLTRB(36, 36, 36, 40),
         theme: pw.ThemeData.withFont(
@@ -311,7 +308,6 @@ class ReportPdf {
   }
 
   // --- Marchio ---
-  /// Il marchio dell'app, come `RadarPainter`, con l'asse y del PDF rivolto verso l'alto.
   static void _mark(PdfGraphics g, PdfPoint size) {
     final s = size.x / 48;
     double x(double v) => v * s;

@@ -36,11 +36,8 @@ class AppPalette extends ThemeExtension<AppPalette> {
   final Color bg, card, ink, ink2, ink3, line, track, chip, glyphBg;
   final Color pine, onPine, pineSoft, pineText, hero, onHero, heroTrack;
 
-  /// Indicizzati per [Level.index].
   final List<Color> riskFill, riskText, riskOnFill;
 
-  /// Scala dei sintomi (0 nessuno … 3 forti): separata da quella dei pollini, con gradini ben distinti.
-  /// Nel tema scuro cresce verso il chiaro, come la luce sullo sfondo scuro.
   final List<Color> symFill, symOnFill;
 
   Color fill(Level l) => riskFill[l.index];

@@ -20,7 +20,6 @@ class TrendScreen extends StatefulWidget {
 }
 
 class _TrendScreenState extends State<TrendScreen> {
-  /// Il grafico giorno per giorno mostra sempre l'ultimo mese; il confronto usa il periodo scelto.
   static const _days = 30;
   static const _periods = {30: '30 giorni', 90: '3 mesi', 365: '1 anno'};
   static const _since = {30: 'negli ultimi 30 giorni', 90: 'negli ultimi 3 mesi', 365: 'nell’ultimo anno'};
@@ -33,7 +32,6 @@ class _TrendScreenState extends State<TrendScreen> {
     final app = context.watch<AppState>();
     final choices = app.followedAllergens.isEmpty ? Allergens.all : app.followedAllergens;
     final now = DateTime.now();
-    // Di default l'allergene che spiega di più i sintomi, se il diario basta per dirlo.
     final a = Allergens.byId(_allergenId ?? '') ?? _mostTelling(diary, choices, now) ?? choices.first;
     final today = DiaryEntry.day(now);
     final days = [for (var i = _days - 1; i >= 0; i--) today.subtract(Duration(days: i))];
@@ -57,7 +55,6 @@ class _TrendScreenState extends State<TrendScreen> {
                 ),
             ],
           ),
-          // Il periodo conta solo quando il diario basta per un confronto.
           if (diary.entries.length >= DiaryState.minDaysForInsight) ...[
             const SizedBox(height: 12),
             SegmentedButton<int>(
@@ -215,8 +212,6 @@ class _Answer extends StatelessWidget {
 }
 
 // --- Giorno per giorno ---
-/// Ultimo mese, un giorno per colonna. Si sceglie un giorno toccando o trascinando ovunque sul grafico:
-/// colonne strette non vanno mirate, e la riga sotto dice cosa è successo quel giorno.
 class _DayByDay extends StatefulWidget {
   const _DayByDay({required this.allergen, required this.days, required this.diary});
 
@@ -325,7 +320,6 @@ class _DayByDayState extends State<_DayByDay> {
                   ),
                 ),
                 const SizedBox(height: 6),
-                // Una data ogni settimana, contando all'indietro da oggi, centrata sotto la sua colonna.
                 columns((d, e) {
                   final back = days.last.difference(d).inDays;
                   if (back % 7 != 0) return const SizedBox(height: 14);

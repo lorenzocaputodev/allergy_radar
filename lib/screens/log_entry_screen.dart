@@ -41,7 +41,6 @@ class _LogEntryScreenState extends State<LogEntryScreen> {
 
   bool get _isToday => DiaryEntry.day(widget.date) == DiaryEntry.day(DateTime.now());
 
-  /// I pollini si fotografano solo per oggi: per i giorni passati restano quelli già salvati.
   Map<String, int> _pollenNow() {
     final snap = context.read<AppState>().snapshot;
     if (!_isToday || snap == null) return _entry.pollen;
@@ -302,11 +301,9 @@ class _LogEntryScreenState extends State<LogEntryScreen> {
   }
 }
 
-/// Chiede il nome di un nuovo farmaco. Null se annullato.
 Future<String?> askMedication(BuildContext context) =>
     showDialog<String>(context: context, builder: (_) => const _MedicationDialog());
 
-// Il controller vive quanto il dialogo, animazione di chiusura compresa.
 class _MedicationDialog extends StatefulWidget {
   const _MedicationDialog();
 

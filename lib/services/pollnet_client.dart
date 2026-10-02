@@ -3,9 +3,6 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 
-/// Misure giornaliere della rete POLLnet, dal servizio WFS open data di ISPRA (CC BY 4.0).
-///
-/// Si usa l'output CSV: in quello JSON le date risultano spostate indietro di un giorno.
 class PollnetClient {
   PollnetClient(this._http);
 
@@ -51,7 +48,6 @@ class PollnetClient {
     return out;
   }
 
-  /// Split di una riga CSV con campi eventualmente tra virgolette.
   static List<String> splitCsvLine(String line) {
     final out = <String>[];
     final buf = StringBuffer();
@@ -83,7 +79,6 @@ class Measurement {
   final int partId;
   final DateTime date;
 
-  /// Null quando la stazione non ha campionato quel giorno.
   final double? value;
 }
 

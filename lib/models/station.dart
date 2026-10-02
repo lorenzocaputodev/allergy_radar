@@ -47,13 +47,10 @@ class StationDirectory {
 
   final List<Station> stations;
 
-  /// Oltre questa distanza il polline misurato non rappresenta più la zona.
   static const maxKm = 60.0;
 
-  /// Area del calendario: quella della stazione più vicina, a qualunque distanza.
   Area areaOf(Place p) => near(p, maxKm: double.infinity).firstOrNull?.station.area ?? Area.south;
 
-  /// Stazioni entro [maxKm], dalla più vicina.
   List<NearStation> near(Place p, {double maxKm = maxKm}) {
     final list = [for (final s in stations) NearStation(s, distanceKm(p.lat, p.lon, s.lat, s.lon))]
       ..sort((a, b) => a.km.compareTo(b.km));

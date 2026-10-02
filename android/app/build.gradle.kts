@@ -4,11 +4,9 @@ import java.util.Properties
 plugins {
     id("com.android.application")
     id("kotlin-android")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
 
-// Firma: android/key.properties resta fuori da git. Senza, la release usa la chiave di debug.
 val keystorePropertiesFile = rootProject.file("key.properties")
 val keystoreProperties = Properties()
 if (keystorePropertiesFile.exists()) {
@@ -21,7 +19,6 @@ android {
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
-        // Richiesto da flutter_local_notifications.
         isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -69,6 +66,5 @@ flutter {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
-    // Stessa versione del plugin workmanager: serve al widget per avviare l'aggiornamento.
     implementation("androidx.work:work-runtime:2.11.2")
 }

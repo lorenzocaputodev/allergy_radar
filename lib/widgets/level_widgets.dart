@@ -4,7 +4,6 @@ import '../models/allergen.dart';
 import '../models/level.dart';
 import '../theme/palette.dart';
 
-/// Larghezza del testo più lungo: per colonne di nomi che non vanno mai a capo.
 double widestText(BuildContext context, Iterable<String> texts, TextStyle style) {
   var widest = 0.0;
   for (final t in texts) {
@@ -19,7 +18,6 @@ double widestText(BuildContext context, Iterable<String> texts, TextStyle style)
   return widest;
 }
 
-/// Barra a 4 segmenti: il livello si legge anche senza colore.
 class RiskBar extends StatelessWidget {
   const RiskBar(this.level, {super.key, this.height = 8, this.track});
 
@@ -93,7 +91,6 @@ class LevelWord extends StatelessWidget {
   );
 }
 
-/// Da dove arriva il dato: obbligatorio accanto a ogni valore.
 class SourceChip extends StatelessWidget {
   const SourceChip(this.kind, {super.key, this.detail});
 
@@ -233,7 +230,6 @@ class SeasonStrip extends StatelessWidget {
   }
 }
 
-/// Intensità dei sintomi come 1, 2 o 3 pallini pieni su 3: il livello non dipende solo dal colore.
 class SeverityDots extends StatelessWidget {
   const SeverityDots(this.severity, {super.key, required this.color, this.size = 6});
 

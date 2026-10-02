@@ -224,11 +224,8 @@ class _Bars extends StatelessWidget {
   final String Function(DayValue) label;
   final double height;
 
-  /// La barra dell'ora attuale, se c'è: ha il bordo.
   final bool Function(DayValue)? current;
 
-  /// La scala arriva almeno a una volta e mezza la soglia «moderato»: 0,1 granuli non sembrano una barra piena,
-  /// e i valori normali non lasciano metà grafico vuoto.
   final Thresholds thresholds;
 
   @override
@@ -294,7 +291,6 @@ class _Bars extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              // Fondo pieno: il valore resta leggibile anche sopra la linea della soglia.
               ColoredBox(
                 color: p.card,
                 child: Padding(

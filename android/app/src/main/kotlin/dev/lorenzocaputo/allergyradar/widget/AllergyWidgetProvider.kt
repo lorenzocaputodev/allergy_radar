@@ -29,20 +29,12 @@ import java.time.OffsetDateTime
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-/**
- * Widget minimale: luogo e ora in alto, livello del giorno con barra a 4 segmenti, poi gli allergeni seguiti,
- * tanti quanti ne stanno nell'altezza; gli altri si scorrono con le frecce.
- * Legge i dati che l'app scrive in SharedPreferences (chiave flutter.widget_data) e si ridisegna
- * quando cambiano (AllergyRadarApplication), anche con l'app chiusa, dopo il controllo in background.
- */
 class AllergyWidgetProvider : AppWidgetProvider() {
-
     // --- Eventi ---
     override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray) {
         ids.forEach { update(context, manager, it) }
     }
 
-    // Ridimensionato dall'utente: cambia quante righe ci stanno.
     override fun onAppWidgetOptionsChanged(context: Context, manager: AppWidgetManager, id: Int, options: Bundle) {
         update(context, manager, id)
     }
@@ -68,16 +60,12 @@ class AllergyWidgetProvider : AppWidgetProvider() {
         private const val EXTRA_STEP = "step"
         private const val ACTION_REFRESH = "dev.lorenzocaputo.allergyradar.widget.REFRESH"
 
-        // Nome del compito Dart: in AlertsService fa riscaricare i dati anche se recenti.
         private const val REFRESH_TASK = "widget_refresh"
 
-        // Altezze in dp rispetto a quella dichiarata dal launcher (che di solito tiene fuori i suoi margini):
-        // intestazione con livello e barra, una riga di allergene, la barra delle frecce.
         private const val HEADER_DP = 100
         private const val ROW_DP = 22
         private const val PAGER_DP = 28
 
-        // Colori per livello 0–4, come nella scala dell'app: testo e riempimento dei segmenti.
         private val TEXT_LIGHT = intArrayOf(0xFF5C6661.toInt(), 0xFF76580A.toInt(), 0xFF94470A.toInt(), 0xFFA63A1B.toInt(), 0xFF7A2338.toInt())
         private val TEXT_DARK = intArrayOf(0xFF9AA49E.toInt(), 0xFFEBCB6E.toInt(), 0xFFF0A860.toInt(), 0xFFF2825E.toInt(), 0xFFF08CA2.toInt())
         private val FILL_LIGHT = intArrayOf(0xFFE4E1D7.toInt(), 0xFFEFD27F.toInt(), 0xFFE59A48.toInt(), 0xFFC4502B.toInt(), 0xFF7A2338.toInt())
@@ -133,12 +121,10 @@ class AllergyWidgetProvider : AppWidgetProvider() {
                 val total = allergens?.length() ?: 0
                 val perPage = rowsFor(manager, id, total)
                 val pageCount = ((total + perPage - 1) / perPage).coerceAtLeast(1)
-                // La pagina salvata può superare l'ultima (frecce, meno allergeni): si riparte dalla prima.
                 val page = Math.floorMod(context.getSharedPreferences(PAGES, Context.MODE_PRIVATE).getInt("$id", 0), pageCount)
                 ROWS.forEachIndexed { i, rowId ->
                     val item = if (i < perPage) allergens?.optJSONObject(page * perPage + i) else null
                     if (item == null) {
-                        // Sull'ultima pagina le righe vuote tengono il posto: frecce e titolo non si spostano.
                         val keep = i < perPage && pageCount > 1
                         views.setViewVisibility(rowId, if (keep) View.INVISIBLE else View.GONE)
                         views.setTextViewText(NAMES[i], "")
@@ -171,10 +157,6 @@ class AllergyWidgetProvider : AppWidgetProvider() {
         }
 
         // --- Aggiornamento e pagine ---
-        /**
-         * Scarica i dati nuovi con lo stesso compito Dart del controllo orario, poi ridisegna i widget.
-         * Senza rete il primo passo aspetta che torni.
-         */
         private fun refresh(context: Context) {
             val manager = AppWidgetManager.getInstance(context)
             val ids = manager.getAppWidgetIds(ComponentName(context, AllergyWidgetProvider::class.java))
@@ -194,7 +176,6 @@ class AllergyWidgetProvider : AppWidgetProvider() {
                 .enqueue()
         }
 
-        /** Quante righe di allergeni stanno nell'altezza attuale del widget (1–6). */
         private fun rowsFor(manager: AppWidgetManager, id: Int, total: Int): Int {
             val height = manager.getAppWidgetOptions(id).getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT)
             if (height == 0) return minOf(3, ROWS.size)
@@ -214,7 +195,6 @@ class AllergyWidgetProvider : AppWidgetProvider() {
             )
         }
 
-        /** «stima» piccola e grigia prima del livello, se il dato non viene da una previsione o da una misura. */
         private fun levelText(context: Context, item: JSONObject, colors: IntArray, muted: Int): CharSequence {
             val out = SpannableStringBuilder()
             if (item.optBoolean("estimate")) {

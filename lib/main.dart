@@ -34,7 +34,6 @@ Future<void> main() async {
   final state = AppState(repo, prefs);
   final diary = DiaryState(prefs);
 
-  // Anche gli allergeni seguiti cambiano il widget, non solo i dati nuovi.
   String? shown;
   state.addListener(() {
     final data = WidgetBridge.encode(state);
@@ -43,7 +42,6 @@ Future<void> main() async {
     unawaited(WidgetBridge.save(prefs, state));
   });
 
-  // Dati, impostazioni o diario cambiati: gli avvisi programmati si rifanno, una volta sola per raffica.
   Timer? pending;
   void reschedule() {
     pending?.cancel();
@@ -53,14 +51,12 @@ Future<void> main() async {
   state.addListener(reschedule);
   diary.addListener(reschedule);
 
-  // Tornando all'app (anche dal widget) i dati più vecchi di un'ora si riscaricano: aggiornano anche il widget.
   AppLifecycleListener(
     onResume: () {
       if (state.onboarded && state.isStale) state.refresh();
     },
   );
 
-  // Toccando il promemoria del diario si apre direttamente la voce di oggi.
   AlertsService.opened.addListener(() {
     if (AlertsService.opened.value != AlertKind.diary) return;
     AlertsService.opened.value = null;

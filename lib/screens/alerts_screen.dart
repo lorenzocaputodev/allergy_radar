@@ -19,7 +19,6 @@ class AlertsScreen extends StatefulWidget {
 }
 
 class _AlertsScreenState extends State<AlertsScreen> {
-  // I «Prossimo: …» dipendono dall'ora: si ricalcolano tornando nell'app.
   late final AppLifecycleListener _lifecycle;
 
   @override
@@ -58,7 +57,6 @@ class _AlertsScreenState extends State<AlertsScreen> {
     );
   }
 
-  /// Cosa succederà per ogni avviso, così si capisce anche perché oggi uno non arriva.
   static Map<AlertKind, String> _notes(AppState app, DiaryState diary, DateTime now) {
     final diaryDone = diary.entryFor(DiaryEntry.day(now)) != null;
     final planned = {
@@ -92,17 +90,14 @@ class _AlertsScreenState extends State<AlertsScreen> {
   }
 }
 
-/// Interruttori e orari degli avvisi. Usato anche nel primo avvio.
 class AlertSettingsEditor extends StatelessWidget {
   const AlertSettingsEditor({super.key, required this.value, required this.onChanged, this.notes = const {}});
 
   final AlertSettings value;
   final void Function(AlertSettings) onChanged;
 
-  /// Sotto ogni orario: quando arriva il prossimo avviso.
   final Map<AlertKind, String> notes;
 
-  /// Larghezza di un interruttore Material 3: l'ora si centra sotto di lui.
   static const _switchWidth = 52.0;
 
   static String time(int minutes) =>
@@ -221,8 +216,6 @@ class _Check extends StatefulWidget {
 
 class _CheckState extends State<_Check> {
   late Future<(bool, bool)> _status = _read();
-
-  // Permessi cambiati dalle impostazioni di Android: si rileggono al ritorno nell'app.
   late final AppLifecycleListener _lifecycle;
 
   @override

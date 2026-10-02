@@ -196,7 +196,6 @@ class _Hero extends StatelessWidget {
     } else {
       summary = 'Al livello che ti dà fastidio: ${Fmt.list([for (final s in above) s.allergen.name])}.';
     }
-    // Ai pollini solo misurati manca la misura, agli altri la previsione.
     final estimated = followed.where((s) => s.kind == DataKind.estimate).map((s) => s.allergen);
     final noMeasure = [for (final a in estimated.where((a) => !a.hasForecast)) a.name];
     final noForecast = [for (final a in estimated.where((a) => a.hasForecast)) a.name];

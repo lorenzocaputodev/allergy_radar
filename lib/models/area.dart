@@ -1,4 +1,3 @@
-/// Macro-area per il calendario stagionale.
 enum Area {
   north('Nord'),
   centre('Centro'),
@@ -8,7 +7,6 @@ enum Area {
 
   final String label;
 
-  /// Regione POLLnet (come scritta da ISPRA) → area.
   static Area ofRegion(String region) => switch (region.trim()) {
     'Piemonte' ||
     "Valle d'Aosta" ||

@@ -63,7 +63,6 @@ class _DiaryScreenState extends State<DiaryScreen> {
         _TodayCard(
           entry: todayEntry,
           onOpen: () => _open(today),
-          // Senza i pollini il giorno resterebbe fuori dai confronti.
           onNoSymptoms: () =>
               diary.save(DiaryEntry(date: today, pollen: context.read<AppState>().snapshot?.levels ?? const {})),
         ),
@@ -326,7 +325,6 @@ class _EntryCard extends StatelessWidget {
 
   final DiaryEntry entry;
 
-  /// Solo gli allergeni seguiti: gli altri sono salvati nella voce ma qui confonderebbero.
   final List<Allergen> followed;
   final VoidCallback onTap;
 

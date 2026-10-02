@@ -27,16 +27,12 @@ class AllergenStatus {
   final DataKind kind;
   final Level level;
 
-  /// granuli/m³: media del giorno (previsione) o misura del giorno (stazione). Null per le stime.
   final double? value;
 
-  /// Giorno a cui si riferisce [value].
   final DateTime? date;
 
-  /// Previsione: oggi e i giorni seguenti. Misura: storico, dal più vecchio.
   final List<DayValue> series;
 
-  /// Solo previsione: valori orari di oggi, dalle 0 alle 24 (mezzanotte di domani).
   final List<DayValue> hourly;
 
   final NearStation? station;
@@ -49,7 +45,6 @@ class AirStatus {
   final double? pm25Mean;
   final double? dustMax;
 
-  // Fasce ispirate all'indice europeo EAQI, adattate alla scala 0–4.
   static Level ozoneLevel(double v) => v < 100
       ? Level.low
       : v < 130
@@ -91,17 +86,13 @@ class PollenSnapshot {
   final Map<String, AllergenStatus> statuses;
   final AirStatus air;
 
-  /// Area del calendario usata per le stime.
   final Area area;
 
-  /// Stazione da cui arrivano le misure: entro il raggio e con dati recenti.
   final NearStation? measuringStation;
 
-  /// Stazione più vicina entro il raggio, anche se non pubblica più.
   final NearStation? nearestStation;
 
   AllergenStatus? operator [](String id) => statuses[id];
 
-  /// Livello (0–4) di ogni allergene, come lo salva il diario.
   Map<String, int> get levels => {for (final e in statuses.entries) e.key: e.value.level.index};
 }

@@ -50,7 +50,6 @@ class _PlaceSearchState extends State<PlaceSearch> {
     });
     try {
       final r = await context.read<OpenMeteoClient>().searchPlaces(q);
-      // Il geocoding può restituire più voci per lo stesso comune (città e località): se ne tiene una.
       final seen = <String>{};
       final unique = [
         for (final p in r)

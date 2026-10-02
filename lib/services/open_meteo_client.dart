@@ -5,7 +5,6 @@ import 'package:http/http.dart' as http;
 import '../models/allergen.dart';
 import '../models/place.dart';
 
-/// Previsioni orarie di pollini e aria (modello CAMS Europa). Gratuito, senza chiave.
 class OpenMeteoClient {
   OpenMeteoClient(this._http);
 
@@ -27,7 +26,6 @@ class OpenMeteoClient {
     return utf8.decode(res.bodyBytes);
   }
 
-  /// Ricerca città (geocoding Open-Meteo), limitata all'Italia.
   Future<List<Place>> searchPlaces(String query) async {
     final uri = Uri.https('geocoding-api.open-meteo.com', '/v1/search', {
       'name': query,
@@ -76,7 +74,6 @@ class OpenMeteoData {
   final List<DateTime> times;
   final Map<String, List<double?>> series;
 
-  /// Valore orario combinato: per più chiavi (betulla + ontano) prende il massimo.
   double? valueAt(List<String> keys, int i) {
     double? best;
     for (final k in keys) {
@@ -86,7 +83,6 @@ class OpenMeteoData {
     return best;
   }
 
-  /// Valori per giorno, in ordine. Un giorno conta se ha almeno [minHours] ore valide.
   Map<DateTime, List<double>> byDay(List<String> keys, {int minHours = 6}) {
     final out = <DateTime, List<double>>{};
     for (var i = 0; i < times.length; i++) {

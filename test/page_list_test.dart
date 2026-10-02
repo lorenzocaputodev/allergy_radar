@@ -4,7 +4,6 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   testWidgets('il margine della pagina tiene conto delle aree di sistema, anche ai lati', (tester) async {
-    // Orizzontale con navigazione a tre tasti: la barra sta a destra.
     tester.view.padding = const FakeViewPadding(top: 72, right: 144, bottom: 24);
     addTearDown(tester.view.reset);
     await tester.pumpWidget(

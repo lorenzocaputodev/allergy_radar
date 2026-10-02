@@ -12,7 +12,6 @@ import '../widgets/place_search.dart';
 import '../widgets/radar_mark.dart';
 import 'alerts_screen.dart';
 
-/// Primo avvio: benvenuto, allergeni, luogo, avvisi, riepilogo.
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
 

@@ -1,4 +1,3 @@
-/// Una voce del diario: come stavi in un giorno, con i pollini di quel giorno.
 class DiaryEntry {
   const DiaryEntry({
     required this.date,
@@ -13,10 +12,8 @@ class DiaryEntry {
     this.pollen = const {},
   });
 
-  /// Giorno, senza ora.
   final DateTime date;
 
-  /// Intensità 0–3: no, lieve, medio, forte.
   final int nose;
   final int eyes;
   final int throat;
@@ -25,11 +22,9 @@ class DiaryEntry {
   final bool badSleep;
   final List<String> meds;
 
-  /// Ore all'aperto: 0 meno di 1, 1 da 1 a 3, 2 più di 3. Null se non indicato.
   final int? outdoor;
   final String note;
 
-  /// Livello (0–4) di ogni allergene al momento del salvataggio, per id.
   final Map<String, int> pollen;
 
   static const severityNames = ['Nessuno', 'Lievi', 'Medi', 'Forti'];
@@ -42,8 +37,6 @@ class DiaryEntry {
 
   String get key => keyOf(date);
 
-  /// Intensità del giorno, 0–3: il sintomo peggiore. Un naso «forte» fa una giornata brutta
-  /// anche se il resto va bene; la media la farebbe sembrare lieve.
   int get severity => [nose, eyes, throat, breath].reduce((a, b) => a > b ? a : b);
 
   double get score => severity.toDouble();

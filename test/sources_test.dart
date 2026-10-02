@@ -9,7 +9,7 @@ import 'helpers.dart';
 
 void main() {
   group('Thresholds', () {
-    const t = Thresholds(2, 20, 70); // Urticacee
+    const t = Thresholds(2, 20, 70);
 
     test('classi POLLnet ai bordi', () {
       expect(t.levelOf(1.9), Level.none);

@@ -10,7 +10,6 @@ class Place {
 
   static const lecce = Place(name: 'Lecce', region: 'Puglia', lat: 40.3515, lon: 18.1750);
 
-  /// Coordinate arrotondate a 0,01° (~1 km): l'unica cosa che esce dal telefono.
   double get roundedLat => (lat * 100).round() / 100;
   double get roundedLon => (lon * 100).round() / 100;
 
@@ -26,7 +25,6 @@ class Place {
   String get cacheKey => '${roundedLat.toStringAsFixed(2)},${roundedLon.toStringAsFixed(2)}';
 }
 
-/// Distanza in km (formula dell'emisenoverso).
 double distanceKm(double lat1, double lon1, double lat2, double lon2) {
   const r = 6371.0;
   double rad(double d) => d * math.pi / 180;

@@ -47,7 +47,6 @@ void main() {
     expect(today.title, 'Pollini di oggi a Lecce');
     expect(today.body, 'Al livello che ti dà fastidio: Parietaria. Gli altri sono più bassi.');
 
-    // Dopo le 7:30 si programma per domani, con la previsione di domani.
     final next = of(schedule(DateTime(2026, 9, 30, 9)), AlertKind.briefing)!;
     expect(next.at, DateTime(2026, 10, 1, 7, 30));
     expect(next.body, 'Al livello che ti dà fastidio: Graminacee e Parietaria.');
@@ -74,7 +73,6 @@ void main() {
       of(schedule(DateTime(2026, 9, 30, 12), followed: [grass(Level.none, Level.low, 3)]), AlertKind.tomorrow),
       isNull,
     );
-    // Conta il livello di domani, anche se è uguale a oggi.
     expect(
       of(
         schedule(DateTime(2026, 9, 30, 12), followed: [grass(Level.moderate, Level.moderate, 12)]),
@@ -82,7 +80,6 @@ void main() {
       ),
       isNotNull,
     );
-    // Dopo le 19 servirebbe la previsione di dopodomani, che qui non c'è.
     expect(of(schedule(DateTime(2026, 9, 30, 20)), AlertKind.tomorrow), isNull);
   });
 

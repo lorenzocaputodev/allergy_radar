@@ -16,10 +16,8 @@ class LocationException implements Exception {
   String toString() => message;
 }
 
-/// Nome del comune e regione per delle coordinate; null se non si trova.
 typedef ReverseGeocoder = Future<({String name, String? region})?> Function(double lat, double lon);
 
-/// Posizione approssimativa del telefono e nome del comune dal Geocoder di Android.
 class LocationService {
   static const fallbackName = 'La mia posizione';
 
@@ -35,8 +33,6 @@ class LocationService {
     if (permission == LocationPermission.deniedForever) {
       throw const LocationException('Permesso negato: si riattiva dalle impostazioni di Android.');
     }
-    // Precisione media: con il solo permesso approssimativo Android la limita comunque alla zona.
-    // «Bassa» chiede la posizione a basso consumo, che può non arrivare se nessun'altra app la usa.
     Position? pos;
     try {
       pos = await Geolocator.getCurrentPosition(
@@ -49,7 +45,6 @@ class LocationService {
     return placeAt(pos.latitude, pos.longitude, reverse: reverse ?? androidGeocoder);
   }
 
-  /// Luogo per delle coordinate: con il nome del comune se il geocoder lo trova, altrimenti generico.
   static Future<Place> placeAt(double lat, double lon, {required ReverseGeocoder reverse}) async {
     ({String name, String? region})? found;
     try {
@@ -60,7 +55,6 @@ class LocationService {
     return Place(name: found?.name ?? fallbackName, region: found?.region, lat: lat, lon: lon);
   }
 
-  /// Geocoder di sistema: su Android usa il servizio del telefono, altrove non c'è.
   static Future<({String name, String? region})?> androidGeocoder(double lat, double lon) async {
     if (kIsWeb || !Platform.isAndroid) return null;
     final marks = await Geocoding().placemarkFromCoordinates(lat, lon, locale: const Locale('it'));

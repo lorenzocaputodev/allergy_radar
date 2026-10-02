@@ -33,13 +33,9 @@ void alertsCallbackDispatcher() {
   });
 }
 
-/// Avvisi su Android, programmati all'orario scelto: arrivano anche ad app chiusa.
-/// Un lavoro in background ogni ora aggiorna dati e widget e riprogramma gli avvisi con i dati nuovi.
-/// Cosa programmare lo decide [AlertPlanner].
 class AlertsService {
   static const _task = 'pollen_check';
 
-  /// Compito avviato dall'icona «aggiorna» del widget (`AllergyWidgetProvider.kt`).
   static const refreshTask = 'widget_refresh';
   static const _work = 'pollen_check_hourly';
   static const _testId = 99;
@@ -57,24 +53,20 @@ class AlertsService {
     description: 'La sera, se oggi non hai ancora registrato i sintomi.',
   );
 
-  /// Sagoma bianca su fondo trasparente: Android colora da sé le icone della barra di stato.
   static const _statusIcon = '@drawable/ic_stat_logo';
   static const _accent = Color(0xFF1F5A4A);
 
   static final _plugin = FlutterLocalNotificationsPlugin();
   static bool _ready = false;
 
-  /// L'ultimo avviso toccato: chi mostra l'app decide dove portare l'utente.
   static final opened = ValueNotifier<AlertKind?>(null);
 
-  /// Sistema reale, non defaultTargetPlatform: nei test vale «android» anche su Windows.
   static bool get isSupported => !kIsWeb && Platform.isAndroid;
 
   static AndroidFlutterLocalNotificationsPlugin? get _android =>
       _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
 
   // --- Avvio e permessi ---
-  /// Non lancia mai: se il plugin non parte, gli avvisi restano spenti e l'app va avanti.
   static Future<bool> init({bool background = false}) async {
     if (!isSupported) return false;
     if (_ready) return true;
@@ -97,7 +89,6 @@ class AlertsService {
     return _ready;
   }
 
-  /// Chiede il permesso (Android 13+). True se si possono mostrare avvisi.
   static Future<bool> requestPermission() async {
     if (!await init()) return false;
     try {
@@ -107,7 +98,6 @@ class AlertsService {
     }
   }
 
-  /// False se il permesso è negato o le notifiche dell'app sono spente nelle impostazioni.
   static Future<bool> enabled() async {
     if (!await init()) return false;
     try {
@@ -117,7 +107,6 @@ class AlertsService {
     }
   }
 
-  /// True se Android permette l'orario preciso; senza, un avviso può arrivare fino a un'ora dopo.
   static Future<bool> exact() async {
     if (!await init()) return false;
     try {
@@ -127,7 +116,6 @@ class AlertsService {
     }
   }
 
-  /// Apre l'impostazione di Android per l'orario preciso. True se concesso.
   static Future<bool> requestExact() async {
     if (!await init()) return false;
     try {
@@ -161,7 +149,6 @@ class AlertsService {
   }
 
   // --- Programmazione ---
-  /// Riprogramma gli avvisi con i dati e le impostazioni attuali. Da chiamare dopo [init].
   static Future<void> reschedule(SharedPreferences prefs, AppState app, DiaryState diary) async {
     if (!_ready || !app.onboarded) return;
     final now = DateTime.now();

@@ -1,16 +1,13 @@
 import 'package:flutter/material.dart';
 
-/// Lo stesso disegno genera l'icona (test_screens/icons_test.dart).
 class RadarMark extends StatelessWidget {
   const RadarMark({super.key, required this.size, required this.color, this.stroke = 3.4, this.inner = true});
 
   final double size;
   final Color color;
 
-  /// Spessore del tratto, sulla griglia 48×48.
   final double stroke;
 
-  /// Cerchio interno: si toglie nelle dimensioni piccole.
   final bool inner;
 
   @override

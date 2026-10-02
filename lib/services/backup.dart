@@ -10,7 +10,6 @@ import '../models/place.dart';
 import '../state/app_state.dart';
 import '../state/diary_state.dart';
 
-/// Backup in JSON di impostazioni e diario, ed esportazione del diario in CSV.
 class Backup {
   static const _app = 'allergy_radar';
   static const _format = 1;
@@ -27,8 +26,6 @@ class Backup {
         .convert({'app': _app, 'format': _format, 'exportedAt': now.toIso8601String(), 'data': data});
   }
 
-  /// Ripristina un backup. Lancia [FormatException] se il file non è un backup di questa app.
-  /// Restituisce quante voci del diario contiene.
   static Future<int> restore(SharedPreferences prefs, String json) async {
     final Map<String, dynamic> root;
     try {
@@ -43,8 +40,6 @@ class Backup {
       throw const FormatException('Il backup viene da una versione più recente dell’app: aggiornala.');
     }
     final data = (root['data'] as Map).cast<String, Object?>();
-    // Prima si verifica tutto, poi si scrive: un file a metà non lascia l'app a metà.
-    // Ogni valore si legge come lo leggerà l'app: un diario rotto bloccherebbe l'avvio.
     final values = <String, Object>{};
     for (final k in _keys) {
       final v = data[k];
@@ -73,7 +68,6 @@ class Backup {
     return entries;
   }
 
-  /// Il valore da salvare per la chiave [k], se è quello che l'app si aspetta. Altrimenti lancia.
   static Object _check(String k, Object v) {
     Map<String, dynamic> map(Object s) => jsonDecode(s as String) as Map<String, dynamic>;
     switch (k) {

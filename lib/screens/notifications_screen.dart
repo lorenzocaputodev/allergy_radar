@@ -29,7 +29,6 @@ class NotificationsScreen extends StatefulWidget {
 }
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
-  // Un avviso può arrivare mentre la schermata è aperta: si rilegge quando l'app torna in primo piano.
   late final AppLifecycleListener _lifecycle;
   Future<SharedPreferences> _prefs = AlertLog.fresh();
 
@@ -176,7 +175,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   );
 
   void _delete(SharedPreferences prefs, AlertMessage m) {
-    // SharedPreferences aggiorna subito la sua copia in memoria: la lista ridisegnata non ha più l'avviso.
     unawaited(AlertLog.remove(prefs, m, DateTime.now()));
     setState(() {});
     ScaffoldMessenger.of(context)
@@ -195,7 +193,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       );
   }
 
-  /// Il promemoria apre il diario di quel giorno; gli avvisi sui pollini riportano a Oggi.
   void _open(AlertMessage m) {
     final nav = Navigator.of(context);
     if (m.kind == AlertKind.diary) {

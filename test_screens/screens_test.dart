@@ -1,6 +1,4 @@
 // ignore_for_file: invalid_use_of_visible_for_testing_member
-// Screenshot di tutte le schermate a 412 dp (Motorola Edge 50 Fusion), per la revisione visiva.
-// flutter test test_screens --update-goldens  →  test_screens/out/*.png
 import 'dart:convert';
 import 'dart:io';
 
@@ -243,8 +241,6 @@ void main() {
     );
   });
 
-  // ===== Immagini del README =====
-  // Schermate a misura di telefono e banner: poi tool/readme_images.py le converte.
   for (final (name, tab) in [('oggi', 'Oggi'), ('diario', 'Diario'), ('calendario', 'Calendario')]) {
     testWidgets('readme $name', (tester) async {
       await shot(
@@ -313,7 +309,6 @@ void main() {
   });
 }
 
-/// Un mese di diario inventato, con sintomi che salgono insieme alla Parietaria.
 List<Map<String, dynamic>> _sampleDiary() {
   final today = DiaryEntry.day(DateTime.now());
   final out = <Map<String, dynamic>>[];

@@ -26,7 +26,6 @@ abstract final class Fmt {
   static String weekday(DateTime d, DateTime today) =>
       DateTime(d.year, d.month, d.day) == DateTime(today.year, today.month, today.day) ? 'Oggi' : _short[d.weekday - 1];
 
-  /// «A, B e C».
   static String list(List<String> items) =>
       items.length < 2 ? items.join() : '${items.sublist(0, items.length - 1).join(', ')} e ${items.last}';
 

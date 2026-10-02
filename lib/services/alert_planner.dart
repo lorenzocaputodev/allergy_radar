@@ -15,8 +15,6 @@ class AlertMessage {
   final String body;
 }
 
-/// Decide quali avvisi programmare: per ogni tipo attivo, la prossima occorrenza dopo `now`.
-/// Nessun effetto collaterale: si testa da solo. Il testo usa i dati del giorno in cui l'avviso arriva.
 class AlertPlanner {
   const AlertPlanner();
 
@@ -88,7 +86,6 @@ class AlertPlanner {
 
   static DayValue? _dayValue(AllergenStatus s, DateTime day) => s.series.where((d) => d.date == day).firstOrNull;
 
-  /// Previsione del giorno, se c'è; altrimenti il livello attuale (stima del mese o ultima misura).
   static Level _levelOn(AllergenStatus s, DateTime day) =>
       s.kind == DataKind.forecast ? (_dayValue(s, day)?.level ?? s.level) : s.level;
 }

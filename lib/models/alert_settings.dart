@@ -1,4 +1,3 @@
-/// Quali avvisi mandare e a che ora. Gli orari sono minuti dalla mezzanotte.
 class AlertSettings {
   const AlertSettings({
     this.briefing = true,

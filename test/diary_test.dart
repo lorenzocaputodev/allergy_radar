@@ -83,7 +83,7 @@ void main() {
       final r = d.insight(Allergens.parietaria, today)!;
       expect(r.days, 20);
       expect(r.highDays, 10);
-      expect(r.highMean, 2.0); // sintomo peggiore: naso 2
+      expect(r.highMean, 2.0);
       expect(r.lowMean, 0);
       expect(r.clear, isTrue);
     });

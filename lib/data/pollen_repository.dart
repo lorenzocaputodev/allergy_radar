@@ -8,7 +8,6 @@ import '../models/station.dart';
 import '../services/open_meteo_client.dart';
 import '../services/pollnet_client.dart';
 
-/// Risposte grezze delle fonti: sono loro a finire in cache, così l'app si ricostruisce offline.
 class RawPollenData {
   const RawPollenData({
     required this.place,
@@ -58,8 +57,6 @@ class PollenRepository {
   final StationDirectory stations;
   final DateTime Function() _now;
 
-  /// Una misura più vecchia di così non descrive più la situazione attuale.
-  /// ISPRA pubblica una settimana alla volta, con giorni di ritardo: con 10 giorni intere regioni restavano senza.
   static const maxMeasureAgeDays = 14;
   static const historyDays = 30;
 
@@ -76,10 +73,8 @@ class PollenRepository {
     );
   }
 
-  /// CSV della stazione più vicina con misure recenti, se c'è.
   Future<(String?, NearStation?)> _measures(Place place, DateTime now) async {
     final ids = Allergens.measuredOnly.map((a) => a.pollnetId);
-    // La stazione più vicina può essere ferma: si prova la successiva, fino a tre.
     for (final near in stations.near(place).take(3)) {
       try {
         final body = await pollnet.fetchCsv(near.station.id, ids, now.subtract(const Duration(days: historyDays)), now);
@@ -87,10 +82,8 @@ class PollenRepository {
             .any((m) => m.value != null && now.difference(m.date).inDays <= maxMeasureAgeDays);
         if (recent) return (body, near);
       } on PollnetException {
-        // Errore su una sola stazione: le altre possono rispondere.
         continue;
       } on Exception {
-        // ISPRA non raggiungibile: si resta sulle stime, la previsione vale comunque.
         break;
       }
     }

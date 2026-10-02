@@ -21,15 +21,12 @@ class DiaryInsight {
 
   final int days;
 
-  /// Giorni con l'allergene da moderato in su, e sotto.
   final int highDays;
   final int lowDays;
 
-  /// Sintomi medi (0–3) nei due gruppi.
   final double highMean;
   final double lowMean;
 
-  /// Differenza abbastanza netta da dirla (almeno mezzo punto su 3).
   bool get clear => (highMean - lowMean).abs() >= 0.5;
 }
 
@@ -44,7 +41,6 @@ class DiaryState extends ChangeNotifier {
   static const kMeds = 'medications';
   static const backupKeys = [kEntries, kMeds];
 
-  /// I principi attivi più usati in Italia per le allergie; ognuno può aggiungere i suoi.
   static const defaultMedications = [
     'Cetirizina',
     'Levocetirizina',
@@ -73,11 +69,9 @@ class DiaryState extends ChangeNotifier {
       }
     }
     final saved = _prefs.getStringList(kMeds);
-    // La lista iniziale delle prime versioni, mai modificata, passa a quella nuova.
     medications = saved == null || listEquals(saved, _oldDefaults) ? defaultMedications : saved;
   }
 
-  /// Rilegge tutto dalle preferenze, per esempio dopo un ripristino.
   void reload() {
     _read();
     notifyListeners();
@@ -86,7 +80,6 @@ class DiaryState extends ChangeNotifier {
   // --- Voci ---
   DiaryEntry? entryFor(DateTime d) => _entries[DiaryEntry.keyOf(d)];
 
-  /// Dal più recente.
   List<DiaryEntry> get entries => _entries.values.toList()..sort((a, b) => b.date.compareTo(a.date));
 
   List<DiaryEntry> between(DateTime from, DateTime to) =>
@@ -123,8 +116,6 @@ class DiaryState extends ChangeNotifier {
   Future<void> _persist() => _prefs.setString(kEntries, jsonEncode(_entries.values.map((e) => e.toJson()).toList()));
 
   // --- Confronto ---
-  /// Sintomi con l'allergene da moderato in su contro sotto, negli ultimi [days] giorni.
-  /// Null se i dati non bastano.
   DiaryInsight? insight(Allergen a, DateTime now, {int days = 30}) {
     final list = between(now.subtract(Duration(days: days - 1)), now).where((e) => e.pollen.containsKey(a.id)).toList();
     if (list.length < minDaysForInsight) return null;

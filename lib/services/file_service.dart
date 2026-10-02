@@ -51,7 +51,6 @@ class FileService {
     return FileResult.unsupported;
   }
 
-  /// Contenuto testuale del file scelto, o null se annullato o non supportato.
   static Future<String?> openText({required List<String> extensions, required List<String> mimes}) async {
     if (_isWindows) {
       final file = await openFile(
@@ -60,8 +59,6 @@ class FileService {
       return file?.readAsString();
     }
     if (_isAndroid) {
-      // Senza filtri: molti gestori file vedono un .json come application/octet-stream e lo
-      // mostrerebbero grigio. Il contenuto lo controlla chi legge (per esempio Backup.restore).
       final path = await FlutterFileDialog.pickFile(
         params: const OpenFileDialogParams(localOnly: true, copyFileToCacheDir: true),
       );

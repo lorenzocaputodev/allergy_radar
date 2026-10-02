@@ -24,10 +24,8 @@ class AppState extends ChangeNotifier {
   static const kAlerts = 'alerts';
   static const _kCache = 'cache';
 
-  /// Chiavi che finiscono nel backup (la cache no: si riscarica).
   static const backupKeys = [kPlace, kFollowed, kThresholds, kOnboarded, kTheme, kAlerts];
 
-  /// Sotto quest'età i dati in cache non vengono richiesti di nuovo.
   static const freshFor = Duration(hours: 1);
 
   Place place = Place.lecce;
@@ -58,7 +56,6 @@ class AppState extends ChangeNotifier {
       if (!followed.contains(a.id) && snapshot?[a.id] != null) snapshot![a.id]!,
   ];
 
-  /// Livello peggiore tra gli allergeni seguiti.
   Level get dayLevel => followedStatuses.fold(Level.none, (l, s) => l.max(s.level));
 
   List<AllergenStatus> get aboveThreshold =>
@@ -67,7 +64,6 @@ class AppState extends ChangeNotifier {
   bool get isStale => snapshot == null || DateTime.now().difference(snapshot!.fetchedAt) > freshFor;
 
   // --- Caricamento e dati ---
-  /// Legge preferenze e cache, senza rete.
   Future<void> load() async {
     onboarded = _prefs.getBool(kOnboarded) ?? false;
     final p = _prefs.getString(kPlace);
@@ -94,7 +90,6 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Avvio dell'app: preferenze, poi dati nuovi se quelli in cache sono vecchi.
   Future<void> init() async {
     await load();
     if (onboarded && isStale) await refresh();
@@ -109,7 +104,6 @@ class AppState extends ChangeNotifier {
     await setPlace(p);
   }
 
-  /// Un aggiornamento chiesto mentre un altro era in corso, per esempio cambiando luogo.
   bool _again = false;
 
   Future<void> refresh() async {
@@ -123,7 +117,6 @@ class AppState extends ChangeNotifier {
     final asked = place;
     try {
       final raw = await _repo.fetch(asked);
-      // Il luogo è cambiato durante il download: questi dati non sono più suoi.
       if (place.cacheKey == asked.cacheKey) {
         snapshot = _repo.build(raw);
         await _prefs.setString(_kCache, raw.encode());
