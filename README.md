@@ -34,7 +34,7 @@ Serve Android 7.0 o successivo.
 - 🏷️ Ogni valore dice se è una **previsione**, una **misura** o una **stima**
 - 🔎 Dettaglio di ogni allergene: ora per ora, prossimi giorni, stagione e la tua soglia
 - 📓 Diario dei sintomi da 10 secondi, con i farmaci più usati già in lista, sonno e ore all’aperto
-- 📈 Andamento: per ogni allergene, se stai peggio quando ce n’è di più, e giorno per giorno
+- 📈 Andamento: per ogni allergene, se stai peggio nei giorni sopra la tua soglia, con un punteggio sintomi + farmaci adattato dal CSMS dell’EAACI; le misure ISPRA completano da sole i giorni passati
 - 🗓️ Calendario stagionale per **Nord**, **Centro** e **Sud e Isole**
 - 📍 Luogo da ricerca città o dalla posizione approssimativa, con il nome del comune
 - 📲 Widget Android per la schermata Home, con le pagine degli allergeni e il tasto per aggiornare
@@ -49,13 +49,13 @@ Serve Android 7.0 o successivo.
 
 L’app può mandare tre avvisi, ognuno con il suo orario, anche ad app chiusa:
 
-- ☀️ **Pollini di oggi**, ogni mattina: i tuoi pollini della giornata, anche solo nei giorni sopra la tua soglia
-- 📈 **Allerta per domani**, la sera prima: se domani un tuo allergene supera la soglia
-- 📓 **Promemoria diario**, la sera, se oggi non hai ancora registrato
+- ☀️ **Pollini di oggi**: cosa c’è nell’aria oggi per i tuoi allergeni, anche solo nei giorni sopra la tua soglia
+- 📈 **Allerta per domani**: il giorno prima, se domani un tuo allergene supera la soglia
+- 📓 **Promemoria diario**: se oggi non hai ancora registrato i sintomi
 
 La soglia è il livello da cui un allergene ti dà fastidio: la scegli per ognuno in «I miei allergeni».
 
-Con «Orario esatto» attivo (permesso Android «Sveglie e promemoria») arrivano all’ora scelta; senza, possono tardare fino a un’ora.
+Con «Orario esatto» attivo (permesso Android «Sveglie e promemoria») arrivano all’ora scelta; senza, possono tardare fino a un’ora. L’interruttore compare già al primo avvio.
 
 Le notifiche sono gestite su Android tramite:
 
