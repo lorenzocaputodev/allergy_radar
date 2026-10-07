@@ -44,7 +44,7 @@ class AlertPlanner {
         final others = over.length < followed.length ? ' Gli altri sono più bassi.' : '';
         final body = over.isEmpty
             ? 'Oggi nessuno dei tuoi allergeni è al livello che ti dà fastidio.'
-            : 'Al livello che ti dà fastidio: ${Fmt.list([for (final s in over) s.allergen.name])}.$others';
+            : 'Al livello che ti dà fastidio: ${Fmt.list([for (final s in over) _named(s)])}.$others';
         out.add(AlertMessage(AlertKind.briefing, when, 'Pollini di oggi a $placeName', body));
       }
     }
@@ -84,6 +84,12 @@ class AlertPlanner {
     }
     return out;
   }
+
+  static String _named(AllergenStatus s) => switch (s.kind) {
+    DataKind.forecast => s.allergen.name,
+    DataKind.measured => '${s.allergen.name} (misura${s.date == null ? '' : ' del ${Fmt.shortDate(s.date!)}'})',
+    DataKind.estimate => '${s.allergen.name} (stima)',
+  };
 
   static DayValue? _dayValue(AllergenStatus s, DateTime day) => s.series.where((d) => d.date == day).firstOrNull;
 

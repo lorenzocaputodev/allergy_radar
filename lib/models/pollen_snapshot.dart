@@ -94,5 +94,8 @@ class PollenSnapshot {
 
   AllergenStatus? operator [](String id) => statuses[id];
 
-  Map<String, int> get levels => {for (final e in statuses.entries) e.key: e.value.level.index};
+  Map<String, int> get levels => {
+    for (final e in statuses.entries)
+      if (e.value.kind != DataKind.estimate) e.key: e.value.level.index,
+  };
 }

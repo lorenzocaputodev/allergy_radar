@@ -51,11 +51,11 @@ void main() {
   test('briefing: testo del giorno in cui arriva', () {
     final today = of(schedule(DateTime(2026, 9, 30, 7)), AlertKind.briefing)!;
     expect(today.title, 'Pollini di oggi a Lecce');
-    expect(today.body, 'Al livello che ti dà fastidio: Parietaria. Gli altri sono più bassi.');
+    expect(today.body, 'Al livello che ti dà fastidio: Parietaria (stima). Gli altri sono più bassi.');
 
     final next = of(schedule(DateTime(2026, 9, 30, 9)), AlertKind.briefing)!;
     expect(next.at, DateTime(2026, 10, 1, 7, 30));
-    expect(next.body, 'Al livello che ti dà fastidio: Graminacee e Parietaria.');
+    expect(next.body, 'Al livello che ti dà fastidio: Graminacee e Parietaria (stima).');
   });
 
   test('briefing solo sopra soglia', () {
