@@ -44,6 +44,7 @@ class ReportPdf {
     required List<Allergen> allergens,
     required String placeName,
     required DateTime now,
+    required Level Function(Allergen) thresholdOf,
   }) async {
     final regular = pw.Font.ttf(await rootBundle.load('assets/fonts/Figtree-400.ttf'));
     final bold = pw.Font.ttf(await rootBundle.load('assets/fonts/Figtree-700.ttf'));
@@ -61,7 +62,7 @@ class ReportPdf {
     }
     final withMeds = entries.where((e) => e.meds.isNotEmpty).length;
     final avg = entries.isEmpty ? null : entries.fold<double>(0, (s, e) => s + e.score) / entries.length;
-    final insights = [for (final a in allergens) ?diary.insight(a, now, days: days)]
+    final insights = [for (final a in allergens) ?diary.insight(a, now, threshold: thresholdOf(a), days: days)]
       ..sort((x, y) => (y.highMean - y.lowMean).compareTo(x.highMean - x.lowMean));
 
     // --- Stili e celle ---
@@ -213,7 +214,7 @@ class ReportPdf {
           if (insights.isEmpty)
             pw.Text(
               'Per un confronto servono almeno ${DiaryState.minDaysForInsight} giorni registrati, '
-              'di cui almeno 3 con il polline da moderato in su e 3 sotto.',
+              'con un livello del polline, di cui almeno 3 sopra la soglia personale e 3 sotto.',
               style: const pw.TextStyle(fontSize: 10, color: _muted),
             )
           else
@@ -230,8 +231,9 @@ class ReportPdf {
                       ),
                       pw.TextSpan(
                         text:
-                            'intensità media ${_num(i.highMean)} nei giorni da moderato in su (${_days(i.highDays)}), '
-                            '${_num(i.lowMean)} negli altri (${_days(i.lowDays)}).',
+                            'punteggio sintomi + farmaci ${_num(i.highMean)} su ${DiaryInsight.maxScore} nei giorni '
+                            'sopra la soglia personale (${_days(i.highDays)}), ${_num(i.lowMean)} negli altri '
+                            '(${_days(i.lowDays)}).',
                       ),
                     ],
                   ),
@@ -299,8 +301,10 @@ class ReportPdf {
           ],
           pw.SizedBox(height: 10),
           small(
-            'Intensità: il sintomo peggiore del giorno, da 0 a 3. Pollini: previsione Open-Meteo (CAMS), '
-            'misure POLLnet-ISPRA o media storica del mese. I confronti sono correlazioni, non diagnosi.',
+            'Intensità: il sintomo peggiore del giorno, da 0 a 3. Punteggio sintomi + farmaci (adattato dal CSMS '
+            'EAACI): intensità più farmaci del giorno, antistaminico o collirio 1, cortisone 2. Pollini: previsione '
+            'Open-Meteo (CAMS) o misura POLLnet-ISPRA del giorno; le stime non entrano nei confronti. '
+            'I confronti sono correlazioni, non diagnosi.',
           ),
         ],
       ),

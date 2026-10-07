@@ -203,6 +203,7 @@ Future<void> _exportPdf(BuildContext context) {
       allergens: state.followedAllergens,
       placeName: state.place.name,
       now: now,
+      thresholdOf: state.thresholdOf,
     );
     return FileService.saveBytes('allergy-radar-diario-${_stamp(now)}.pdf', bytes, mime: 'application/pdf');
   }, 'PDF salvato.');

@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:allergy_radar/models/allergen.dart';
 import 'package:allergy_radar/models/diary_entry.dart';
+import 'package:allergy_radar/models/level.dart';
 import 'package:allergy_radar/services/backup.dart';
 import 'package:allergy_radar/services/report_pdf.dart';
 import 'package:allergy_radar/state/diary_state.dart';
@@ -92,6 +93,7 @@ void main() {
       allergens: [Allergens.grass, Allergens.parietaria],
       placeName: 'Lecce',
       now: now,
+      thresholdOf: (_) => Level.moderate,
     );
     expect(String.fromCharCodes(bytes.take(5)), '%PDF-');
     expect(bytes.length, greaterThan(2000));

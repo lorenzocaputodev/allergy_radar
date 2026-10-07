@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/allergen.dart';
 import '../models/diary_entry.dart';
 import '../models/level.dart';
+import '../models/pollen_snapshot.dart';
 import '../utils/days.dart';
 
 class DiaryInsight {
@@ -28,7 +29,9 @@ class DiaryInsight {
   final double highMean;
   final double lowMean;
 
-  bool get clear => (highMean - lowMean).abs() >= 0.5;
+  static const maxScore = 6;
+
+  bool get clear => (highMean - lowMean).abs() >= 1;
 }
 
 class DiaryState extends ChangeNotifier {
@@ -119,14 +122,33 @@ class DiaryState extends ChangeNotifier {
 
   Future<void> _persist() => _prefs.setString(kEntries, jsonEncode(_entries.values.map((e) => e.toJson()).toList()));
 
+  // --- Misure arrivate dopo ---
+  Future<void> fillMeasured(PollenSnapshot snap) async {
+    var changed = false;
+    for (final st in snap.statuses.values.where((s) => s.kind == DataKind.measured)) {
+      for (final d in st.series) {
+        final e = entryFor(d.date);
+        if (e == null || e.place != snap.place.cacheKey || e.pollen[st.allergen.id] == d.level.index) continue;
+        _entries[e.key] = e.copyWith(pollen: {...e.pollen, st.allergen.id: d.level.index});
+        changed = true;
+      }
+    }
+    if (!changed) return;
+    notifyListeners();
+    await _persist();
+  }
+
   // --- Confronto ---
-  DiaryInsight? insight(Allergen a, DateTime now, {int days = 30}) {
-    final list = between(now.plusDays(1 - days), now).where((e) => e.pollen.containsKey(a.id)).toList();
+  List<DiaryEntry> withLevel(Allergen a, DateTime now, int days) =>
+      between(now.plusDays(1 - days), now).where((e) => e.pollen.containsKey(a.id)).toList();
+
+  DiaryInsight? insight(Allergen a, DateTime now, {required Level threshold, int days = 30}) {
+    final list = withLevel(a, now, days);
     if (list.length < minDaysForInsight) return null;
-    final high = list.where((e) => e.pollen[a.id]! >= Level.moderate.index).toList();
-    final low = list.where((e) => e.pollen[a.id]! < Level.moderate.index).toList();
+    final high = list.where((e) => e.pollen[a.id]! >= threshold.index).toList();
+    final low = list.where((e) => e.pollen[a.id]! < threshold.index).toList();
     if (high.length < 3 || low.length < 3) return null;
-    double mean(List<DiaryEntry> l) => l.fold<double>(0, (s, e) => s + e.score) / l.length;
+    double mean(List<DiaryEntry> l) => l.fold<double>(0, (s, e) => s + e.combinedScore) / l.length;
     return DiaryInsight(
       allergen: a,
       days: list.length,

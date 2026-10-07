@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../models/allergen.dart';
 import '../models/diary_entry.dart';
 import '../models/level.dart';
+import '../models/pollen_snapshot.dart';
 import '../state/app_state.dart';
 import '../state/diary_state.dart';
 import '../theme/palette.dart';
@@ -33,11 +34,11 @@ class _TrendScreenState extends State<TrendScreen> {
     final app = context.watch<AppState>();
     final choices = app.followedAllergens.isEmpty ? Allergens.all : app.followedAllergens;
     final now = DateTime.now();
-    final a = Allergens.byId(_allergenId ?? '') ?? _mostTelling(diary, choices, now) ?? choices.first;
+    final a = Allergens.byId(_allergenId ?? '') ?? _mostTelling(diary, app, choices, now) ?? choices.first;
     final today = DiaryEntry.day(now);
     final days = [for (var i = _days - 1; i >= 0; i--) today.plusDays(-i)];
-    final insight = diary.insight(a, now, days: _period);
-    final logged = diary.between(today.plusDays(1 - _period), today).length;
+    final insight = diary.insight(a, now, threshold: app.thresholdOf(a), days: _period);
+    final logged = diary.withLevel(a, now, _period).length;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Andamento')),
@@ -67,7 +68,7 @@ class _TrendScreenState extends State<TrendScreen> {
           ],
           const SizedBox(height: 14),
           if (insight == null)
-            _Progress(allergen: a, logged: logged)
+            _Progress(allergen: a, logged: logged, status: app.snapshot?[a.id])
           else
             _Answer(insight: insight, period: _since[_period]!),
           const SizedBox(height: 14),
@@ -82,11 +83,11 @@ class _TrendScreenState extends State<TrendScreen> {
     );
   }
 
-  Allergen? _mostTelling(DiaryState diary, List<Allergen> choices, DateTime now) {
+  Allergen? _mostTelling(DiaryState diary, AppState app, List<Allergen> choices, DateTime now) {
     Allergen? best;
     var gap = 0.0;
     for (final c in choices) {
-      final i = diary.insight(c, now, days: _period);
+      final i = diary.insight(c, now, threshold: app.thresholdOf(c), days: _period);
       if (i != null && (i.highMean - i.lowMean) > gap) {
         gap = i.highMean - i.lowMean;
         best = c;
@@ -98,32 +99,38 @@ class _TrendScreenState extends State<TrendScreen> {
 
 // --- Risposta ---
 class _Progress extends StatelessWidget {
-  const _Progress({required this.allergen, required this.logged});
+  const _Progress({required this.allergen, required this.logged, required this.status});
 
   final Allergen allergen;
   final int logged;
+  final AllergenStatus? status;
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
     const need = DiaryState.minDaysForInsight;
     final enough = logged >= need;
+    final name = allergen.name;
+    final unmeasured = !allergen.hasForecast && status?.kind == DataKind.estimate;
+    final String title;
+    final String text;
+    if (enough) {
+      title = 'Servono giorni diversi';
+      text = 'Per il confronto servono giorni con $name sotto la tua soglia e altri sopra.';
+    } else if (unmeasured && logged == 0) {
+      title = 'Nessuna misura vicina';
+      text = 'Nella tua zona $name non ha misure recenti: il confronto parte quando arrivano.';
+    } else {
+      title = need - logged == 1 ? 'Ancora 1 giorno' : 'Ancora ${need - logged} giorni';
+      text = allergen.hasForecast
+          ? 'Dopo $need giorni di diario vedi se i sintomi peggiorano con $name.'
+          : 'Dopo $need giorni di diario con una misura di $name vedi se i sintomi peggiorano. '
+                'ISPRA pubblica le misure una volta a settimana: i giorni passati si completano da soli.';
+    }
     return SectionCard(
       children: [
-        Text(
-          enough
-              ? 'Servono livelli diversi'
-              : need - logged == 1
-              ? 'Ancora 1 giorno'
-              : 'Ancora ${need - logged} giorni',
-          style: Theme.of(context).textTheme.titleLarge,
-        ),
-        Text(
-          enough
-              ? 'Per il confronto servono giorni con ${allergen.name} a livello basso e altri a livello moderato o più.'
-              : 'Dopo $need giorni di diario vedi se i sintomi peggiorano con ${allergen.name}.',
-          style: TextStyle(fontSize: 14, height: 1.4, color: p.ink2),
-        ),
+        Text(title, style: Theme.of(context).textTheme.titleLarge),
+        Text(text, style: TextStyle(fontSize: 14, height: 1.4, color: p.ink2)),
         ClipRRect(
           borderRadius: BorderRadius.circular(6),
           child: LinearProgressIndicator(
@@ -164,7 +171,7 @@ class _Answer extends StatelessWidget {
               child: Text(label, style: TextStyle(fontSize: 14, color: p.onHero)),
             ),
             Text(
-              '${Fmt.number(value)} su 3',
+              '${Fmt.number(value)} su ${DiaryInsight.maxScore}',
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: p.onHero),
             ),
           ],
@@ -173,7 +180,7 @@ class _Answer extends StatelessWidget {
         ClipRRect(
           borderRadius: BorderRadius.circular(6),
           child: LinearProgressIndicator(
-            value: (value / 3).clamp(0, 1).toDouble(),
+            value: (value / DiaryInsight.maxScore).clamp(0, 1).toDouble(),
             minHeight: 12,
             color: color,
             backgroundColor: p.heroTrack,
@@ -199,13 +206,13 @@ class _Answer extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'Come stai in media $period (0 = bene, 3 = sintomi forti)',
+            'Punteggio medio $period: sintomi da 0 a 3 più farmaci da 0 a 3',
             style: TextStyle(fontSize: 13, color: p.onHero.withValues(alpha: 0.85)),
           ),
           const SizedBox(height: 16),
-          bar('Giorni con ${a.name} a livello moderato o più', insight.highMean, insight.highDays, p.fill(Level.high)),
+          bar('Giorni con ${a.name} sopra la tua soglia', insight.highMean, insight.highDays, p.fill(Level.high)),
           const SizedBox(height: 14),
-          bar('Giorni con ${a.name} a livello basso', insight.lowMean, insight.lowDays, p.fill(Level.low)),
+          bar('Giorni con ${a.name} sotto la tua soglia', insight.lowMean, insight.lowDays, p.fill(Level.low)),
         ],
       ),
     );

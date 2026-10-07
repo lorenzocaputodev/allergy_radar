@@ -103,7 +103,7 @@ void main() {
     expect(find.text('Oggi: sintomi forti'), findsOneWidget);
     await tester.tap(find.byTooltip('Andamento e confronti'));
     await tester.pumpAndSettle();
-    expect(find.text('Ancora 13 giorni'), findsOneWidget);
+    expect(find.textContaining(RegExp(r'^Ancora 1[34] giorni$')), findsOneWidget);
   });
 
   testWidgets('campanella e schermate del Profilo', (tester) async {
