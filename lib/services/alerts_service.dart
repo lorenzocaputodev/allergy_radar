@@ -49,7 +49,7 @@ class AlertsService {
   static const _diaryChannel = AndroidNotificationChannel(
     'diary',
     'Promemoria diario',
-    description: 'La sera, se oggi non hai ancora registrato i sintomi.',
+    description: 'Se oggi non hai ancora registrato i sintomi.',
   );
 
   static const _statusIcon = '@drawable/ic_stat_logo';

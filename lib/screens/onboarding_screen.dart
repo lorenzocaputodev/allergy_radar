@@ -104,7 +104,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
           ],
         ),
-        children: [AlertSettingsEditor(value: _alerts, onChanged: (a) => setState(() => _alerts = a))],
+        children: [
+          AlertSettingsEditor(value: _alerts, onChanged: (a) => setState(() => _alerts = a)),
+          if (AlertsService.isSupported && _alerts.anyEnabled) const PunctualitySection(setup: true),
+        ],
       ),
       _ => _Step(
         step: 4,

@@ -10,6 +10,7 @@ import '../services/alerts_service.dart';
 import '../state/app_state.dart';
 import '../state/diary_state.dart';
 import '../theme/palette.dart';
+import '../utils/days.dart';
 import '../widgets/page_list.dart';
 import '../widgets/settings_group.dart';
 
@@ -52,7 +53,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
               await state.setAlerts(a);
             },
           ),
-          if (AlertsService.isSupported && state.alerts.anyEnabled) const _Punctuality(),
+          if (AlertsService.isSupported && state.alerts.anyEnabled) const PunctualitySection(),
         ],
       ),
     );
@@ -71,19 +72,37 @@ class _AlertsScreenState extends State<AlertsScreen> {
       ))
         m.kind: m.at,
     };
-    String next(DateTime at) =>
-        '${DiaryEntry.day(at) == DiaryEntry.day(now) ? 'oggi' : 'domani'} alle ${AlertSettingsEditor.time(at.hour * 60 + at.minute)}';
+    final today = DiaryEntry.day(now);
+    String day(DateTime at) => switch (at.daysSince(today)) {
+      0 => 'oggi',
+      1 => 'domani',
+      _ => 'dopodomani',
+    };
+    DateTime nextAt(int minutes) {
+      final at = DateTime(now.year, now.month, now.day, minutes ~/ 60, minutes % 60);
+      return at.isAfter(now) ? at : DateTime(now.year, now.month, now.day + 1, minutes ~/ 60, minutes % 60);
+    }
+
+    String next(DateTime at) => '${day(at)} alle ${AlertSettingsEditor.time(at.hour * 60 + at.minute)}';
     final briefing = planned[AlertKind.briefing];
     final tomorrow = planned[AlertKind.tomorrow];
     final reminder = planned[AlertKind.diary];
+    final noData = app.snapshot == null;
     return {
-      AlertKind.briefing: briefing == null
-          ? 'Niente in programma: domani i tuoi allergeni restano sotto la soglia.'
-          : 'Prossimo: ${next(briefing)}',
+      AlertKind.briefing: briefing != null
+          ? 'Prossimo: ${next(briefing)}'
+          : noData
+          ? 'In attesa dei dati del luogo.'
+          : app.followedStatuses.isEmpty
+          ? 'Niente in programma: scegli i tuoi allergeni.'
+          : 'Niente in programma: ${day(nextAt(app.alerts.briefingAt))} i tuoi allergeni restano sotto la soglia.',
       AlertKind.tomorrow: tomorrow != null
           ? 'Prossimo: ${next(tomorrow)}'
+          : noData
+          ? 'In attesa dei dati del luogo.'
           : app.followedStatuses.any((s) => s.kind == DataKind.forecast)
-          ? 'Niente in programma: per domani la previsione resta sotto la soglia.'
+          ? 'Niente in programma: per ${day(nextAt(app.alerts.tomorrowAt).plusDays(1))} '
+                'la previsione resta sotto la soglia.'
           : 'Non disponibile: i tuoi allergeni non hanno una previsione.',
       if (reminder != null)
         AlertKind.diary: diaryDone && DiaryEntry.day(reminder) != DiaryEntry.day(now)
@@ -100,8 +119,6 @@ class AlertSettingsEditor extends StatelessWidget {
   final void Function(AlertSettings) onChanged;
 
   final Map<AlertKind, String> notes;
-
-  static const _switchWidth = 52.0;
 
   static String time(int minutes) =>
       '${(minutes ~/ 60).toString().padLeft(2, '0')}:${(minutes % 60).toString().padLeft(2, '0')}';
@@ -145,13 +162,15 @@ class AlertSettingsEditor extends StatelessWidget {
             leading: const SizedBox(width: 24),
             title: Text('Orario', style: TextStyle(fontSize: 15, color: p.ink2)),
             subtitle: note == null ? null : Text(note, style: TextStyle(fontSize: 13, color: p.ink3)),
-            trailing: SizedBox(
-              width: _switchWidth,
-              child: Text(
-                time(at),
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-              ),
+            trailing: ActionChip(
+              avatar: Icon(Icons.schedule, size: 18, color: p.pineText),
+              label: Text(time(at)),
+              labelStyle: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: p.pineText),
+              backgroundColor: p.pineSoft,
+              side: BorderSide.none,
+              shape: const StadiumBorder(),
+              tooltip: 'Cambia orario',
+              onPressed: () => pick(at, setAt!),
             ),
             onTap: () => pick(at, setAt!),
           ),
@@ -171,7 +190,7 @@ class AlertSettingsEditor extends StatelessWidget {
           block(
             icon: Icons.wb_sunny_outlined,
             title: 'Pollini di oggi',
-            subtitle: 'Ogni mattina, i tuoi pollini della giornata.',
+            subtitle: 'Cosa c’è nell’aria oggi per i tuoi allergeni.',
             on: value.briefing,
             toggle: (v) => onChanged(value.copyWith(briefing: v)),
             at: value.briefingAt,
@@ -188,7 +207,7 @@ class AlertSettingsEditor extends StatelessWidget {
           block(
             icon: Icons.trending_up,
             title: 'Allerta per domani',
-            subtitle: 'La sera prima, se domani un tuo allergene supera la soglia.',
+            subtitle: 'Il giorno prima, se domani un tuo allergene supera la soglia.',
             on: value.tomorrow,
             toggle: (v) => onChanged(value.copyWith(tomorrow: v)),
             at: value.tomorrowAt,
@@ -199,7 +218,7 @@ class AlertSettingsEditor extends StatelessWidget {
           block(
             icon: Icons.book_outlined,
             title: 'Promemoria diario',
-            subtitle: 'La sera, se oggi non hai ancora registrato.',
+            subtitle: 'Se oggi non hai ancora registrato i sintomi.',
             on: value.diary,
             toggle: (v) => onChanged(value.copyWith(diary: v)),
             at: value.diaryAt,
@@ -212,14 +231,16 @@ class AlertSettingsEditor extends StatelessWidget {
   }
 }
 
-class _Punctuality extends StatefulWidget {
-  const _Punctuality();
+class PunctualitySection extends StatefulWidget {
+  const PunctualitySection({super.key, this.setup = false});
+
+  final bool setup;
 
   @override
-  State<_Punctuality> createState() => _PunctualityState();
+  State<PunctualitySection> createState() => _PunctualitySectionState();
 }
 
-class _PunctualityState extends State<_Punctuality> {
+class _PunctualitySectionState extends State<PunctualitySection> {
   late Future<(bool, bool)> _status = _read();
   late final AppLifecycleListener _lifecycle;
 
@@ -249,7 +270,7 @@ class _PunctualityState extends State<_Punctuality> {
       final status = snap.data;
       if (status == null) return const SizedBox.shrink();
       final (enabled, exact) = status;
-      return PunctualityCard(enabled: enabled, exact: exact, onExact: _requestExact);
+      return PunctualityCard(enabled: enabled || widget.setup, exact: exact, onExact: _requestExact);
     },
   );
 }

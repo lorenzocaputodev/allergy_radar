@@ -55,7 +55,7 @@ class AlertPlanner {
       for (final s in followed.where((s) => s.kind == DataKind.forecast)) {
         final v = _dayValue(s, target);
         if (v != null && above(s.allergen, v.level)) {
-          bothering.add('${s.allergen.name} ${v.level.label.toLowerCase()} (${v.value.round()} granuli/m³)');
+          bothering.add('${s.allergen.name} ${v.level.label.toLowerCase()} (${Fmt.grains(v.value)})');
         }
       }
       if (bothering.isNotEmpty) {
