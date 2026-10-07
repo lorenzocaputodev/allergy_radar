@@ -194,9 +194,9 @@ class _Hero extends StatelessWidget {
     if (followed.isEmpty) {
       summary = 'Scegli i tuoi allergeni da Profilo.';
     } else if (above.isEmpty) {
-      summary = 'Oggi nessuno dei tuoi allergeni è al livello che ti dà fastidio.';
+      summary = 'Oggi i tuoi allergeni restano sotto la soglia.';
     } else {
-      summary = 'Al livello che ti dà fastidio: ${Fmt.list([for (final s in above) s.allergen.name])}.';
+      summary = 'Sopra la tua soglia: ${Fmt.list([for (final s in above) s.allergen.name])}.';
     }
     final estimated = followed.where((s) => s.kind == DataKind.estimate).map((s) => s.allergen);
     final noMeasure = [for (final a in estimated.where((a) => !a.hasForecast)) a.name];
@@ -289,7 +289,7 @@ class _Forecast extends StatelessWidget {
 
     String source(AllergenStatus s) => switch (s.kind) {
       DataKind.forecast => 'previsione',
-      DataKind.measured => 'misura del ${s.date!.day}/${s.date!.month}',
+      DataKind.measured => 'misura del ${Fmt.shortDate(s.date!)}',
       DataKind.estimate => 'stima',
     };
 
@@ -623,7 +623,7 @@ class _DiaryCta extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      e == null ? 'Come stai oggi?' : 'Diario di oggi fatto',
+                      e == null ? 'Come stai oggi?' : 'Diario di oggi registrato',
                       style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
                     ),
                     const SizedBox(height: 2),

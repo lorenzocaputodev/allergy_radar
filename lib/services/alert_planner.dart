@@ -40,10 +40,10 @@ class AlertPlanner {
       final levels = {for (final s in followed) s.allergen: _levelOn(s, when.dateOnly)};
       final over = followed.where((s) => above(s.allergen, levels[s.allergen]!)).toList();
       if (!settings.briefingOnlyAbove || over.isNotEmpty) {
-        final others = over.length < followed.length ? ' Gli altri sono più bassi.' : '';
+        final others = over.length < followed.length ? ' Gli altri restano sotto.' : '';
         final body = over.isEmpty
-            ? 'Oggi nessuno dei tuoi allergeni è al livello che ti dà fastidio.'
-            : 'Al livello che ti dà fastidio: ${Fmt.list([for (final s in over) _named(s)])}.$others';
+            ? 'Oggi i tuoi allergeni restano sotto la soglia.'
+            : 'Sopra la tua soglia: ${Fmt.list([for (final s in over) _named(s)])}.$others';
         out.add(AlertMessage(AlertKind.briefing, when, 'Pollini di oggi a $placeName', body));
       }
     }
@@ -60,12 +60,7 @@ class AlertPlanner {
       }
       if (bothering.isNotEmpty) {
         out.add(
-          AlertMessage(
-            AlertKind.tomorrow,
-            when,
-            'Domani a $placeName',
-            'Al livello che ti dà fastidio: ${Fmt.list(bothering)}.',
-          ),
+          AlertMessage(AlertKind.tomorrow, when, 'Domani a $placeName', 'Sopra la tua soglia: ${Fmt.list(bothering)}.'),
         );
       }
     }
@@ -77,7 +72,7 @@ class AlertPlanner {
           AlertKind.diary,
           todayAt.isAfter(now) && !diaryDoneToday ? todayAt : at(tomorrow, settings.diaryAt),
           'Com’è andata oggi?',
-          'Registra i sintomi in 10 secondi: servono a capire quali pollini ti danno fastidio.',
+          'Bastano 10 secondi: col tempo scopri quali pollini ti danno fastidio.',
         ),
       );
     }

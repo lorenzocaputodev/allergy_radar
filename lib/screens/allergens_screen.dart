@@ -40,7 +40,7 @@ class AllergensScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text('Mi dà fastidio da', style: TextStyle(fontSize: 13, color: p.ink2)),
+                  Text('Soglia: ti dà fastidio da', style: TextStyle(fontSize: 13, color: p.ink2)),
                   const SizedBox(height: 6),
                   SegmentedButton<Level>(
                     segments: const [

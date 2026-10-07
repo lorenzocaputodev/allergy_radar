@@ -33,9 +33,9 @@ class ProfileScreen extends StatelessWidget {
     final a = state.alerts;
     const t = AlertSettingsEditor.time;
     final alertsText = [
-      if (a.briefing) 'Pollini di oggi ${t(a.briefingAt)}',
-      if (a.tomorrow) 'Allerta per domani ${t(a.tomorrowAt)}',
-      if (a.diary) 'Promemoria diario ${t(a.diaryAt)}',
+      if (a.briefing) 'Pollini di oggi alle ${t(a.briefingAt)}',
+      if (a.tomorrow) 'Allerta per domani alle ${t(a.tomorrowAt)}',
+      if (a.diary) 'Promemoria diario alle ${t(a.diaryAt)}',
     ].join(' · ');
 
     void go(Widget screen) => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => screen));

@@ -192,7 +192,17 @@ class AllergenDetailScreen extends StatelessWidget {
           const SizedBox(height: 14),
           SectionCard(
             children: [
-              Text('Ti dà fastidio da', style: Theme.of(context).textTheme.titleLarge),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('La tua soglia', style: Theme.of(context).textTheme.titleLarge),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Il livello da cui ${a.name} ti dà fastidio: conta per la tua giornata e per gli avvisi.',
+                    style: TextStyle(fontSize: 13, color: p.ink3),
+                  ),
+                ],
+              ),
               SegmentedButton<Level>(
                 segments: const [
                   ButtonSegment(value: Level.low, label: Text('Basso')),

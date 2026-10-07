@@ -43,7 +43,7 @@ class AlertsService {
   static const _pollenChannel = AndroidNotificationChannel(
     'pollen',
     'Pollini',
-    description: 'Briefing del mattino e avviso se domani peggiora.',
+    description: 'I pollini del mattino e l’allerta per domani.',
     importance: Importance.high,
   );
   static const _diaryChannel = AndroidNotificationChannel(

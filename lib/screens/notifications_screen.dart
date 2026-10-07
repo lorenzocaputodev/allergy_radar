@@ -97,7 +97,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       const SizedBox(height: 12),
                       Text('Nessun avviso, per ora', style: Theme.of(context).textTheme.titleLarge),
                       const SizedBox(height: 6),
-                      Text('Qui trovi quelli che ti arrivano.', style: TextStyle(color: p.ink2)),
+                      Text('Qui trovi gli avvisi che ti arrivano.', style: TextStyle(color: p.ink2)),
                     ],
                   ),
                 ),

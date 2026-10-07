@@ -110,7 +110,7 @@ class Backup {
       return s.contains(RegExp('[;"\n]')) ? '"${s.replaceAll('"', '""')}"' : s;
     }
 
-    const outdoor = ['meno di 1 ora', '1-3 ore', 'più di 3 ore'];
+    const outdoor = ['meno di 1 ora', '1–3 ore', 'più di 3 ore'];
     final rows = <List<Object?>>[
       [
         'data',

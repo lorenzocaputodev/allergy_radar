@@ -79,7 +79,7 @@ class AllergenCard extends StatelessWidget {
                   SourceChip(status.kind, detail: Fmt.sourceDetail(status, today)),
                   if (aboveThreshold)
                     Text(
-                      'Ti dà fastidio',
+                      'Sopra la tua soglia',
                       style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: p.text(status.level)),
                     ),
                 ],

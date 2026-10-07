@@ -88,7 +88,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   _alerts = AlertSettings.off;
                   if (context.mounted) {
                     ScaffoldMessenger.of(context)
-                        .showSnackBar(const SnackBar(content: Text('Avvisi disattivati: li riattivi dal Profilo.')));
+                        .showSnackBar(const SnackBar(content: Text('Avvisi spenti: li riattivi dal Profilo.')));
                   }
                 }
                 _next();
