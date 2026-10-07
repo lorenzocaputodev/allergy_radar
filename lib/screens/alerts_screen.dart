@@ -78,16 +78,16 @@ class _AlertsScreenState extends State<AlertsScreen> {
     final reminder = planned[AlertKind.diary];
     return {
       AlertKind.briefing: briefing == null
-          ? 'Niente in programma: nessun allergene ti darà fastidio.'
+          ? 'Niente in programma: domani i tuoi allergeni restano sotto la soglia.'
           : 'Prossimo: ${next(briefing)}',
       AlertKind.tomorrow: tomorrow != null
           ? 'Prossimo: ${next(tomorrow)}'
           : app.followedStatuses.any((s) => s.kind == DataKind.forecast)
-          ? 'Niente in programma: domani nessun allergene con previsione ti darà fastidio.'
-          : 'Non disponibile: nessuno dei tuoi allergeni ha una previsione per domani.',
+          ? 'Niente in programma: per domani la previsione resta sotto la soglia.'
+          : 'Non disponibile: i tuoi allergeni non hanno una previsione.',
       if (reminder != null)
         AlertKind.diary: diaryDone && DiaryEntry.day(reminder) != DiaryEntry.day(now)
-            ? 'Oggi hai già registrato: prossimo ${next(reminder)}'
+            ? 'Già registrato oggi · prossimo ${next(reminder)}'
             : 'Prossimo: ${next(reminder)}',
     };
   }
@@ -115,6 +115,8 @@ class AlertSettingsEditor extends StatelessWidget {
         context: context,
         initialTime: TimeOfDay(hour: current ~/ 60, minute: current % 60),
         helpText: 'Scegli l’ora',
+        builder: (context, child) =>
+            MediaQuery(data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true), child: child!),
       );
       if (t != null) set(t.hour * 60 + t.minute);
     }
@@ -169,7 +171,7 @@ class AlertSettingsEditor extends StatelessWidget {
           block(
             icon: Icons.wb_sunny_outlined,
             title: 'Pollini di oggi',
-            subtitle: 'La mattina, cosa ti dà fastidio oggi.',
+            subtitle: 'Ogni mattina, i tuoi pollini della giornata.',
             on: value.briefing,
             toggle: (v) => onChanged(value.copyWith(briefing: v)),
             at: value.briefingAt,
@@ -177,7 +179,7 @@ class AlertSettingsEditor extends StatelessWidget {
             note: notes[AlertKind.briefing],
             extra: SwitchListTile(
               secondary: const SizedBox(width: 24),
-              title: Text('Solo se qualcosa ti dà fastidio', style: TextStyle(fontSize: 15, color: p.ink2)),
+              title: Text('Solo nei giorni sopra soglia', style: TextStyle(fontSize: 15, color: p.ink2)),
               value: value.briefingOnlyAbove,
               onChanged: (v) => onChanged(value.copyWith(briefingOnlyAbove: v)),
             ),
@@ -186,7 +188,7 @@ class AlertSettingsEditor extends StatelessWidget {
           block(
             icon: Icons.trending_up,
             title: 'Allerta per domani',
-            subtitle: 'La sera, se domani un tuo allergene ti darà fastidio.',
+            subtitle: 'La sera prima, se domani un tuo allergene supera la soglia.',
             on: value.tomorrow,
             toggle: (v) => onChanged(value.copyWith(tomorrow: v)),
             at: value.tomorrowAt,
@@ -197,7 +199,7 @@ class AlertSettingsEditor extends StatelessWidget {
           block(
             icon: Icons.book_outlined,
             title: 'Promemoria diario',
-            subtitle: 'Solo se oggi non hai ancora registrato.',
+            subtitle: 'La sera, se oggi non hai ancora registrato.',
             on: value.diary,
             toggle: (v) => onChanged(value.copyWith(diary: v)),
             at: value.diaryAt,
