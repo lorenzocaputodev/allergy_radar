@@ -51,6 +51,21 @@ void main() {
     expect(state.loading, isFalse);
   });
 
+  test('aggiornare di nuovo lo stesso luogo durante un aggiornamento non lo riscarica', () async {
+    SharedPreferences.setMockInitialValues({'onboarded': true});
+    final repo = _SlowRepository(DateTime(2026, 9, 25, 10));
+    final state = AppState(repo, await SharedPreferences.getInstance());
+    await state.load();
+
+    final first = state.refresh();
+    await state.refresh();
+    repo.gate.complete();
+    await first;
+
+    expect(repo.asked, ['Lecce']);
+    expect(state.snapshot, isNotNull);
+  });
+
   test('le preferenze assenti tornano ai valori iniziali', () async {
     SharedPreferences.setMockInitialValues({
       'onboarded': true,

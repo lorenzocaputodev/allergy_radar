@@ -63,7 +63,13 @@ class AppState extends ChangeNotifier {
   List<AllergenStatus> get aboveThreshold =>
       followedStatuses.where((s) => s.level != Level.none && s.level >= thresholdOf(s.allergen)).toList();
 
-  bool get isStale => snapshot == null || DateTime.now().difference(snapshot!.fetchedAt) > freshFor;
+  bool get isStale {
+    if (snapshot == null) return true;
+    final now = DateTime.now();
+    final at = snapshot!.fetchedAt;
+    return now.difference(at) > freshFor ||
+        DateTime(now.year, now.month, now.day) != DateTime(at.year, at.month, at.day);
+  }
 
   // --- Caricamento e dati ---
   Future<void> load() async {
@@ -79,17 +85,20 @@ class AppState extends ChangeNotifier {
     themeMode = ThemeMode.values.asNameMap()[_prefs.getString(kTheme)] ?? ThemeMode.system;
     final a = _prefs.getString(kAlerts);
     alerts = a == null ? const AlertSettings() : AlertSettings.fromJson(jsonDecode(a) as Map<String, dynamic>);
-    final cached = _prefs.getString(_kCache);
-    snapshot = null;
-    if (cached != null) {
-      try {
-        final raw = RawPollenData.decode(cached);
-        if (raw.place.cacheKey == place.cacheKey) snapshot = _repo.build(raw);
-      } on Object {
-        await _prefs.remove(_kCache);
-      }
-    }
+    snapshot = await _fromCache();
     notifyListeners();
+  }
+
+  Future<PollenSnapshot?> _fromCache() async {
+    final cached = _prefs.getString(_kCache);
+    if (cached == null) return null;
+    try {
+      final raw = RawPollenData.decode(cached);
+      return raw.place.cacheKey == place.cacheKey ? _repo.build(raw) : null;
+    } on Object {
+      await _prefs.remove(_kCache);
+      return null;
+    }
   }
 
   Future<void> init() async {
@@ -106,13 +115,8 @@ class AppState extends ChangeNotifier {
     await setPlace(p);
   }
 
-  bool _again = false;
-
   Future<void> refresh() async {
-    if (loading) {
-      _again = true;
-      return;
-    }
+    if (loading) return;
     loading = true;
     error = null;
     notifyListeners();
@@ -125,6 +129,7 @@ class AppState extends ChangeNotifier {
       }
     } on Object {
       if (place.cacheKey == asked.cacheKey) {
+        snapshot = await _fromCache() ?? snapshot;
         error = snapshot == null
             ? 'Dati non disponibili. Controlla la connessione e riprova.'
             : 'Sei offline o le fonti non rispondono: mostro gli ultimi dati.';
@@ -133,10 +138,7 @@ class AppState extends ChangeNotifier {
       loading = false;
       notifyListeners();
     }
-    if (_again) {
-      _again = false;
-      await refresh();
-    }
+    if (place.cacheKey != asked.cacheKey) await refresh();
   }
 
   // --- Impostazioni ---
