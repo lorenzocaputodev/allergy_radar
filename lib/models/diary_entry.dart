@@ -1,3 +1,5 @@
+import '../utils/days.dart';
+
 class DiaryEntry {
   const DiaryEntry({
     required this.date,
@@ -30,7 +32,7 @@ class DiaryEntry {
   static const severityNames = ['Nessuno', 'Lievi', 'Medi', 'Forti'];
   static const symptomNames = ['Nessun sintomo', 'Sintomi lievi', 'Sintomi medi', 'Sintomi forti'];
 
-  static DateTime day(DateTime d) => DateTime(d.year, d.month, d.day);
+  static DateTime day(DateTime d) => d.dateOnly;
 
   static String keyOf(DateTime d) =>
       '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';

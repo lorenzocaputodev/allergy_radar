@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 
+import '../utils/days.dart';
+
 class PollnetClient {
   PollnetClient(this._http);
 
@@ -43,7 +45,7 @@ class PollnetClient {
       final part = int.tryParse(f[iPart]);
       final date = DateTime.tryParse(f[iDate]);
       if (part == null || date == null) continue;
-      out.add(Measurement(part, DateTime(date.year, date.month, date.day), double.tryParse(f[iValue])));
+      out.add(Measurement(part, date.dateOnly, double.tryParse(f[iValue])));
     }
     return out;
   }

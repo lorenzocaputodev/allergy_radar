@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 
 import '../models/allergen.dart';
 import '../models/place.dart';
+import '../utils/days.dart';
 
 class OpenMeteoClient {
   OpenMeteoClient(this._http);
@@ -89,7 +90,7 @@ class OpenMeteoData {
       final v = valueAt(keys, i);
       if (v == null) continue;
       final t = times[i];
-      out.putIfAbsent(DateTime(t.year, t.month, t.day), () => []).add(v);
+      out.putIfAbsent(t.dateOnly, () => []).add(v);
     }
     out.removeWhere((_, v) => v.length < minHours);
     return out;

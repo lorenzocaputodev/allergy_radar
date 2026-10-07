@@ -83,9 +83,12 @@ class DiaryState extends ChangeNotifier {
 
   List<DiaryEntry> get entries => _entries.values.toList()..sort((a, b) => b.date.compareTo(a.date));
 
-  List<DiaryEntry> between(DateTime from, DateTime to) =>
-      entries.where((e) => !e.date.isBefore(DiaryEntry.day(from)) && !e.date.isAfter(DiaryEntry.day(to))).toList()
-        ..sort((a, b) => a.date.compareTo(b.date));
+  List<DiaryEntry> between(DateTime from, DateTime to) {
+    final start = from.dateOnly;
+    final end = to.dateOnly;
+    return _entries.values.where((e) => !e.date.isBefore(start) && !e.date.isAfter(end)).toList()
+      ..sort((a, b) => a.date.compareTo(b.date));
+  }
 
   Future<void> save(DiaryEntry e) async {
     _entries[e.key] = e;

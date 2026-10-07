@@ -1,5 +1,6 @@
 import '../models/allergen.dart';
 import '../models/pollen_snapshot.dart';
+import 'days.dart';
 
 abstract final class Fmt {
   static const _days = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato', 'Domenica'];
@@ -23,8 +24,7 @@ abstract final class Fmt {
 
   static String shortDate(DateTime d) => '${d.day} ${_months[d.month - 1].substring(0, 3)}';
 
-  static String weekday(DateTime d, DateTime today) =>
-      DateTime(d.year, d.month, d.day) == DateTime(today.year, today.month, today.day) ? 'Oggi' : _short[d.weekday - 1];
+  static String weekday(DateTime d, DateTime today) => d.isSameDay(today) ? 'Oggi' : _short[d.weekday - 1];
 
   static String list(List<String> items) =>
       items.length < 2 ? items.join() : '${items.sublist(0, items.length - 1).join(', ')} e ${items.last}';

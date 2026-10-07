@@ -27,18 +27,17 @@ class AlertPlanner {
     required Level Function(Allergen) thresholdOf,
     required bool diaryDoneToday,
   }) {
-    final today = DateTime(now.year, now.month, now.day);
+    final today = now.dateOnly;
     final tomorrow = today.plusDays(1);
     DateTime at(DateTime day, int minutes) => DateTime(day.year, day.month, day.day, minutes ~/ 60, minutes % 60);
     DateTime next(int minutes) => at(today, minutes).isAfter(now) ? at(today, minutes) : at(tomorrow, minutes);
-    DateTime dayOf(DateTime t) => DateTime(t.year, t.month, t.day);
     bool above(Allergen a, Level l) => l != Level.none && l >= thresholdOf(a);
 
     final out = <AlertMessage>[];
 
     if (settings.briefing && followed.isNotEmpty) {
       final when = next(settings.briefingAt);
-      final levels = {for (final s in followed) s.allergen: _levelOn(s, dayOf(when))};
+      final levels = {for (final s in followed) s.allergen: _levelOn(s, when.dateOnly)};
       final over = followed.where((s) => above(s.allergen, levels[s.allergen]!)).toList();
       if (!settings.briefingOnlyAbove || over.isNotEmpty) {
         final others = over.length < followed.length ? ' Gli altri sono più bassi.' : '';
@@ -51,7 +50,7 @@ class AlertPlanner {
 
     if (settings.tomorrow) {
       final when = next(settings.tomorrowAt);
-      final target = dayOf(when).plusDays(1);
+      final target = when.dateOnly.plusDays(1);
       final bothering = <String>[];
       for (final s in followed.where((s) => s.kind == DataKind.forecast)) {
         final v = _dayValue(s, target);
