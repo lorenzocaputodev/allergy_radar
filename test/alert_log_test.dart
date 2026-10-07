@@ -48,6 +48,30 @@ void main() {
     expect(AlertLog.read(prefs, now).single.title, 'Avviso delle 8');
   });
 
+  test('un avviso in ritardo resta in attesa finché non viene tolto dai programmati', () async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    await AlertLog.setPending(prefs, [at(8)], day.add(const Duration(hours: 7)));
+    final late = day.add(const Duration(hours: 8, minutes: 5));
+    await AlertLog.setPending(prefs, [at(8), at(21, AlertKind.diary)], late);
+    await AlertLog.setPending(prefs, [at(8), at(21, AlertKind.diary)], late);
+    expect((await AlertLog.pending(prefs)).map((m) => m.title), contains('Avviso delle 8'));
+    expect(AlertLog.read(prefs, late).single.title, 'Avviso delle 8');
+
+    final after = day.add(const Duration(hours: 9, minutes: 10));
+    await AlertLog.setPending(prefs, [at(21, AlertKind.diary)], after);
+    expect((await AlertLog.pending(prefs)).map((m) => m.kind), [AlertKind.diary]);
+    expect(AlertLog.read(prefs, after).single.title, 'Avviso delle 8');
+  });
+
+  test('lo stesso avviso nel registro e tra i programmati compare una volta sola', () async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    await AlertLog.setPending(prefs, [at(8)], day);
+    await AlertLog.restore(prefs, at(8));
+    expect(AlertLog.read(prefs, day.add(const Duration(hours: 9))), hasLength(1));
+  });
+
   test('registro rovinato: elenco vuoto, niente eccezioni', () async {
     SharedPreferences.setMockInitialValues({AlertLog.key: 'non json', AlertLog.pendingKey: '[{"kind":"x","at":"y"}]'});
     expect(AlertLog.read(await SharedPreferences.getInstance(), day), isEmpty);

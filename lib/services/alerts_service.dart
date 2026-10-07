@@ -154,12 +154,13 @@ class AlertsService {
     );
     try {
       final exactMode = await exact();
-      final waiting = exactMode
-          ? const <AlertKind>{}
-          : {
+      final late = exactMode
+          ? const <AlertMessage>[]
+          : [
               for (final m in await AlertLog.pending(prefs))
-                if (!m.at.isAfter(now) && now.difference(m.at) < _lateBy) m.kind,
-            };
+                if (!m.at.isAfter(now) && now.difference(m.at) < _lateBy) m,
+            ];
+      final waiting = {for (final m in late) m.kind};
       final messages = await enabled() ? planned.where((m) => !waiting.contains(m.kind)).toList() : <AlertMessage>[];
       final mode = exactMode ? AndroidScheduleMode.exactAllowWhileIdle : AndroidScheduleMode.inexactAllowWhileIdle;
       for (final k in AlertKind.values.where((k) => !waiting.contains(k))) {
@@ -176,7 +177,7 @@ class AlertsService {
           payload: m.kind.name,
         );
       }
-      await AlertLog.setPending(prefs, messages, now);
+      await AlertLog.setPending(prefs, [...late, ...messages], now);
     } on Object catch (e) {
       debugPrint('Avvisi non programmati: $e');
     }
