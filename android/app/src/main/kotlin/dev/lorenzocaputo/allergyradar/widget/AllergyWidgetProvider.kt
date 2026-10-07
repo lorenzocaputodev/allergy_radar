@@ -16,10 +16,8 @@ import android.text.style.StyleSpan
 import android.graphics.Typeface
 import android.view.View
 import android.widget.RemoteViews
-import androidx.work.Constraints
 import androidx.work.Data
 import androidx.work.ExistingWorkPolicy
-import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
 import dev.fluttercommunity.workmanager.BackgroundWorker
@@ -167,7 +165,6 @@ class AllergyWidgetProvider : AppWidgetProvider() {
             }
             val fetch = OneTimeWorkRequest.Builder(BackgroundWorker::class.java)
                 .setInputData(Data.Builder().putString(BackgroundWorker.DART_TASK_KEY, REFRESH_TASK).build())
-                .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
                 .build()
             val redraw = OneTimeWorkRequest.Builder(WidgetUpdateWorker::class.java).build()
             WorkManager.getInstance(context)
