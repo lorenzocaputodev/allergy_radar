@@ -295,7 +295,7 @@ class _Legend extends StatelessWidget {
               ),
               const SizedBox(width: 6),
               Text(DiaryEntry.severityNames[i], style: TextStyle(fontSize: 12, color: p.ink2)),
-              if (i > 0) ...[const SizedBox(width: 4), SeverityDots(i, color: p.ink2, size: 6)],
+              if (i > 0) ...[const SizedBox(width: 4), SeverityDots(i, color: p.ink2)],
             ],
           ),
         Row(

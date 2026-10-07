@@ -31,7 +31,7 @@ class ProfileScreen extends StatelessWidget {
         ? '${nearest.station.name} senza misure recenti'
         : 'nessuna stazione di misura vicina';
     final a = state.alerts;
-    final t = AlertSettingsEditor.time;
+    const t = AlertSettingsEditor.time;
     final alertsText = [
       if (a.briefing) 'Pollini di oggi ${t(a.briefingAt)}',
       if (a.tomorrow) 'Allerta per domani ${t(a.tomorrowAt)}',

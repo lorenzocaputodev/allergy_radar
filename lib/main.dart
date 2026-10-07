@@ -54,7 +54,7 @@ Future<void> main() async {
   AppLifecycleListener(
     onResume: () {
       reschedule();
-      if (state.onboarded && state.isStale) state.refresh();
+      if (state.onboarded && state.isStale) unawaited(state.refresh());
     },
   );
 

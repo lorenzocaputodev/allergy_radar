@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -14,13 +16,13 @@ class PlaceSearchScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Luogo')),
       body: PageList(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+        padding: const EdgeInsets.all(16),
         children: [
           PlaceSearch(
             autofocus: true,
             selected: current,
             onSelected: (r) {
-              context.read<AppState>().setPlace(r);
+              unawaited(context.read<AppState>().setPlace(r));
               Navigator.of(context).pop();
             },
           ),

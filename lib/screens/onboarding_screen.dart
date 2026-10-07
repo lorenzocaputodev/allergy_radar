@@ -357,7 +357,7 @@ class _Summary extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = context.palette;
     final names = Allergens.all.where((a) => allergens.contains(a.id)).map((a) => a.name).join(', ');
-    final t = AlertSettingsEditor.time;
+    const t = AlertSettingsEditor.time;
     final alertsText = [
       if (alerts.briefing) 'Pollini di oggi alle ${t(alerts.briefingAt)}',
       if (alerts.tomorrow) 'Allerta per domani alle ${t(alerts.tomorrowAt)}',

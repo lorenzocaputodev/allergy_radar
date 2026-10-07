@@ -17,7 +17,7 @@ void main() {
     series: [DayValue(day, 1, today), DayValue(day.add(const Duration(days: 1)), tomorrowValue, tomorrow)],
   );
 
-  final parietaria = AllergenStatus(allergen: Allergens.parietaria, kind: DataKind.estimate, level: Level.high);
+  const parietaria = AllergenStatus(allergen: Allergens.parietaria, kind: DataKind.estimate, level: Level.high);
 
   List<AlertMessage> schedule(
     DateTime now, {

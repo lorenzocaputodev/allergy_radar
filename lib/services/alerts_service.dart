@@ -15,6 +15,7 @@ import '../models/diary_entry.dart';
 import '../models/station.dart';
 import '../state/app_state.dart';
 import '../state/diary_state.dart';
+import '../theme/palette.dart';
 import 'alert_planner.dart';
 import 'open_meteo_client.dart';
 import 'pollnet_client.dart';
@@ -52,7 +53,7 @@ class AlertsService {
   );
 
   static const _statusIcon = '@drawable/ic_stat_logo';
-  static const _accent = Color(0xFF1F5A4A);
+  static final _accent = AppPalette.light.pine;
 
   static final _plugin = FlutterLocalNotificationsPlugin();
   static bool _ready = false;

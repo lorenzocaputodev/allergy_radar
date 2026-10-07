@@ -99,7 +99,7 @@ class TodayScreen extends StatelessWidget {
           else if (snap != null) ...[
             _Hero(state: s),
             const SizedBox(height: 14),
-            _SectionTitle('I tuoi allergeni'),
+            const _SectionTitle('I tuoi allergeni'),
             if (s.followedStatuses.isEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
