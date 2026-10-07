@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../models/alert_settings.dart';
+import '../models/allergen.dart';
 import '../models/diary_entry.dart';
+import '../models/level.dart';
 import '../services/alert_planner.dart';
 import '../services/alerts_service.dart';
 import '../state/app_state.dart';
@@ -78,9 +80,11 @@ class _AlertsScreenState extends State<AlertsScreen> {
       AlertKind.briefing: briefing == null
           ? 'Niente in programma: nessun allergene ti darà fastidio.'
           : 'Prossimo: ${next(briefing)}',
-      AlertKind.tomorrow: tomorrow == null
-          ? 'Niente in programma: domani nessun allergene ti darà fastidio.'
-          : 'Prossimo: ${next(tomorrow)}',
+      AlertKind.tomorrow: tomorrow != null
+          ? 'Prossimo: ${next(tomorrow)}'
+          : app.followedStatuses.any((s) => s.kind == DataKind.forecast)
+          ? 'Niente in programma: domani nessun allergene con previsione ti darà fastidio.'
+          : 'Non disponibile: nessuno dei tuoi allergeni ha una previsione per domani.',
       if (reminder != null)
         AlertKind.diary: diaryDone && DiaryEntry.day(reminder) != DiaryEntry.day(now)
             ? 'Oggi hai già registrato: prossimo ${next(reminder)}'
@@ -231,50 +235,70 @@ class _PunctualityState extends State<_Punctuality> {
 
   static Future<(bool, bool)> _read() async => (await AlertsService.enabled(), await AlertsService.exact());
 
+  Future<void> _requestExact() async {
+    await AlertsService.requestExact();
+    if (mounted) setState(() => _status = _read());
+  }
+
+  @override
+  Widget build(BuildContext context) => FutureBuilder<(bool, bool)>(
+    future: _status,
+    builder: (context, snap) {
+      final status = snap.data;
+      if (status == null) return const SizedBox.shrink();
+      final (enabled, exact) = status;
+      return PunctualityCard(enabled: enabled, exact: exact, onExact: _requestExact);
+    },
+  );
+}
+
+class PunctualityCard extends StatelessWidget {
+  const PunctualityCard({super.key, required this.enabled, required this.exact, required this.onExact});
+
+  final bool enabled;
+  final bool exact;
+  final VoidCallback onExact;
+
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    return FutureBuilder<(bool, bool)>(
-      future: _status,
-      builder: (context, snap) {
-        final status = snap.data;
-        if (status == null) return const SizedBox.shrink();
-        final (enabled, exact) = status;
-        final Widget row;
-        if (!enabled) {
-          row = ListTile(
-            contentPadding: const EdgeInsets.fromLTRB(16, 6, 16, 6),
-            leading: Icon(Icons.notifications_off_outlined, color: p.ink2),
-            title: const Text('Notifiche spente', style: TextStyle(fontWeight: FontWeight.w700)),
-            subtitle: const Text('Gli avvisi non arrivano: riattivale da Impostazioni › App › Allergy Radar.'),
-          );
-        } else {
-          row = ListTile(
-            contentPadding: const EdgeInsets.fromLTRB(16, 6, 12, 6),
-            leading: Icon(exact ? Icons.alarm_on : Icons.schedule, color: p.ink2),
-            title: const Text('Avvisi puntuali', style: TextStyle(fontWeight: FontWeight.w700)),
-            subtitle: Text(
-              exact
-                  ? 'Arrivano all’orario scelto, anche ad app chiusa.'
-                  : 'Ora possono arrivare fino a un’ora in ritardo.',
+    final rows = <Widget>[
+      if (!enabled)
+        ListTile(
+          leading: Icon(Icons.notifications_off_outlined, color: p.text(Level.high)),
+          title: const Text('Notifiche disattivate', style: TextStyle(fontWeight: FontWeight.w700)),
+          subtitle: const Text(
+            'Gli avvisi non arrivano. Riattivale in Impostazioni › App › Allergy Radar › Notifiche.',
+          ),
+        )
+      else ...[
+        SwitchListTile(
+          secondary: Icon(exact ? Icons.alarm_on_outlined : Icons.alarm_outlined),
+          title: const Text('Orario esatto', style: TextStyle(fontWeight: FontWeight.w700)),
+          subtitle: Text(
+            exact
+                ? 'Gli avvisi arrivano all’ora scelta, anche con il telefono in standby.'
+                : 'Senza, Android può ritardare gli avvisi fino a un’ora per risparmiare batteria.',
+          ),
+          value: exact,
+          onChanged: (_) => onExact(),
+        ),
+        if (!exact)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(56, 0, 24, 16),
+            child: Text(
+              'Si apre l’impostazione di Android «Sveglie e promemoria»: attivala e torna qui.',
+              style: TextStyle(fontSize: 13, color: p.ink3),
             ),
-            trailing: exact
-                ? Icon(Icons.check_circle, color: p.pineText)
-                : FilledButton.tonal(
-                    onPressed: AlertsService.requestExact,
-                    style: FilledButton.styleFrom(minimumSize: const Size(0, 40)),
-                    child: const Text('Attiva'),
-                  ),
-          );
-        }
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SettingsLabel('Puntualità'),
-            SettingsGroup([row]),
-          ],
-        );
-      },
+          ),
+      ],
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SettingsLabel('Puntualità'),
+        SettingsGroup([Column(children: rows)]),
+      ],
     );
   }
 }

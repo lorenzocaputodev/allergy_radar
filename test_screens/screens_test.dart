@@ -16,6 +16,7 @@ import 'package:allergy_radar/services/open_meteo_client.dart';
 import 'package:allergy_radar/state/app_state.dart';
 import 'package:allergy_radar/state/diary_state.dart';
 import 'package:allergy_radar/theme/app_theme.dart';
+import 'package:allergy_radar/widgets/page_list.dart';
 import 'package:allergy_radar/widgets/radar_mark.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -230,6 +231,27 @@ void main() {
   testWidgets('avvisi', (tester) async {
     await shot(tester, '12_avvisi', const AlertsScreen(), s: await state(Place.lecce, lecceNow), height: 1000);
   });
+
+  for (final (name, enabled, exact) in [
+    ('spenta', true, false),
+    ('attiva', true, true),
+    ('notifiche_off', false, false),
+  ]) {
+    testWidgets('puntualità $name', (tester) async {
+      await shot(
+        tester,
+        '12_puntualita_$name',
+        Scaffold(
+          body: PageList(
+            padding: const EdgeInsets.all(16),
+            children: [PunctualityCard(enabled: enabled, exact: exact, onExact: () {})],
+          ),
+        ),
+        s: await state(Place.lecce, lecceNow),
+        height: 360,
+      );
+    });
+  }
 
   testWidgets('andamento', (tester) async {
     await shot(
