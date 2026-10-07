@@ -8,6 +8,7 @@ import '../models/alert_log.dart';
 import '../models/diary_entry.dart';
 import '../models/level.dart';
 import '../services/alert_planner.dart';
+import '../services/alerts_service.dart';
 import '../state/app_state.dart';
 import '../theme/palette.dart';
 import '../utils/days.dart';
@@ -31,12 +32,12 @@ class NotificationsScreen extends StatefulWidget {
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
   late final AppLifecycleListener _lifecycle;
-  Future<SharedPreferences> _prefs = AlertLog.fresh();
+  Future<SharedPreferences> _prefs = AlertsService.syncLog();
 
   @override
   void initState() {
     super.initState();
-    _lifecycle = AppLifecycleListener(onResume: () => setState(() => _prefs = AlertLog.fresh()));
+    _lifecycle = AppLifecycleListener(onResume: () => setState(() => _prefs = AlertsService.syncLog()));
   }
 
   @override
@@ -68,7 +69,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         builder: (context, snap) {
           if (!snap.hasData) return const Center(child: CircularProgressIndicator());
           final now = DateTime.now();
-          final log = AlertLog.read(snap.data!, now);
+          final log = AlertLog.read(snap.data!);
           return PageList(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
             children: [
@@ -101,7 +102,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   ),
                 ),
               for (final (i, e) in log.indexed) ...[
-                if (i == 0 || !_sameDay(log[i - 1].at, e.at))
+                if (i == 0 || !log[i - 1].at.isSameDay(e.at))
                   Padding(
                     padding: EdgeInsets.fromLTRB(4, i == 0 ? 4 : 16, 4, 8),
                     child: Text(
@@ -176,7 +177,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   );
 
   void _delete(SharedPreferences prefs, AlertMessage m) {
-    unawaited(AlertLog.remove(prefs, m, DateTime.now()));
+    unawaited(AlertLog.remove(prefs, m));
     setState(() {});
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
@@ -205,11 +206,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     }
   }
 
-  static bool _sameDay(DateTime a, DateTime b) => a.year == b.year && a.month == b.month && a.day == b.day;
-
   static String _dayLabel(DateTime d, DateTime now) {
-    if (_sameDay(d, now)) return 'Oggi';
-    if (_sameDay(d, now.plusDays(-1))) return 'Ieri';
+    if (d.isSameDay(now)) return 'Oggi';
+    if (d.isSameDay(now.plusDays(-1))) return 'Ieri';
     return Fmt.longDate(d);
   }
 }

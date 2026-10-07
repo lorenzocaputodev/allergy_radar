@@ -7,73 +7,83 @@ void main() {
   final day = DateTime(2026, 10, 1);
   AlertMessage at(int hour, [AlertKind kind = AlertKind.briefing]) =>
       AlertMessage(kind, day.add(Duration(hours: hour)), 'Avviso delle $hour', 'Testo');
+  DateTime time(int hour, [int minute = 0]) => day.add(Duration(hours: hour, minutes: minute));
 
-  test('gli avvisi programmati contano come arrivati quando passa il loro orario', () async {
-    SharedPreferences.setMockInitialValues({});
-    final prefs = await SharedPreferences.getInstance();
-    await AlertLog.setPending(prefs, [at(8), at(21, AlertKind.diary)], day);
-    expect(AlertLog.read(prefs, day.add(const Duration(hours: 7))), isEmpty);
-    expect(AlertLog.read(prefs, day.add(const Duration(hours: 9))).single.title, 'Avviso delle 8');
+  group('split', () {
+    final stored = [at(8), at(21, AlertKind.diary)];
+    bool all(AlertKind _) => true;
 
-    await AlertLog.setPending(prefs, [at(45, AlertKind.diary)], day.add(const Duration(hours: 20)));
-    final log = AlertLog.read(prefs, day.add(const Duration(hours: 22)));
-    expect(log.map((m) => m.title), ['Avviso delle 8']);
+    test('arrivato solo se Android l’ha già mostrato', () {
+      final s = AlertLog.split(stored, unfired: {AlertKind.diary}, now: time(9), wanted: all);
+      expect(s.arrived.map((m) => m.title), ['Avviso delle 8']);
+      expect(s.late, isEmpty);
+    });
+
+    test('in ritardo resta in attesa se ancora voluto e da meno di un’ora', () {
+      final s = AlertLog.split(stored, unfired: {AlertKind.briefing, AlertKind.diary}, now: time(8, 20), wanted: all);
+      expect(s.arrived, isEmpty);
+      expect(s.late.single.kind, AlertKind.briefing);
+    });
+
+    test('in ritardo ma non più voluto o troppo vecchio: né arrivato né in attesa', () {
+      final unfired = {AlertKind.briefing, AlertKind.diary};
+      final off = AlertLog.split(stored, unfired: unfired, now: time(8, 20), wanted: (k) => k != AlertKind.briefing);
+      expect(off.late, isEmpty);
+      expect(off.arrived, isEmpty);
+      final old = AlertLog.split(stored, unfired: unfired, now: time(9, 30), wanted: all);
+      expect(old.late, isEmpty);
+      expect(old.arrived, isEmpty);
+    });
+
+    test('i futuri non sono né arrivati né in ritardo', () {
+      final s = AlertLog.split(stored, unfired: const {}, now: time(7), wanted: all);
+      expect(s.arrived, isEmpty);
+      expect(s.late, isEmpty);
+    });
   });
 
-  test('al massimo ${AlertLog.max} voci, dal più recente', () async {
+  test('registro: al massimo ${AlertLog.max} voci, dal più recente, senza doppioni', () async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
     for (var h = 0; h < 40; h++) {
-      await AlertLog.setPending(prefs, [at(h)], day.add(Duration(hours: h)));
+      await AlertLog.update(prefs, pending: const [], arrived: [at(h), at(h)]);
     }
-    final log = AlertLog.read(prefs, day.add(const Duration(days: 3)));
+    final log = AlertLog.read(prefs);
     expect(log, hasLength(AlertLog.max));
     expect(log.first.title, 'Avviso delle 39');
   });
 
-  test('swipe: l’avviso arrivato sparisce, quello futuro resta; Annulla lo rimette', () async {
+  test('update salva gli in sospeso e aggiunge gli arrivati', () async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
-    final now = day.add(const Duration(hours: 10));
-    await AlertLog.setPending(prefs, [at(8)], day.add(const Duration(hours: 7)));
-    await AlertLog.setPending(prefs, [at(9), at(21, AlertKind.diary)], day.add(const Duration(hours: 8, minutes: 30)));
+    await AlertLog.update(prefs, pending: [at(8), at(21, AlertKind.diary)], arrived: const []);
+    expect(AlertLog.read(prefs), isEmpty);
+    expect(await AlertLog.pending(prefs), hasLength(2));
 
-    await AlertLog.remove(prefs, at(8), now);
-    final removing = AlertLog.remove(prefs, at(9), now);
-    expect(AlertLog.read(prefs, now), isEmpty);
+    await AlertLog.update(prefs, pending: [at(21, AlertKind.diary)], arrived: [at(8)]);
+    expect(AlertLog.read(prefs).single.title, 'Avviso delle 8');
+    expect((await AlertLog.pending(prefs)).single.kind, AlertKind.diary);
+  });
+
+  test('swipe: l’avviso sparisce subito; Annulla lo rimette', () async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    await AlertLog.update(prefs, pending: const [], arrived: [at(8), at(9)]);
+
+    final removing = AlertLog.remove(prefs, at(9));
+    expect(AlertLog.read(prefs).single.title, 'Avviso delle 8');
     await removing;
-    expect(AlertLog.read(prefs, day.add(const Duration(hours: 22))).single.kind, AlertKind.diary);
+    await AlertLog.remove(prefs, at(8));
+    expect(AlertLog.read(prefs), isEmpty);
 
     await AlertLog.restore(prefs, at(8));
-    expect(AlertLog.read(prefs, now).single.title, 'Avviso delle 8');
-  });
-
-  test('un avviso in ritardo resta in attesa finché non viene tolto dai programmati', () async {
-    SharedPreferences.setMockInitialValues({});
-    final prefs = await SharedPreferences.getInstance();
-    await AlertLog.setPending(prefs, [at(8)], day.add(const Duration(hours: 7)));
-    final late = day.add(const Duration(hours: 8, minutes: 5));
-    await AlertLog.setPending(prefs, [at(8), at(21, AlertKind.diary)], late);
-    await AlertLog.setPending(prefs, [at(8), at(21, AlertKind.diary)], late);
-    expect((await AlertLog.pending(prefs)).map((m) => m.title), contains('Avviso delle 8'));
-    expect(AlertLog.read(prefs, late).single.title, 'Avviso delle 8');
-
-    final after = day.add(const Duration(hours: 9, minutes: 10));
-    await AlertLog.setPending(prefs, [at(21, AlertKind.diary)], after);
-    expect((await AlertLog.pending(prefs)).map((m) => m.kind), [AlertKind.diary]);
-    expect(AlertLog.read(prefs, after).single.title, 'Avviso delle 8');
-  });
-
-  test('lo stesso avviso nel registro e tra i programmati compare una volta sola', () async {
-    SharedPreferences.setMockInitialValues({});
-    final prefs = await SharedPreferences.getInstance();
-    await AlertLog.setPending(prefs, [at(8)], day);
-    await AlertLog.restore(prefs, at(8));
-    expect(AlertLog.read(prefs, day.add(const Duration(hours: 9))), hasLength(1));
+    expect(AlertLog.read(prefs).single.title, 'Avviso delle 8');
   });
 
   test('registro rovinato: elenco vuoto, niente eccezioni', () async {
     SharedPreferences.setMockInitialValues({AlertLog.key: 'non json', AlertLog.pendingKey: '[{"kind":"x","at":"y"}]'});
-    expect(AlertLog.read(await SharedPreferences.getInstance(), day), isEmpty);
+    final prefs = await SharedPreferences.getInstance();
+    expect(AlertLog.read(prefs), isEmpty);
+    expect(await AlertLog.pending(prefs), isEmpty);
   });
 }

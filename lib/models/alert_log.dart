@@ -4,50 +4,65 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../services/alert_planner.dart';
 
+class AlertSplit {
+  const AlertSplit({required this.arrived, required this.late});
+
+  final List<AlertMessage> arrived;
+  final List<AlertMessage> late;
+}
+
 abstract final class AlertLog {
   static const key = 'alerts_log';
   static const pendingKey = 'alerts_pending';
   static const max = 30;
+  static const lateBy = Duration(hours: 1);
 
-  static List<AlertMessage> read(SharedPreferences prefs, DateTime now) => _merge([
-    ..._decode(prefs.getString(key)),
-    ..._decode(prefs.getString(pendingKey)).where((m) => !m.at.isAfter(now)),
-  ]);
+  static List<AlertMessage> read(SharedPreferences prefs) => _merge([..._decode(prefs.getString(key))]);
 
   static Future<List<AlertMessage>> pending(SharedPreferences prefs) async {
     await prefs.reload();
     return _decode(prefs.getString(pendingKey));
   }
 
-  static Future<void> setPending(SharedPreferences prefs, List<AlertMessage> pending, DateTime now) async {
+  // --- Avvisi arrivati e in ritardo ---
+  static AlertSplit split(
+    List<AlertMessage> stored, {
+    required Set<AlertKind> unfired,
+    required DateTime now,
+    required bool Function(AlertKind) wanted,
+  }) => AlertSplit(
+    arrived: [
+      for (final m in stored)
+        if (!m.at.isAfter(now) && !unfired.contains(m.kind)) m,
+    ],
+    late: [
+      for (final m in stored)
+        if (!m.at.isAfter(now) && unfired.contains(m.kind) && now.difference(m.at) < lateBy && wanted(m.kind)) m,
+    ],
+  );
+
+  static Future<void> update(
+    SharedPreferences prefs, {
+    required List<AlertMessage> pending,
+    required List<AlertMessage> arrived,
+  }) async {
     await prefs.reload();
-    final arrived = _decode(prefs.getString(pendingKey)).where((m) => !m.at.isAfter(now) && !pending.any(_same(m)));
     await prefs.setString(key, _encode(_merge([..._decode(prefs.getString(key)), ...arrived])));
     await prefs.setString(pendingKey, _encode(pending));
   }
 
-  static Future<void> remove(SharedPreferences prefs, AlertMessage m, DateTime now) async {
-    await _drop(prefs, m, now);
+  static Future<void> remove(SharedPreferences prefs, AlertMessage m) async {
+    await _drop(prefs, m);
     await prefs.reload();
-    await _drop(prefs, m, now);
+    await _drop(prefs, m);
   }
 
-  static Future<void> _drop(SharedPreferences prefs, AlertMessage m, DateTime now) {
-    final same = _same(m);
-    final log = _decode(prefs.getString(key)).where((x) => !same(x)).toList();
-    final pending = _decode(prefs.getString(pendingKey)).where((x) => !(same(x) && !x.at.isAfter(now))).toList();
-    return Future.wait([prefs.setString(key, _encode(log)), prefs.setString(pendingKey, _encode(pending))]);
-  }
+  static Future<void> _drop(SharedPreferences prefs, AlertMessage m) =>
+      prefs.setString(key, _encode(_decode(prefs.getString(key)).where((x) => !_same(m)(x)).toList()));
 
   static Future<void> restore(SharedPreferences prefs, AlertMessage m) async {
     await prefs.reload();
     await prefs.setString(key, _encode(_merge([..._decode(prefs.getString(key)), m])));
-  }
-
-  static Future<SharedPreferences> fresh() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.reload();
-    return prefs;
   }
 
   static bool Function(AlertMessage) _same(AlertMessage m) =>

@@ -1,3 +1,5 @@
+import '../services/alert_planner.dart';
+
 class AlertSettings {
   const AlertSettings({
     this.briefing = true,
@@ -21,6 +23,12 @@ class AlertSettings {
   final int diaryAt;
 
   bool get anyEnabled => briefing || tomorrow || diary;
+
+  bool isOn(AlertKind k) => switch (k) {
+    AlertKind.briefing => briefing,
+    AlertKind.tomorrow => tomorrow,
+    AlertKind.diary => diary,
+  };
 
   static const off = AlertSettings(briefing: false, tomorrow: false, diary: false);
 

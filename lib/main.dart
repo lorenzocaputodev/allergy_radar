@@ -59,12 +59,13 @@ Future<void> main() async {
   );
 
   AlertsService.opened.addListener(() {
-    if (AlertsService.opened.value != AlertKind.diary) return;
+    final opened = AlertsService.opened.value;
+    if (opened == null || opened.kind != AlertKind.diary) return;
     AlertsService.opened.value = null;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!state.onboarded) return;
       _navigator.currentState?.push(
-        MaterialPageRoute<void>(builder: (_) => LogEntryScreen(date: DiaryEntry.day(DateTime.now()))),
+        MaterialPageRoute<void>(builder: (_) => LogEntryScreen(date: DiaryEntry.day(opened.at ?? DateTime.now()))),
       );
     });
   });

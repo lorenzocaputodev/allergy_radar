@@ -38,7 +38,6 @@ class AlertsService {
 
   static const refreshTask = 'widget_refresh';
   static const _work = 'pollen_check_hourly';
-  static const _lateBy = Duration(hours: 1);
 
   static const _pollenChannel = AndroidNotificationChannel(
     'pollen',
@@ -58,7 +57,7 @@ class AlertsService {
   static final _plugin = FlutterLocalNotificationsPlugin();
   static bool _ready = false;
 
-  static final opened = ValueNotifier<AlertKind?>(null);
+  static final opened = ValueNotifier<({AlertKind kind, DateTime? at})?>(null);
 
   static bool get isSupported => !kIsWeb && Platform.isAndroid;
 
@@ -144,27 +143,31 @@ class AlertsService {
   static Future<void> reschedule(SharedPreferences prefs, AppState app, DiaryState diary) async {
     if (!_ready || !app.onboarded) return;
     final now = DateTime.now();
+    final diaryDone = diary.entryFor(DiaryEntry.day(now)) != null;
     final planned = const AlertPlanner().schedule(
       now: now,
       settings: app.alerts,
       placeName: app.place.name,
       followed: app.followedStatuses,
       thresholdOf: app.thresholdOf,
-      diaryDoneToday: diary.entryFor(DiaryEntry.day(now)) != null,
+      diaryDoneToday: diaryDone,
     );
     try {
-      final exactMode = await exact();
-      final late = exactMode
-          ? const <AlertMessage>[]
-          : [
-              for (final m in await AlertLog.pending(prefs))
-                if (!m.at.isAfter(now) && now.difference(m.at) < _lateBy) m,
-            ];
-      final waiting = {for (final m in late) m.kind};
-      final messages = await enabled() ? planned.where((m) => !waiting.contains(m.kind)).toList() : <AlertMessage>[];
-      final mode = exactMode ? AndroidScheduleMode.exactAllowWhileIdle : AndroidScheduleMode.inexactAllowWhileIdle;
-      for (final k in AlertKind.values.where((k) => !waiting.contains(k))) {
-        await _plugin.cancel(_id(k));
+      final on = await enabled();
+      final unfired = await _unfired();
+      final split = AlertLog.split(
+        await AlertLog.pending(prefs),
+        unfired: unfired,
+        now: now,
+        wanted: (k) => on && app.alerts.isOn(k) && !(k == AlertKind.diary && diaryDone),
+      );
+      final waiting = {for (final m in split.late) m.kind};
+      final messages = on ? planned.where((m) => !waiting.contains(m.kind)).toList() : <AlertMessage>[];
+      final mode = await exact() ? AndroidScheduleMode.exactAllowWhileIdle : AndroidScheduleMode.inexactAllowWhileIdle;
+      for (final k in AlertKind.values) {
+        if (!waiting.contains(k) && unfired.contains(k) && !messages.any((m) => m.kind == k)) {
+          await _plugin.cancel(_id(k));
+        }
       }
       for (final m in messages) {
         await _plugin.zonedSchedule(
@@ -174,13 +177,41 @@ class AlertsService {
           tz.TZDateTime.from(m.at, tz.UTC),
           _details(m.kind, m.body),
           androidScheduleMode: mode,
-          payload: m.kind.name,
+          payload: _payload(m),
         );
       }
-      await AlertLog.setPending(prefs, [...late, ...messages], now);
+      await AlertLog.update(prefs, pending: [...split.late, ...messages], arrived: split.arrived);
     } on Object catch (e) {
       debugPrint('Avvisi non programmati: $e');
     }
+  }
+
+  static Future<SharedPreferences> syncLog() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.reload();
+    if (!await init()) return prefs;
+    try {
+      final stored = await AlertLog.pending(prefs);
+      final split = AlertLog.split(stored, unfired: await _unfired(), now: DateTime.now(), wanted: (_) => true);
+      if (split.arrived.isNotEmpty) {
+        await AlertLog.update(
+          prefs,
+          pending: stored.where((m) => !split.arrived.contains(m)).toList(),
+          arrived: split.arrived,
+        );
+      }
+    } on Object catch (e) {
+      debugPrint('Registro degli avvisi non aggiornato: $e');
+    }
+    return prefs;
+  }
+
+  static Future<Set<AlertKind>> _unfired() async {
+    final ids = {for (final r in await _plugin.pendingNotificationRequests()) r.id};
+    return {
+      for (final k in AlertKind.values)
+        if (ids.contains(_id(k))) k,
+    };
   }
 
   // --- Controllo in background ---
@@ -209,7 +240,14 @@ class AlertsService {
   // --- Notifiche ---
   static int _id(AlertKind k) => k.index + 1;
 
-  static void _open(String? payload) => opened.value = AlertKind.values.asNameMap()[payload];
+  static String _payload(AlertMessage m) => '${m.kind.name}|${m.at.toIso8601String()}';
+
+  static void _open(String? payload) {
+    final [name, ...rest] = (payload ?? '').split('|');
+    final kind = AlertKind.values.asNameMap()[name];
+    if (kind == null) return;
+    opened.value = (kind: kind, at: rest.isEmpty ? null : DateTime.tryParse(rest.first));
+  }
 
   static NotificationDetails _details(AlertKind kind, String body) {
     final channel = kind == AlertKind.diary ? _diaryChannel : _pollenChannel;
