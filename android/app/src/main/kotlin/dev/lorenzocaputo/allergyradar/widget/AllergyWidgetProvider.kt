@@ -25,7 +25,11 @@ import dev.lorenzocaputo.allergyradar.R
 import org.json.JSONObject
 import java.time.OffsetDateTime
 import java.time.LocalDateTime
+import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
+import java.util.Locale
+import java.util.concurrent.TimeUnit
 
 class AllergyWidgetProvider : AppWidgetProvider() {
     // --- Eventi ---
@@ -37,28 +41,16 @@ class AllergyWidgetProvider : AppWidgetProvider() {
         update(context, manager, id)
     }
 
-    override fun onReceive(context: Context, intent: Intent) {
-        when (intent.action) {
-            ACTION_PAGE -> {
-                val id = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)
-                val pages = context.getSharedPreferences(PAGES, Context.MODE_PRIVATE)
-                pages.edit().putInt("$id", pages.getInt("$id", 0) + intent.getIntExtra(EXTRA_STEP, 1)).apply()
-                update(context, AppWidgetManager.getInstance(context), id)
-            }
-            ACTION_REFRESH -> refresh(context)
-            else -> super.onReceive(context, intent)
-        }
-    }
-
     companion object {
         const val PREFS = "FlutterSharedPreferences"
         const val KEY = "flutter.widget_data"
         private const val PAGES = "allergy_widget_pages"
-        private const val ACTION_PAGE = "dev.lorenzocaputo.allergyradar.widget.PAGE"
-        private const val EXTRA_STEP = "step"
-        private const val ACTION_REFRESH = "dev.lorenzocaputo.allergyradar.widget.REFRESH"
+        const val ACTION_PAGE = "dev.lorenzocaputo.allergyradar.widget.PAGE"
+        const val EXTRA_STEP = "step"
+        const val ACTION_REFRESH = "dev.lorenzocaputo.allergyradar.widget.REFRESH"
 
         private const val REFRESH_TASK = "widget_refresh"
+        private const val REDRAW_TASK = "widget_redraw"
 
         private const val HEADER_DP = 100
         private const val ROW_DP = 22
@@ -146,7 +138,7 @@ class AllergyWidgetProvider : AppWidgetProvider() {
                 )
                 views.setOnClickPendingIntent(R.id.widget_root, pending)
             }
-            val refresh = Intent(context, AllergyWidgetProvider::class.java).setAction(ACTION_REFRESH)
+            val refresh = Intent(context, WidgetActionReceiver::class.java).setAction(ACTION_REFRESH)
             views.setOnClickPendingIntent(
                 R.id.widget_refresh,
                 PendingIntent.getBroadcast(context, 0, refresh, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT),
@@ -155,7 +147,13 @@ class AllergyWidgetProvider : AppWidgetProvider() {
         }
 
         // --- Aggiornamento e pagine ---
-        private fun refresh(context: Context) {
+        fun page(context: Context, id: Int, step: Int) {
+            val pages = context.getSharedPreferences(PAGES, Context.MODE_PRIVATE)
+            pages.edit().putInt("$id", pages.getInt("$id", 0) + step).apply()
+            update(context, AppWidgetManager.getInstance(context), id)
+        }
+
+        fun refresh(context: Context) {
             val manager = AppWidgetManager.getInstance(context)
             val ids = manager.getAppWidgetIds(ComponentName(context, AllergyWidgetProvider::class.java))
             ids.forEach { id ->
@@ -167,10 +165,12 @@ class AllergyWidgetProvider : AppWidgetProvider() {
                 .setInputData(Data.Builder().putString(BackgroundWorker.DART_TASK_KEY, REFRESH_TASK).build())
                 .build()
             val redraw = OneTimeWorkRequest.Builder(WidgetUpdateWorker::class.java).build()
-            WorkManager.getInstance(context)
-                .beginUniqueWork(REFRESH_TASK, ExistingWorkPolicy.REPLACE, fetch)
-                .then(redraw)
-                .enqueue()
+            val fallback = OneTimeWorkRequest.Builder(WidgetUpdateWorker::class.java)
+                .setInitialDelay(2, TimeUnit.MINUTES)
+                .build()
+            val work = WorkManager.getInstance(context)
+            work.beginUniqueWork(REFRESH_TASK, ExistingWorkPolicy.REPLACE, fetch).then(redraw).enqueue()
+            work.enqueueUniqueWork(REDRAW_TASK, ExistingWorkPolicy.REPLACE, fallback)
         }
 
         private fun rowsFor(manager: AppWidgetManager, id: Int, total: Int): Int {
@@ -182,7 +182,7 @@ class AllergyWidgetProvider : AppWidgetProvider() {
         }
 
         private fun pageIntent(context: Context, id: Int, step: Int): PendingIntent {
-            val intent = Intent(context, AllergyWidgetProvider::class.java)
+            val intent = Intent(context, WidgetActionReceiver::class.java)
                 .setAction(ACTION_PAGE)
                 .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id)
                 .putExtra(EXTRA_STEP, step)
@@ -194,9 +194,12 @@ class AllergyWidgetProvider : AppWidgetProvider() {
 
         private fun headline(context: Context, data: JSONObject, muted: Int): CharSequence {
             val out = SpannableStringBuilder(data.optString("levelLabel"))
-            if (data.optBoolean("estimate")) {
+            val source = data.optString("source").ifEmpty {
+                if (data.optBoolean("estimate")) context.getString(R.string.widget_estimate) else ""
+            }
+            if (source.isNotEmpty()) {
                 val start = out.length
-                out.append("  " + context.getString(R.string.widget_estimate))
+                out.append("  $source")
                 out.setSpan(ForegroundColorSpan(muted), start, out.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
                 out.setSpan(RelativeSizeSpan(0.5f), start, out.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
             }
@@ -205,8 +208,11 @@ class AllergyWidgetProvider : AppWidgetProvider() {
 
         private fun levelText(context: Context, item: JSONObject, colors: IntArray, muted: Int): CharSequence {
             val out = SpannableStringBuilder()
-            if (item.optBoolean("estimate")) {
-                out.append(context.getString(R.string.widget_estimate) + "  ")
+            val note = item.optString("note").ifEmpty {
+                if (item.optBoolean("estimate")) context.getString(R.string.widget_estimate) else ""
+            }
+            if (note.isNotEmpty()) {
+                out.append("$note  ")
                 out.setSpan(ForegroundColorSpan(muted), 0, out.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
                 out.setSpan(RelativeSizeSpan(0.8f), 0, out.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
             }
@@ -218,12 +224,17 @@ class AllergyWidgetProvider : AppWidgetProvider() {
         }
 
         private fun updatedAt(iso: String): String = try {
-            val time = try {
-                OffsetDateTime.parse(iso).toLocalTime()
+            val at = try {
+                OffsetDateTime.parse(iso).toLocalDateTime()
             } catch (_: Exception) {
-                LocalDateTime.parse(iso).toLocalTime()
+                LocalDateTime.parse(iso)
             }
-            time.format(DateTimeFormatter.ofPattern("HH:mm"))
+            val time = at.format(DateTimeFormatter.ofPattern("HH:mm"))
+            when (ChronoUnit.DAYS.between(at.toLocalDate(), LocalDate.now())) {
+                0L -> time
+                1L -> "ieri $time"
+                else -> at.format(DateTimeFormatter.ofPattern("d MMM HH:mm", Locale.ITALIAN))
+            }
         } catch (_: Exception) {
             ""
         }

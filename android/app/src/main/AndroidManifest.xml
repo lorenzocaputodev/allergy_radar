@@ -50,6 +50,9 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/allergy_widget_info" />
         </receiver>
+        <receiver
+            android:name=".widget.WidgetActionReceiver"
+            android:exported="false" />
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />

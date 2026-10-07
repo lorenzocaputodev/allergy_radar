@@ -79,7 +79,7 @@ void main() {
     await state.refresh();
     expect(state.followedStatuses.single.kind, DataKind.estimate);
     expect(state.dayLevel, isNot(Level.none));
-    expect(state.dayLevelEstimated, isTrue);
+    expect(state.dayLevelSource, DataKind.estimate);
   });
 
   test('le preferenze assenti tornano ai valori iniziali', () async {

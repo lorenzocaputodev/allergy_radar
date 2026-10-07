@@ -61,8 +61,12 @@ class AppState extends ChangeNotifier {
 
   Level get dayLevel => followedStatuses.fold(Level.none, (l, s) => l.max(s.level));
 
-  bool get dayLevelEstimated =>
-      dayLevel != Level.none && !followedStatuses.any((s) => s.kind != DataKind.estimate && s.level == dayLevel);
+  DataKind? get dayLevelSource {
+    final level = dayLevel;
+    if (level == Level.none) return null;
+    final kinds = {for (final s in followedStatuses.where((s) => s.level == level)) s.kind};
+    return DataKind.values.firstWhere(kinds.contains);
+  }
 
   List<AllergenStatus> get aboveThreshold =>
       followedStatuses.where((s) => s.level != Level.none && s.level >= thresholdOf(s.allergen)).toList();

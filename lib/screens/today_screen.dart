@@ -238,9 +238,12 @@ class _Hero extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (state.dayLevelEstimated) ...[
+                if (state.dayLevelSource case final kind? when kind != DataKind.forecast) ...[
                   const SizedBox(width: 10),
-                  Text('stima', style: TextStyle(fontSize: 16, color: p.onHero.withValues(alpha: 0.85))),
+                  Text(
+                    SourceChip.label(kind).toLowerCase(),
+                    style: TextStyle(fontSize: 16, color: p.onHero.withValues(alpha: 0.85)),
+                  ),
                 ],
               ],
             ),
