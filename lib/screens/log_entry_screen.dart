@@ -48,7 +48,9 @@ class _LogEntryScreenState extends State<LogEntryScreen> {
 
   Future<void> _save({bool noSymptoms = false}) async {
     final base = noSymptoms ? DiaryEntry(date: _entry.date, meds: _entry.meds) : _entry;
-    final e = base.copyWith(note: _note.text.trim(), pollen: _pollenNow());
+    final app = context.read<AppState>();
+    final place = _isToday && app.snapshot != null ? app.place.cacheKey : _entry.place;
+    final e = base.copyWith(note: _note.text.trim(), pollen: _pollenNow(), place: place);
     await context.read<DiaryState>().save(e);
     if (mounted) Navigator.of(context).pop();
   }

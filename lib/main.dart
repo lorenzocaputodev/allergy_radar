@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'data/pollen_repository.dart';
 import 'models/diary_entry.dart';
+import 'models/pollen_snapshot.dart';
 import 'models/station.dart';
 import 'screens/home_shell.dart';
 import 'screens/log_entry_screen.dart';
@@ -34,12 +35,20 @@ Future<void> main() async {
   final state = AppState(repo, prefs);
   final diary = DiaryState(prefs);
 
+  PollenSnapshot? filled;
+  state.addListener(() {
+    final snap = state.snapshot;
+    if (snap == null || identical(snap, filled)) return;
+    filled = snap;
+    unawaited(diary.fillMeasured(snap));
+  });
+
   String? shown;
   state.addListener(() {
     final data = WidgetBridge.encode(state);
     if (data == null || data == shown) return;
     shown = data;
-    unawaited(WidgetBridge.save(prefs, state));
+    unawaited(WidgetBridge.write(prefs, data));
   });
 
   Timer? pending;

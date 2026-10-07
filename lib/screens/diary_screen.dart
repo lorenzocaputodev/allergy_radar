@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -63,9 +65,19 @@ class _DiaryScreenState extends State<DiaryScreen> {
         _TodayCard(
           entry: todayEntry,
           onOpen: () => _open(today),
-          onNoSymptoms: () => diary.save(
-            DiaryEntry(date: today, pollen: context.read<AppState>().snapshot?.levelsOn(today) ?? const {}),
-          ),
+          onNoSymptoms: () {
+            final app = context.read<AppState>();
+            final snap = app.snapshot;
+            unawaited(
+              diary.save(
+                DiaryEntry(
+                  date: today,
+                  pollen: snap?.levelsOn(today) ?? const {},
+                  place: snap == null ? null : app.place.cacheKey,
+                ),
+              ),
+            );
+          },
         ),
         const SizedBox(height: 14),
         SectionCard(
