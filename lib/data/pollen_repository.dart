@@ -9,40 +9,52 @@ import '../services/open_meteo_client.dart';
 import '../services/pollnet_client.dart';
 import '../utils/days.dart';
 
+class StationCsv {
+  const StationCsv(this.stationId, this.km, this.csv);
+
+  final int stationId;
+  final double km;
+  final String csv;
+
+  Map<String, dynamic> toJson() => {'id': stationId, 'km': km, 'csv': csv};
+
+  factory StationCsv.fromJson(Map<String, dynamic> j) =>
+      StationCsv(j['id'] as int, (j['km'] as num).toDouble(), j['csv'] as String);
+}
+
 class RawPollenData {
   const RawPollenData({
     required this.place,
     required this.fetchedAt,
     required this.openMeteo,
-    this.pollnetCsv,
-    this.stationId,
-    this.stationKm,
+    this.measures = const [],
   });
 
   final Place place;
   final DateTime fetchedAt;
   final String openMeteo;
-  final String? pollnetCsv;
-  final int? stationId;
-  final double? stationKm;
+  final List<StationCsv> measures;
 
   Map<String, dynamic> toJson() => {
     'place': place.toJson(),
     'fetchedAt': fetchedAt.toIso8601String(),
     'openMeteo': openMeteo,
-    'pollnetCsv': pollnetCsv,
-    'stationId': stationId,
-    'stationKm': stationKm,
+    'measures': [for (final m in measures) m.toJson()],
   };
 
-  factory RawPollenData.fromJson(Map<String, dynamic> j) => RawPollenData(
-    place: Place.fromJson(j['place'] as Map<String, dynamic>),
-    fetchedAt: DateTime.parse(j['fetchedAt'] as String),
-    openMeteo: j['openMeteo'] as String,
-    pollnetCsv: j['pollnetCsv'] as String?,
-    stationId: j['stationId'] as int?,
-    stationKm: (j['stationKm'] as num?)?.toDouble(),
-  );
+  factory RawPollenData.fromJson(Map<String, dynamic> j) {
+    final legacy = j['pollnetCsv'] as String?;
+    return RawPollenData(
+      place: Place.fromJson(j['place'] as Map<String, dynamic>),
+      fetchedAt: DateTime.parse(j['fetchedAt'] as String),
+      openMeteo: j['openMeteo'] as String,
+      measures: [
+        for (final m in (j['measures'] as List? ?? const [])) StationCsv.fromJson(m as Map<String, dynamic>),
+        if (legacy != null && j['stationId'] != null)
+          StationCsv(j['stationId'] as int, (j['stationKm'] as num?)?.toDouble() ?? 0, legacy),
+      ],
+    );
+  }
 
   String encode() => jsonEncode(toJson());
 
@@ -63,57 +75,47 @@ class PollenRepository {
 
   Future<RawPollenData> fetch(Place place) async {
     final now = _now();
-    final (om, (csv, used)) = await (openMeteo.fetchForecast(place), _measures(place, now)).wait;
-    return RawPollenData(
-      place: place,
-      fetchedAt: now,
-      openMeteo: om,
-      pollnetCsv: csv,
-      stationId: used?.station.id,
-      stationKm: used?.km,
-    );
+    final (om, measures) = await (openMeteo.fetchForecast(place), _measures(place, now)).wait;
+    return RawPollenData(place: place, fetchedAt: now, openMeteo: om, measures: measures);
   }
 
-  Future<(String?, NearStation?)> _measures(Place place, DateTime now) async {
+  Future<List<StationCsv>> _measures(Place place, DateTime now) async {
     final ids = Allergens.measuredOnly.map((a) => a.pollnetId);
-    Future<String?> recent(NearStation near) async {
+    Future<StationCsv?> recent(NearStation near) async {
       try {
         final body = await pollnet.fetchCsv(near.station.id, ids, now.plusDays(-historyDays), now);
         final ok = PollnetClient.parseCsv(body)
             .any((m) => m.value != null && now.daysSince(m.date) <= maxMeasureAgeDays);
-        return ok ? body : null;
+        return ok ? StationCsv(near.station.id, near.km, body) : null;
       } on Exception {
         return null;
       }
     }
 
-    final near = stations.near(place).take(3).toList();
-    final bodies = await Future.wait(near.map(recent));
-    for (var i = 0; i < near.length; i++) {
-      if (bodies[i] != null) return (bodies[i], near[i]);
-    }
-    return (null, null);
+    final found = await Future.wait(stations.near(place).take(3).map(recent));
+    return found.nonNulls.toList();
   }
 
   PollenSnapshot build(RawPollenData raw) {
     final now = _now();
-    final today = DateTime(now.year, now.month, now.day);
+    final today = now.dateOnly;
     final om = OpenMeteoData.parse(raw.openMeteo);
-    final measures = raw.pollnetCsv == null ? const <Measurement>[] : PollnetClient.parseCsv(raw.pollnetCsv!);
-
-    NearStation? station;
-    if (raw.stationId != null) {
-      final s = stations.stations.where((s) => s.id == raw.stationId).firstOrNull;
-      if (s != null) station = NearStation(s, raw.stationKm ?? distanceKm(raw.place.lat, raw.place.lon, s.lat, s.lon));
-    }
+    final sources = [
+      for (final m in raw.measures)
+        if (stations.stations.where((s) => s.id == m.stationId).firstOrNull case final s?)
+          (NearStation(s, m.km), PollnetClient.parseCsv(m.csv)),
+    ];
 
     final area = stations.areaOf(raw.place);
     final statuses = <String, AllergenStatus>{};
     for (final a in Allergens.all) {
       statuses[a.id] =
-          (a.hasForecast ? _forecast(a, om, today) : _measured(a, measures, station, today)) ??
+          (a.hasForecast
+              ? _forecast(a, om, today)
+              : sources.map((src) => _measured(a, src.$2, src.$1, today)).nonNulls.firstOrNull) ??
           _estimate(a, area, today);
     }
+    final used = statuses.values.map((s) => s.station).nonNulls.toList()..sort((x, y) => x.km.compareTo(y.km));
 
     return PollenSnapshot(
       place: raw.place,
@@ -121,7 +123,7 @@ class PollenRepository {
       statuses: statuses,
       air: _air(om, today),
       area: area,
-      measuringStation: station,
+      measuringStation: used.firstOrNull,
       nearestStation: stations.near(raw.place).firstOrNull,
     );
   }
@@ -138,7 +140,7 @@ class PollenRepository {
     for (var i = 0; i < om.times.length; i++) {
       final t = om.times[i];
       final v = om.valueAt(a.openMeteoKeys, i);
-      if (v != null && (DateTime(t.year, t.month, t.day) == today || t == midnight)) hourly.add(_day(a, t, v));
+      if (v != null && (t.dateOnly == today || t == midnight)) hourly.add(_day(a, t, v));
     }
     final first = series.first;
     return AllergenStatus(
@@ -152,8 +154,7 @@ class PollenRepository {
     );
   }
 
-  AllergenStatus? _measured(Allergen a, List<Measurement> all, NearStation? station, DateTime today) {
-    if (station == null) return null;
+  AllergenStatus? _measured(Allergen a, List<Measurement> all, NearStation station, DateTime today) {
     final valid = all.where((m) => m.partId == a.pollnetId && m.value != null).toList()
       ..sort((x, y) => x.date.compareTo(y.date));
     if (valid.isEmpty) return null;
@@ -180,8 +181,7 @@ class PollenRepository {
   AirStatus _air(OpenMeteoData om, DateTime today) {
     List<double> todayValues(String k) => [
       for (var i = 0; i < om.times.length; i++)
-        if (DateTime(om.times[i].year, om.times[i].month, om.times[i].day) == today && om.series[k]?[i] != null)
-          om.series[k]![i]!,
+        if (om.times[i].dateOnly == today && om.series[k]?[i] != null) om.series[k]![i]!,
     ];
     double? maxOf(List<double> v) => v.isEmpty ? null : v.reduce((a, b) => a > b ? a : b);
     final pm = todayValues('pm2_5');

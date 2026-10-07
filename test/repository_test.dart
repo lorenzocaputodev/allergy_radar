@@ -91,6 +91,57 @@ void main() {
     expect(snap.measuringStation!.station.id, isNot(118));
   });
 
+  test('ogni allergene misurato prende la stazione più vicina con una sua misura recente', () async {
+    const header =
+        'FID,PART_SEQ,PART_LEVEL,PART_ID,PART_NAME_L,PART_PARENT_NAME_L,REMA_CONCENTRATION,REMA_DATE,STAT_ID,STAT_CODE,STAT_NAME_I';
+    final client = MockClient((req) async {
+      if (req.url.host != 'sdi.isprambiente.it') return utf8Response(fixture('open_meteo_lecce.json'));
+      if (!req.url.queryParameters['cql_filter']!.startsWith('STAT_ID=118 ')) {
+        return utf8Response(fixture('pollnet_bologna.csv'));
+      }
+      return utf8Response(
+        '$header\n'
+        'a,1,2,1362,Urticaceae,Urticaceae,40,2026-09-01,118,BO1,Bologna\n'
+        'b,2,2,1330,Cupressaceae,Cupressaceae,12,2026-09-24,118,BO1,Bologna',
+      );
+    });
+    final repo = PollenRepository(
+      openMeteo: OpenMeteoClient(client),
+      pollnet: PollnetClient(client),
+      stations: stationDirectory(),
+      clock: () => DateTime(2026, 9, 25, 10),
+    );
+    final snap = repo.build(RawPollenData.decode((await repo.fetch(bologna)).encode()));
+    expect(snap[Allergens.cypress.id]!.station!.station.id, 118);
+    final par = snap[Allergens.parietaria.id]!;
+    expect(par.kind, DataKind.measured);
+    expect(par.station!.station.id, isNot(118));
+    expect(par.value, 73);
+    expect(snap.measuringStation!.station.id, 118);
+  });
+
+  test('la cache del formato precedente si legge ancora', () {
+    final raw = RawPollenData.decode(
+      '{"place":{"name":"Bologna","region":null,"lat":44.49,"lon":11.34},"fetchedAt":"2026-09-25T10:00:00.000",'
+      '"openMeteo":"{}","pollnetCsv":"x","stationId":118,"stationKm":1.5}',
+    );
+    expect(raw.measures.single.stationId, 118);
+    expect(raw.measures.single.km, 1.5);
+  });
+
+  test('diario: solo previsioni del giorno e misure di oggi o di ieri, mai stime', () async {
+    final lecce = repository(DateTime(2026, 9, 30, 10));
+    final snap = lecce.build(await lecce.fetch(Place.lecce));
+    final levels = snap.levelsOn(DateTime(2026, 9, 30));
+    expect(levels.keys, contains(Allergens.grass.id));
+    expect(levels.keys, isNot(contains(Allergens.parietaria.id)));
+
+    final bo = repository(DateTime(2026, 9, 21, 10));
+    final measured = bo.build(await bo.fetch(bologna));
+    expect(measured.levelsOn(DateTime(2026, 9, 21))[Allergens.parietaria.id], Level.high.index);
+    expect(measured.levelsOn(DateTime(2026, 9, 25)).keys, isNot(contains(Allergens.parietaria.id)));
+  });
+
   test('la cache si ricostruisce identica', () async {
     final repo = repository(DateTime(2026, 9, 25, 10));
     final raw = await repo.fetch(bologna);
