@@ -143,7 +143,7 @@ class AlertSettingsEditor extends StatelessWidget {
         if (on && at != null)
           ListTile(
             leading: const SizedBox(width: 24),
-            title: Text('Ora', style: TextStyle(fontSize: 15, color: p.ink2)),
+            title: Text('Orario', style: TextStyle(fontSize: 15, color: p.ink2)),
             subtitle: note == null ? null : Text(note, style: TextStyle(fontSize: 13, color: p.ink3)),
             trailing: SizedBox(
               width: _switchWidth,
