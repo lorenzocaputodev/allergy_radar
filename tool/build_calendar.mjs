@@ -1,12 +1,4 @@
-// Ricava i calendari stagionali per area dagli storici POLLnet (ISPRA, CC BY 4.0).
-//
-//   node tool/build_calendar.mjs      (Node 18+)
-//
-// Per ogni area e allergene: media giornaliera per mese su ogni stazione, poi
-// mediana tra le stazioni, classificata con le soglie POLLnet (0 assente … 3 alto).
-// Stampa le mappe da copiare in lib/models/allergen.dart.
-
-// Stazioni di pianura o costa, con storici lunghi.
+// --- Configurazione ---
 const AREAS = {
   north: [197, 148, 91, 118, 122, 120, 166, 152, 55, 84, 104, 126],
   centre: [69, 195, 80, 163, 193, 157, 162, 140, 159, 70],
@@ -20,6 +12,37 @@ const ALLERGENS = {
 };
 const FROM = '2016-01-01';
 const TO = '2025-12-31';
+const MIN_DAYS = 20;
+const MIN_MONTHS = 10;
+
+// --- CSV ISPRA ---
+function splitCsvLine(line) {
+  const out = [];
+  let field = '';
+  let quoted = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (quoted) {
+      if (c === '"' && line[i + 1] === '"') {
+        field += '"';
+        i++;
+      } else if (c === '"') {
+        quoted = false;
+      } else {
+        field += c;
+      }
+    } else if (c === '"') {
+      quoted = true;
+    } else if (c === ',') {
+      out.push(field);
+      field = '';
+    } else {
+      field += c;
+    }
+  }
+  out.push(field);
+  return out;
+}
 
 async function monthlyMeans(station, part) {
   const cql = `STAT_ID=${station} and PART_ID=${part} and REMA_DATE between '${FROM}' and '${TO}'`;
@@ -29,26 +52,29 @@ async function monthlyMeans(station, part) {
     try {
       const res = await fetch(url);
       if (!res.ok) throw new Error(`ISPRA ${res.status}`);
-      const [head, ...rows] = (await res.text()).trim().split(/\r?\n/).map((l) => l.split(','));
+      const [head, ...rows] = (await res.text()).trim().split(/\r?\n/).map(splitCsvLine);
       const iv = head.indexOf('REMA_CONCENTRATION');
       const id = head.indexOf('REMA_DATE');
+      if (iv < 0 || id < 0) throw new Error('Formato CSV ISPRA inatteso');
       const sum = Array(12).fill(0);
       const n = Array(12).fill(0);
       for (const r of rows) {
-        if (r[iv] === '') continue;
-        const m = Number(r[id].slice(5, 7)) - 1;
-        sum[m] += Number(r[iv]);
-        n[m]++;
+        const value = Number(r[iv]);
+        const month = Number((r[id] ?? '').slice(5, 7)) - 1;
+        if (r.length !== head.length || r[iv] === '' || !Number.isFinite(value) || !(month >= 0 && month < 12)) continue;
+        sum[month] += value;
+        n[month]++;
       }
-      // Copertura minima: almeno 20 giorni misurati in 10 mesi su 12.
-      if (n.filter((x) => x >= 20).length < 10) return null;
+      if (n.filter((x) => x >= MIN_DAYS).length < MIN_MONTHS) return null;
       return sum.map((s, i) => (n[i] ? s / n[i] : null));
     } catch (e) {
       if (attempt >= 2) throw e;
+      await new Promise((resolve) => setTimeout(resolve, 2000 * (attempt + 1)));
     }
   }
 }
 
+// --- Calendari ---
 const median = (v) => {
   const s = v.filter((x) => x != null).sort((a, b) => a - b);
   if (!s.length) return 0;
@@ -57,14 +83,14 @@ const median = (v) => {
 };
 
 for (const [name, [part, low, moderate, high]] of Object.entries(ALLERGENS)) {
-  const lines = [];
+  console.log(`${name}:`);
   for (const [area, stations] of Object.entries(AREAS)) {
     const series = [];
     for (const s of stations) series.push(await monthlyMeans(s, part));
     const ok = series.filter(Boolean);
     const means = Array.from({ length: 12 }, (_, m) => median(ok.map((s) => s[m])));
     const cal = means.map((v) => (v < low ? 0 : v < moderate ? 1 : v < high ? 2 : 3));
-    lines.push(`      Area.${area}: [${cal.join(', ')}], // ${ok.length} stazioni; ${means.map((v) => v.toFixed(1)).join(' ')}`);
+    console.log(`      Area.${area}: [${cal.join(', ')}],`);
+    console.error(`${name} ${area}: ${ok.length} stazioni; ${means.map((v) => v.toFixed(1)).join(' ')}`);
   }
-  console.log(`${name}:\n${lines.join('\n')}`);
 }
