@@ -109,7 +109,7 @@ class AllergyWidgetProvider : AppWidgetProvider() {
                 val level = data.optInt("level").coerceIn(0, 4)
                 views.setTextViewText(R.id.widget_place, data.optString("place"))
                 views.setTextViewText(R.id.widget_updated, updatedAt(data.optString("updated")))
-                views.setTextViewText(R.id.widget_level, data.optString("levelLabel"))
+                views.setTextViewText(R.id.widget_level, headline(context, data, muted))
                 views.setTextColor(R.id.widget_level, text[level])
                 views.setViewVisibility(R.id.widget_bar, View.VISIBLE)
                 SEGMENTS.forEachIndexed { i, segId ->
@@ -190,6 +190,17 @@ class AllergyWidgetProvider : AppWidgetProvider() {
                 context, id * 2 + if (step > 0) 1 else 0, intent,
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
             )
+        }
+
+        private fun headline(context: Context, data: JSONObject, muted: Int): CharSequence {
+            val out = SpannableStringBuilder(data.optString("levelLabel"))
+            if (data.optBoolean("estimate")) {
+                val start = out.length
+                out.append("  " + context.getString(R.string.widget_estimate))
+                out.setSpan(ForegroundColorSpan(muted), start, out.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+                out.setSpan(RelativeSizeSpan(0.5f), start, out.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+            }
+            return out
         }
 
         private fun levelText(context: Context, item: JSONObject, colors: IntArray, muted: Int): CharSequence {

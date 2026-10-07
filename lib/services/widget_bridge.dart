@@ -21,6 +21,7 @@ class WidgetBridge {
       'updated': snap.fetchedAt.toIso8601String(),
       'level': app.dayLevel.index,
       'levelLabel': app.dayLevel.label,
+      'estimate': app.dayLevelEstimated,
       'allergens': [
         for (final s in [...app.followedStatuses]..sort((a, b) => b.level.index.compareTo(a.level.index)))
           {

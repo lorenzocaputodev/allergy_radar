@@ -44,7 +44,7 @@ class _LogEntryScreenState extends State<LogEntryScreen> {
   Map<String, int> _pollenNow() {
     final snap = context.read<AppState>().snapshot;
     if (!_isToday || snap == null) return _entry.pollen;
-    return snap.levels;
+    return snap.levelsOn(DiaryEntry.day(widget.date));
   }
 
   Future<void> _save({bool noSymptoms = false}) async {

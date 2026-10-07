@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:allergy_radar/data/pollen_repository.dart';
+import 'package:allergy_radar/models/allergen.dart';
+import 'package:allergy_radar/models/level.dart';
 import 'package:allergy_radar/models/place.dart';
 import 'package:allergy_radar/services/open_meteo_client.dart';
 import 'package:allergy_radar/services/pollnet_client.dart';
@@ -64,6 +66,20 @@ void main() {
 
     expect(repo.asked, ['Lecce']);
     expect(state.snapshot, isNotNull);
+  });
+
+  test('il livello del giorno dice quando viene solo da una stima', () async {
+    SharedPreferences.setMockInitialValues({
+      'onboarded': true,
+      'followed': ['parietaria'],
+    });
+    final repo = _SlowRepository(DateTime(2026, 4, 15, 10))..gate.complete();
+    final state = AppState(repo, await SharedPreferences.getInstance());
+    await state.load();
+    await state.refresh();
+    expect(state.followedStatuses.single.kind, DataKind.estimate);
+    expect(state.dayLevel, isNot(Level.none));
+    expect(state.dayLevelEstimated, isTrue);
   });
 
   test('le preferenze assenti tornano ai valori iniziali', () async {

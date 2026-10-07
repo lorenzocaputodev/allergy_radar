@@ -25,6 +25,7 @@ class TodayScreen extends StatelessWidget {
     final s = context.watch<AppState>();
     final p = context.palette;
     final snap = s.snapshot;
+    final above = s.aboveThreshold;
     final now = DateTime.now();
 
     void openDetail(AllergenStatus st) =>
@@ -110,7 +111,7 @@ class TodayScreen extends StatelessWidget {
                 child: AllergenCard(
                   status: st,
                   today: now,
-                  aboveThreshold: s.aboveThreshold.contains(st),
+                  aboveThreshold: above.contains(st),
                   onTap: () => openDetail(st),
                 ),
               ),
@@ -221,15 +222,27 @@ class _Hero extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 6),
-            Text(
-              level.label,
-              style: TextStyle(
-                fontFamily: AppFonts.display,
-                fontSize: 44,
-                height: 1,
-                fontWeight: FontWeight.w600,
-                color: p.onHero,
-              ),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Flexible(
+                  child: Text(
+                    level.label,
+                    style: TextStyle(
+                      fontFamily: AppFonts.display,
+                      fontSize: 44,
+                      height: 1,
+                      fontWeight: FontWeight.w600,
+                      color: p.onHero,
+                    ),
+                  ),
+                ),
+                if (state.dayLevelEstimated) ...[
+                  const SizedBox(width: 10),
+                  Text('stima', style: TextStyle(fontSize: 16, color: p.onHero.withValues(alpha: 0.85))),
+                ],
+              ],
             ),
             const SizedBox(height: 14),
             RiskBar(level, track: p.heroTrack),

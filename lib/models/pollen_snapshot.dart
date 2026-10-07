@@ -1,3 +1,4 @@
+import '../utils/days.dart';
 import 'allergen.dart';
 import 'level.dart';
 import 'place.dart';
@@ -36,6 +37,12 @@ class AllergenStatus {
   final List<DayValue> hourly;
 
   final NearStation? station;
+
+  Level? levelOn(DateTime day) => switch (kind) {
+    DataKind.forecast => series.where((d) => d.date == day).firstOrNull?.level,
+    DataKind.measured => date != null && day.daysSince(date!) <= 1 ? level : null,
+    DataKind.estimate => null,
+  };
 }
 
 class AirStatus {
@@ -94,8 +101,8 @@ class PollenSnapshot {
 
   AllergenStatus? operator [](String id) => statuses[id];
 
-  Map<String, int> get levels => {
+  Map<String, int> levelsOn(DateTime day) => {
     for (final e in statuses.entries)
-      if (e.value.kind != DataKind.estimate) e.key: e.value.level.index,
+      if (e.value.levelOn(day) case final l?) e.key: l.index,
   };
 }

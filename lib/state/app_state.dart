@@ -9,6 +9,7 @@ import '../models/allergen.dart';
 import '../models/level.dart';
 import '../models/place.dart';
 import '../models/pollen_snapshot.dart';
+import '../utils/days.dart';
 
 class AppState extends ChangeNotifier {
   AppState(this._repo, this._prefs);
@@ -60,6 +61,9 @@ class AppState extends ChangeNotifier {
 
   Level get dayLevel => followedStatuses.fold(Level.none, (l, s) => l.max(s.level));
 
+  bool get dayLevelEstimated =>
+      dayLevel != Level.none && !followedStatuses.any((s) => s.kind != DataKind.estimate && s.level == dayLevel);
+
   List<AllergenStatus> get aboveThreshold =>
       followedStatuses.where((s) => s.level != Level.none && s.level >= thresholdOf(s.allergen)).toList();
 
@@ -67,8 +71,7 @@ class AppState extends ChangeNotifier {
     if (snapshot == null) return true;
     final now = DateTime.now();
     final at = snapshot!.fetchedAt;
-    return now.difference(at) > freshFor ||
-        DateTime(now.year, now.month, now.day) != DateTime(at.year, at.month, at.day);
+    return now.difference(at) > freshFor || !now.isSameDay(at);
   }
 
   // --- Caricamento e dati ---
