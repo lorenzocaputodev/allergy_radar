@@ -76,17 +76,21 @@ class PollenRepository {
 
   Future<(String?, NearStation?)> _measures(Place place, DateTime now) async {
     final ids = Allergens.measuredOnly.map((a) => a.pollnetId);
-    for (final near in stations.near(place).take(3)) {
+    Future<String?> recent(NearStation near) async {
       try {
         final body = await pollnet.fetchCsv(near.station.id, ids, now.plusDays(-historyDays), now);
-        final recent = PollnetClient.parseCsv(body)
+        final ok = PollnetClient.parseCsv(body)
             .any((m) => m.value != null && now.daysSince(m.date) <= maxMeasureAgeDays);
-        if (recent) return (body, near);
-      } on PollnetException {
-        continue;
+        return ok ? body : null;
       } on Exception {
-        break;
+        return null;
       }
+    }
+
+    final near = stations.near(place).take(3).toList();
+    final bodies = await Future.wait(near.map(recent));
+    for (var i = 0; i < near.length; i++) {
+      if (bodies[i] != null) return (bodies[i], near[i]);
     }
     return (null, null);
   }

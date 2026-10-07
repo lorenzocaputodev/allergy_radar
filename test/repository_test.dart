@@ -74,7 +74,10 @@ void main() {
     var calls = 0;
     final client = MockClient((req) async {
       if (req.url.host != 'sdi.isprambiente.it') return utf8Response(fixture('open_meteo_lecce.json'));
-      return ++calls == 1 ? http.Response('errore', 500) : utf8Response(fixture('pollnet_bologna.csv'));
+      calls++;
+      return req.url.queryParameters['cql_filter']!.startsWith('STAT_ID=118 ')
+          ? http.Response('errore', 500)
+          : utf8Response(fixture('pollnet_bologna.csv'));
     });
     final repo = PollenRepository(
       openMeteo: OpenMeteoClient(client),
@@ -83,8 +86,9 @@ void main() {
       clock: () => DateTime(2026, 9, 25, 10),
     );
     final snap = repo.build(await repo.fetch(bologna));
-    expect(calls, 2);
+    expect(calls, 3);
     expect(snap[Allergens.parietaria.id]!.kind, DataKind.measured);
+    expect(snap.measuringStation!.station.id, isNot(118));
   });
 
   test('la cache si ricostruisce identica', () async {
