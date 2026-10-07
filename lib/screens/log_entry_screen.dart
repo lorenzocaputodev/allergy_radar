@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../models/allergen.dart';
 import '../models/diary_entry.dart';
 import '../models/level.dart';
 import '../state/app_state.dart';
@@ -75,7 +74,6 @@ class _LogEntryScreenState extends State<LogEntryScreen> {
   Widget build(BuildContext context) {
     final p = context.palette;
     final diary = context.watch<DiaryState>();
-    final snap = context.watch<AppState>().snapshot;
     final followed = context.watch<AppState>().followedAllergens;
 
     Widget symptom(String title, String hint, IconData icon, int value, void Function(int) set) => Column(
@@ -111,12 +109,11 @@ class _LogEntryScreenState extends State<LogEntryScreen> {
       ],
     );
 
-    final pollenLine = _isToday && snap != null
-        ? followed.where((a) => snap[a.id] != null).map((a) => (a, snap[a.id]!.level)).toList()
-        : [
-            for (final e in _entry.pollen.entries)
-              if (followed.any((a) => a.id == e.key)) (Allergens.byId(e.key)!, Level.fromIndex(e.value)),
-          ];
+    final recorded = _pollenNow();
+    final pollenLine = [
+      for (final a in followed)
+        if (recorded[a.id] case final l?) (a, Level.fromIndex(l)),
+    ];
 
     return Scaffold(
       appBar: AppBar(
