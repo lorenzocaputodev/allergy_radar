@@ -163,6 +163,18 @@ class ProfileScreen extends StatelessWidget {
                   showSelectedIcon: false,
                   onSelectionChanged: (v) => state.setThemeMode(v.first),
                 ),
+                const SizedBox(height: 16),
+                const Text('Tema del widget', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 10),
+                SegmentedButton<bool>(
+                  segments: const [
+                    ButtonSegment(value: false, label: Text('Chiaro')),
+                    ButtonSegment(value: true, label: Text('Scuro')),
+                  ],
+                  selected: {state.widgetDark},
+                  showSelectedIcon: false,
+                  onSelectionChanged: (v) => state.setWidgetDark(v.first),
+                ),
               ],
             ),
           ),

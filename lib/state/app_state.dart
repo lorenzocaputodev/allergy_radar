@@ -23,9 +23,10 @@ class AppState extends ChangeNotifier {
   static const kOnboarded = 'onboarded';
   static const kTheme = 'theme';
   static const kAlerts = 'alerts';
+  static const kWidgetTheme = 'widget_theme';
   static const _kCache = 'cache';
 
-  static const backupKeys = [kPlace, kFollowed, kThresholds, kOnboarded, kTheme, kAlerts];
+  static const backupKeys = [kPlace, kFollowed, kThresholds, kOnboarded, kTheme, kAlerts, kWidgetTheme];
 
   static const freshFor = Duration(hours: 1);
 
@@ -35,6 +36,7 @@ class AppState extends ChangeNotifier {
   Set<String> followed = {..._defaultFollowed};
   Map<String, Level> personal = {};
   ThemeMode themeMode = ThemeMode.system;
+  bool widgetDark = true;
   AlertSettings alerts = const AlertSettings();
 
   bool onboarded = false;
@@ -101,6 +103,7 @@ class AppState extends ChangeNotifier {
             <String, Level>{},
           );
     themeMode = ThemeMode.values.asNameMap()[read(() => _prefs.getString(kTheme), null)] ?? ThemeMode.system;
+    widgetDark = read(() => _prefs.getString(kWidgetTheme), null) != 'light';
     final a = read(() => _prefs.getString(kAlerts), null);
     alerts = a == null
         ? const AlertSettings()
@@ -187,6 +190,12 @@ class AppState extends ChangeNotifier {
     themeMode = m;
     notifyListeners();
     await _prefs.setString(kTheme, m.name);
+  }
+
+  Future<void> setWidgetDark(bool dark) async {
+    widgetDark = dark;
+    notifyListeners();
+    await _prefs.setString(kWidgetTheme, dark ? 'dark' : 'light');
   }
 
   Future<void> setAlerts(AlertSettings a) async {

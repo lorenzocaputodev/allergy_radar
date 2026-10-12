@@ -7,7 +7,6 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.content.res.Configuration
 import android.text.SpannableStringBuilder
 import android.text.Spanned
 import android.text.style.ForegroundColorSpan
@@ -60,6 +59,8 @@ class AllergyWidgetProvider : AppWidgetProvider() {
         private val TEXT_DARK = intArrayOf(0xFF9AA49E.toInt(), 0xFFEBCB6E.toInt(), 0xFFF0A860.toInt(), 0xFFF2825E.toInt(), 0xFFF08CA2.toInt())
         private val FILL_LIGHT = intArrayOf(0xFFE4E1D7.toInt(), 0xFFEFD27F.toInt(), 0xFFE59A48.toInt(), 0xFFC4502B.toInt(), 0xFF7A2338.toInt())
         private val FILL_DARK = intArrayOf(0xFF2C3632.toInt(), 0xFFE3C46E.toInt(), 0xFFE0913F.toInt(), 0xFFD0613A.toInt(), 0xFFB23A55.toInt())
+        private val DARK = Palette(R.drawable.widget_background, 0xFFECEFEA.toInt(), 0xFF9AA49E.toInt(), TEXT_DARK, FILL_DARK)
+        private val LIGHT = Palette(R.drawable.widget_background_light, 0xFF17201C.toInt(), 0xFF5C6661.toInt(), TEXT_LIGHT, FILL_LIGHT)
         private val ROWS = intArrayOf(
             R.id.widget_row1, R.id.widget_row2, R.id.widget_row3, R.id.widget_row4, R.id.widget_row5, R.id.widget_row6,
         )
@@ -82,14 +83,15 @@ class AllergyWidgetProvider : AppWidgetProvider() {
 
         private fun update(context: Context, manager: AppWidgetManager, id: Int) {
             val views = RemoteViews(context.packageName, R.layout.allergy_widget)
-            val night = (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
-                Configuration.UI_MODE_NIGHT_YES
-            val text = if (night) TEXT_DARK else TEXT_LIGHT
-            val fill = if (night) FILL_DARK else FILL_LIGHT
-            val muted = context.getColor(R.color.widget_muted)
-
             val raw = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY, null)
-            if (raw == null) {
+            val data = raw?.let { JSONObject(it) }
+            val palette = if (data?.optString("theme") == "light") LIGHT else DARK
+            val text = palette.text
+            val fill = palette.fill
+            val muted = palette.muted
+            paint(views, palette)
+
+            if (data == null) {
                 views.setTextViewText(R.id.widget_place, context.getString(R.string.app_name))
                 views.setTextViewText(R.id.widget_level, context.getString(R.string.widget_empty))
                 views.setViewVisibility(R.id.widget_bar, View.GONE)
@@ -97,7 +99,6 @@ class AllergyWidgetProvider : AppWidgetProvider() {
                 views.setViewVisibility(R.id.widget_pager, View.GONE)
                 views.setTextViewText(R.id.widget_updated, "")
             } else {
-                val data = JSONObject(raw)
                 val level = data.optInt("level").coerceIn(0, 4)
                 views.setTextViewText(R.id.widget_place, data.optString("place"))
                 views.setTextViewText(R.id.widget_updated, updatedAt(context, data.optString("updated")))
@@ -122,6 +123,7 @@ class AllergyWidgetProvider : AppWidgetProvider() {
                     } else {
                         views.setViewVisibility(rowId, View.VISIBLE)
                         views.setTextViewText(NAMES[i], item.optString("name"))
+                        views.setTextColor(NAMES[i], palette.ink)
                         views.setTextViewText(LEVELS[i], levelText(context, item, text, muted))
                     }
                 }
@@ -144,6 +146,17 @@ class AllergyWidgetProvider : AppWidgetProvider() {
                 PendingIntent.getBroadcast(context, 0, refresh, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT),
             )
             manager.updateAppWidget(id, views)
+        }
+
+        private fun paint(views: RemoteViews, palette: Palette) {
+            views.setInt(R.id.widget_root, "setBackgroundResource", palette.background)
+            views.setTextColor(R.id.widget_place, palette.muted)
+            views.setTextColor(R.id.widget_updated, palette.muted)
+            views.setInt(R.id.widget_refresh, "setColorFilter", palette.muted)
+            views.setTextColor(R.id.widget_level, palette.ink)
+            views.setTextColor(R.id.widget_prev, palette.ink)
+            views.setTextColor(R.id.widget_next, palette.ink)
+            views.setTextColor(R.id.widget_page, palette.muted)
         }
 
         // --- Aggiornamento e pagine ---
@@ -240,3 +253,5 @@ class AllergyWidgetProvider : AppWidgetProvider() {
         }
     }
 }
+
+private class Palette(val background: Int, val ink: Int, val muted: Int, val text: IntArray, val fill: IntArray)

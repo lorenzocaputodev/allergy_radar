@@ -10,10 +10,10 @@
     <string name="widget_empty">Apri l\'app</string>
     <string name="widget_description">Livello dei pollini di oggi per i tuoi allergeni</string>
 
-    <color name="widget_surface">#FFFFFFFF</color>
-    <color name="widget_ink">#FF17201C</color>
-    <color name="widget_muted">#FF5C6661</color>
-    <color name="widget_track">#FFE4E1D7</color>
+    <color name="widget_surface">#FF1B221F</color>
+    <color name="widget_ink">#FFECEFEA</color>
+    <color name="widget_muted">#FF9AA49E</color>
+    <color name="widget_track">#FF2C3632</color>
 
     <style name="WidgetRowName">
         <item name="android:layout_width">0dp</item>

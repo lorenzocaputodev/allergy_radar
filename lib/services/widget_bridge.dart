@@ -22,6 +22,7 @@ class WidgetBridge {
     final snap = app.snapshot;
     if (snap == null) return null;
     return jsonEncode({
+      'theme': app.widgetDark ? 'dark' : 'light',
       'place': app.place.name,
       'updated': snap.fetchedAt.toIso8601String(),
       'level': app.dayLevel.index,

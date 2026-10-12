@@ -36,6 +36,21 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   const bologna = Place(name: 'Bologna', lat: 44.49, lon: 11.34);
 
+  test('il tema del widget è scuro di base, e si salva', () async {
+    SharedPreferences.setMockInitialValues({'onboarded': true});
+    final prefs = await SharedPreferences.getInstance();
+    final state = AppState(_SlowRepository(DateTime(2026, 9, 25, 10)), prefs);
+    await state.load();
+    expect(state.widgetDark, isTrue);
+
+    await state.setWidgetDark(false);
+    expect(prefs.getString(AppState.kWidgetTheme), 'light');
+    final again = AppState(_SlowRepository(DateTime(2026, 9, 25, 10)), prefs);
+    await again.load();
+    expect(again.widgetDark, isFalse);
+    expect(AppState.backupKeys, contains(AppState.kWidgetTheme));
+  });
+
   test('cambiare luogo durante un aggiornamento scarica il luogo nuovo', () async {
     SharedPreferences.setMockInitialValues({'onboarded': true});
     final repo = _SlowRepository(DateTime(2026, 9, 25, 10));
