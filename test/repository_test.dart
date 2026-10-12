@@ -129,7 +129,7 @@ void main() {
     expect(raw.measures.single.km, 1.5);
   });
 
-  test('diario: solo previsioni del giorno e misure di oggi o di ieri, mai stime', () async {
+  test('diario: solo previsioni e misure di quel giorno, mai stime', () async {
     final lecce = repository(DateTime(2026, 9, 30, 10));
     final snap = lecce.build(await lecce.fetch(Place.lecce));
     final levels = snap.levelsOn(DateTime(2026, 9, 30));
@@ -138,8 +138,8 @@ void main() {
 
     final bo = repository(DateTime(2026, 9, 21, 10));
     final measured = bo.build(await bo.fetch(bologna));
-    expect(measured.levelsOn(DateTime(2026, 9, 21))[Allergens.parietaria.id], Level.high.index);
-    expect(measured.levelsOn(DateTime(2026, 9, 25)).keys, isNot(contains(Allergens.parietaria.id)));
+    expect(measured.levelsOn(DateTime(2026, 9, 20))[Allergens.parietaria.id], Level.high.index);
+    expect(measured.levelsOn(DateTime(2026, 9, 21)).keys, isNot(contains(Allergens.parietaria.id)));
   });
 
   test('la cache si ricostruisce identica', () async {

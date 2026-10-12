@@ -84,7 +84,8 @@ Prerequisiti, con le versioni su cui la build è verificata:
 La catena di build usa Gradle 8.14.5, AGP 8.13.2 e Kotlin 2.2.21, volutamente
 entro la linea 8.x di AGP.
 
-Senza `android/key.properties`, `flutter build apk --release` usa la chiave di debug.
+Senza `android/key.properties`, `flutter build apk --release` si ferma con un errore: la release non si firma
+con la chiave di debug. Per provare l’app basta `flutter build apk --debug`.
 
 `android/gradle.properties` dimensiona il daemon Gradle a 2 GB di heap: su
 macchine con poca RAM valori più alti fanno terminare il daemon a metà build.

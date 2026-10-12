@@ -100,6 +100,8 @@ class _AlertsScreenState extends State<AlertsScreen> {
           ? 'Prossimo: ${next(tomorrow)}'
           : noData
           ? 'In attesa dei dati del luogo.'
+          : app.followedStatuses.isEmpty
+          ? 'Niente in programma: scegli i tuoi allergeni.'
           : app.followedStatuses.any((s) => s.kind == DataKind.forecast)
           ? 'Niente in programma: per ${day(nextAt(app.alerts.tomorrowAt).plusDays(1))} '
                 'la previsione resta sotto la soglia.'
@@ -270,15 +272,22 @@ class _PunctualitySectionState extends State<PunctualitySection> {
       final status = snap.data;
       if (status == null) return const SizedBox.shrink();
       final (enabled, exact) = status;
-      return PunctualityCard(enabled: enabled || widget.setup, exact: exact, onExact: _requestExact);
+      return PunctualityCard(enabled: enabled, setup: widget.setup, exact: exact, onExact: _requestExact);
     },
   );
 }
 
 class PunctualityCard extends StatelessWidget {
-  const PunctualityCard({super.key, required this.enabled, required this.exact, required this.onExact});
+  const PunctualityCard({
+    super.key,
+    required this.enabled,
+    required this.exact,
+    required this.onExact,
+    this.setup = false,
+  });
 
   final bool enabled;
+  final bool setup;
   final bool exact;
   final VoidCallback onExact;
 
@@ -286,7 +295,13 @@ class PunctualityCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = context.palette;
     final rows = <Widget>[
-      if (!enabled)
+      if (!enabled && setup)
+        ListTile(
+          leading: Icon(Icons.notifications_outlined, color: p.ink2),
+          title: const Text('Permesso per le notifiche', style: TextStyle(fontWeight: FontWeight.w700)),
+          subtitle: const Text('Alla conferma Android te lo chiede: senza, gli avvisi non arrivano.'),
+        ),
+      if (!enabled && !setup)
         ListTile(
           leading: Icon(Icons.notifications_off_outlined, color: p.text(Level.high)),
           title: const Text('Notifiche disattivate', style: TextStyle(fontWeight: FontWeight.w700)),

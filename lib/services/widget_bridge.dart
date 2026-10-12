@@ -16,11 +16,7 @@ class WidgetBridge {
 
   static Future<void> write(SharedPreferences prefs, String data) => prefs.setString(_key, data);
 
-  static String _source(DataKind? kind) => switch (kind) {
-    DataKind.estimate => 'stima',
-    DataKind.measured => 'misura',
-    _ => '',
-  };
+  static String _source(DataKind? kind) => kind == null || kind == DataKind.forecast ? '' : kind.label.toLowerCase();
 
   static String? encode(AppState app) {
     final snap = app.snapshot;
@@ -37,11 +33,9 @@ class WidgetBridge {
             'name': s.allergen.name,
             'level': s.level.index,
             'levelLabel': s.level.label,
-            'note': switch (s.kind) {
-              DataKind.estimate => 'stima',
-              DataKind.measured => s.date == null ? 'misura' : 'misura ${Fmt.shortDate(s.date!)}',
-              DataKind.forecast => '',
-            },
+            'note': s.kind == DataKind.measured && s.date != null
+                ? '${_source(s.kind)} ${Fmt.shortDate(s.date!)}'
+                : _source(s.kind),
           },
       ],
     });

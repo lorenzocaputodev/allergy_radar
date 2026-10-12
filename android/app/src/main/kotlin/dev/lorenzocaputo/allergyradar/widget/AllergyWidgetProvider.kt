@@ -100,7 +100,7 @@ class AllergyWidgetProvider : AppWidgetProvider() {
                 val data = JSONObject(raw)
                 val level = data.optInt("level").coerceIn(0, 4)
                 views.setTextViewText(R.id.widget_place, data.optString("place"))
-                views.setTextViewText(R.id.widget_updated, updatedAt(data.optString("updated")))
+                views.setTextViewText(R.id.widget_updated, updatedAt(context, data.optString("updated")))
                 views.setTextViewText(R.id.widget_level, headline(context, data, muted))
                 views.setTextColor(R.id.widget_level, text[level])
                 views.setViewVisibility(R.id.widget_bar, View.VISIBLE)
@@ -223,7 +223,7 @@ class AllergyWidgetProvider : AppWidgetProvider() {
             return out
         }
 
-        private fun updatedAt(iso: String): String = try {
+        private fun updatedAt(context: Context, iso: String): String = try {
             val at = try {
                 OffsetDateTime.parse(iso).toLocalDateTime()
             } catch (_: Exception) {
@@ -232,7 +232,7 @@ class AllergyWidgetProvider : AppWidgetProvider() {
             val time = at.format(DateTimeFormatter.ofPattern("HH:mm"))
             when (ChronoUnit.DAYS.between(at.toLocalDate(), LocalDate.now())) {
                 0L -> time
-                1L -> "ieri $time"
+                1L -> context.getString(R.string.widget_yesterday, time)
                 else -> at.format(DateTimeFormatter.ofPattern("d MMM HH:mm", Locale.ITALIAN))
             }
         } catch (_: Exception) {

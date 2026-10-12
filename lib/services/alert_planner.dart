@@ -79,11 +79,11 @@ class AlertPlanner {
     return out;
   }
 
-  static String _named(AllergenStatus s) => switch (s.kind) {
-    DataKind.forecast => s.allergen.name,
-    DataKind.measured => '${s.allergen.name} (misura${s.date == null ? '' : ' del ${Fmt.shortDate(s.date!)}'})',
-    DataKind.estimate => '${s.allergen.name} (stima)',
-  };
+  static String _named(AllergenStatus s) {
+    if (s.kind == DataKind.forecast) return s.allergen.name;
+    final when = s.kind == DataKind.measured && s.date != null ? ' del ${Fmt.shortDate(s.date!)}' : '';
+    return '${s.allergen.name} (${s.kind.label.toLowerCase()}$when)';
+  }
 
   static DayValue? _dayValue(AllergenStatus s, DateTime day) => s.series.where((d) => d.date == day).firstOrNull;
 

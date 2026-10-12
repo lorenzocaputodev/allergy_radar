@@ -80,18 +80,31 @@ class AppState extends ChangeNotifier {
 
   // --- Caricamento e dati ---
   Future<void> load() async {
-    onboarded = _prefs.getBool(kOnboarded) ?? false;
-    final p = _prefs.getString(kPlace);
-    place = p == null ? Place.lecce : Place.fromJson(jsonDecode(p) as Map<String, dynamic>);
-    final f = _prefs.getStringList(kFollowed);
+    T read<T>(T Function() f, T fallback) {
+      try {
+        return f();
+      } on Object {
+        return fallback;
+      }
+    }
+
+    onboarded = read(() => _prefs.getBool(kOnboarded) ?? false, false);
+    final p = read(() => _prefs.getString(kPlace), null);
+    place = p == null ? Place.lecce : read(() => Place.fromJson(jsonDecode(p) as Map<String, dynamic>), Place.lecce);
+    final f = read(() => _prefs.getStringList(kFollowed), null);
     followed = f == null ? {..._defaultFollowed} : f.where((id) => Allergens.byId(id) != null).toSet();
-    final t = _prefs.getString(kThresholds);
+    final t = read(() => _prefs.getString(kThresholds), null);
     personal = t == null
         ? {}
-        : (jsonDecode(t) as Map<String, dynamic>).map((k, v) => MapEntry(k, Level.fromIndex(v as int)));
-    themeMode = ThemeMode.values.asNameMap()[_prefs.getString(kTheme)] ?? ThemeMode.system;
-    final a = _prefs.getString(kAlerts);
-    alerts = a == null ? const AlertSettings() : AlertSettings.fromJson(jsonDecode(a) as Map<String, dynamic>);
+        : read(
+            () => (jsonDecode(t) as Map<String, dynamic>).map((k, v) => MapEntry(k, Level.fromIndex(v as int))),
+            <String, Level>{},
+          );
+    themeMode = ThemeMode.values.asNameMap()[read(() => _prefs.getString(kTheme), null)] ?? ThemeMode.system;
+    final a = read(() => _prefs.getString(kAlerts), null);
+    alerts = a == null
+        ? const AlertSettings()
+        : read(() => AlertSettings.fromJson(jsonDecode(a) as Map<String, dynamic>), const AlertSettings());
     snapshot = await _fromCache();
     notifyListeners();
   }

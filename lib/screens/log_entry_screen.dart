@@ -40,16 +40,22 @@ class _LogEntryScreenState extends State<LogEntryScreen> {
 
   bool get _isToday => DiaryEntry.day(widget.date) == DiaryEntry.day(DateTime.now());
 
+  bool get _samePlace {
+    final app = context.read<AppState>();
+    return app.snapshot != null && (_isToday || _entry.place == null || _entry.place == app.place.cacheKey);
+  }
+
   Map<String, int> _pollenNow() {
     final snap = context.read<AppState>().snapshot;
-    if (!_isToday || snap == null) return _entry.pollen;
-    return snap.levelsOn(DiaryEntry.day(widget.date));
+    if (snap == null || !_samePlace) return _entry.pollen;
+    final levels = snap.levelsOn(_entry.date);
+    return _isToday ? levels : {..._entry.pollen, ...levels};
   }
 
   Future<void> _save({bool noSymptoms = false}) async {
     final base = noSymptoms ? DiaryEntry(date: _entry.date, meds: _entry.meds) : _entry;
     final app = context.read<AppState>();
-    final place = _isToday && app.snapshot != null ? app.place.cacheKey : _entry.place;
+    final place = _samePlace ? app.place.cacheKey : _entry.place;
     final e = base.copyWith(note: _note.text.trim(), pollen: _pollenNow(), place: place);
     await context.read<DiaryState>().save(e);
     if (mounted) Navigator.of(context).pop();

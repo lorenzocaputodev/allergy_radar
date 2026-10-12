@@ -45,11 +45,15 @@ android {
 
     buildTypes {
         release {
-            signingConfig = if (keystorePropertiesFile.exists()) {
-                signingConfigs.getByName("release")
-            } else {
-                signingConfigs.getByName("debug")
-            }
+            if (keystorePropertiesFile.exists()) signingConfig = signingConfigs.getByName("release")
+        }
+    }
+}
+
+tasks.matching { it.name == "assembleRelease" || it.name == "bundleRelease" }.configureEach {
+    doFirst {
+        if (!keystorePropertiesFile.exists()) {
+            throw GradleException("Manca android/key.properties: la release non si firma con la chiave di debug.")
         }
     }
 }

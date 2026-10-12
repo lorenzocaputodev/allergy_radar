@@ -99,4 +99,21 @@ void main() {
     expect(state.personal, isEmpty);
     expect(state.followed, {'grass', 'parietaria'});
   });
+
+  test('impostazioni rovinate: valori predefiniti, niente eccezioni', () async {
+    SharedPreferences.setMockInitialValues({
+      'onboarded': true,
+      'place': '{rotto',
+      'thresholds': '[1]',
+      'alerts': 'x',
+      'followed': ['grass'],
+    });
+    final state = AppState(_SlowRepository(DateTime(2026, 9, 25, 10)), await SharedPreferences.getInstance());
+    await state.load();
+    expect(state.onboarded, isTrue);
+    expect(state.place.name, 'Lecce');
+    expect(state.personal, isEmpty);
+    expect(state.alerts.anyEnabled, isTrue);
+    expect(state.followed, {'grass'});
+  });
 }

@@ -98,4 +98,18 @@ void main() {
     expect(String.fromCharCodes(bytes.take(5)), '%PDF-');
     expect(bytes.length, greaterThan(2000));
   });
+
+  test('un formato non numerico è un backup non valido', () async {
+    final prefs = await SharedPreferences.getInstance();
+    final json = jsonEncode({'app': 'allergy_radar', 'format': 'uno', 'data': <String, Object>{}});
+    expect(
+      () => Backup.restore(prefs, json),
+      throwsA(isA<FormatException>().having((e) => e.message, 'message', 'Il file non è un backup valido.')),
+    );
+  });
+
+  test('CSV: un ritorno a capo nella nota resta nella cella', () {
+    final csv = Backup.diaryCsv([DiaryEntry(date: DateTime(2026, 9, 29), note: 'prima\rdopo')]);
+    expect(csv, contains('"prima\rdopo"'));
+  });
 }

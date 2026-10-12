@@ -46,7 +46,9 @@ class InfoScreen extends StatelessWidget {
               _Item(
                 icon: Icons.my_location,
                 title: 'Posizione',
-                text: 'Il nome del comune lo trova Android; a Open-Meteo va solo la posizione arrotondata a 1 km.',
+                text:
+                    'Il nome del comune lo trova il servizio di localizzazione di Android, che può inviare le coordinate a '
+                    'Google. A Open-Meteo va solo la posizione arrotondata a 1 km.',
               ),
             ],
           ),

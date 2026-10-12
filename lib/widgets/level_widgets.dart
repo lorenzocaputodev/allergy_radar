@@ -97,12 +97,6 @@ class SourceChip extends StatelessWidget {
   final DataKind kind;
   final String? detail;
 
-  static String label(DataKind k) => switch (k) {
-    DataKind.forecast => 'Previsione',
-    DataKind.measured => 'Misura',
-    DataKind.estimate => 'Stima',
-  };
-
   static IconData _icon(DataKind k) => switch (k) {
     DataKind.forecast => Icons.layers_outlined,
     DataKind.measured => Icons.sensors,
@@ -125,7 +119,7 @@ class SourceChip extends StatelessWidget {
               TextSpan(
                 children: [
                   TextSpan(
-                    text: label(kind),
+                    text: kind.label,
                     style: const TextStyle(fontWeight: FontWeight.w700),
                   ),
                   if (detail != null) TextSpan(text: ' · $detail'),

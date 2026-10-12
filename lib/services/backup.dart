@@ -36,7 +36,9 @@ class Backup {
     if (root['app'] != _app || root['data'] is! Map) {
       throw const FormatException('Il file non è un backup di Allergy Radar.');
     }
-    if ((root['format'] as int? ?? 0) > _format) {
+    final format = root['format'];
+    if (format is! int?) throw const FormatException('Il file non è un backup valido.');
+    if ((format ?? 0) > _format) {
       throw const FormatException('Il backup viene da una versione più recente dell’app: aggiornala.');
     }
     final data = (root['data'] as Map).cast<String, Object?>();
@@ -107,7 +109,7 @@ class Backup {
     final allergens = [...followed, ...Allergens.all.where((a) => !followed.contains(a))];
     String cell(Object? v) {
       final s = '${v ?? ''}';
-      return s.contains(RegExp('[;"\n]')) ? '"${s.replaceAll('"', '""')}"' : s;
+      return s.contains(RegExp('[;"\r\n]')) ? '"${s.replaceAll('"', '""')}"' : s;
     }
 
     const outdoor = ['meno di 1 ora', '1–3 ore', 'più di 3 ore'];

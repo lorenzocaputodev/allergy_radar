@@ -206,7 +206,7 @@ class _Answer extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'Punteggio medio $period: sintomi da 0 a 3 più farmaci da 0 a 3',
+            'Punteggio medio $period: sintomi da 0 a 3 più farmaci da 0 a 2',
             style: TextStyle(fontSize: 13, color: p.onHero.withValues(alpha: 0.85)),
           ),
           const SizedBox(height: 16),

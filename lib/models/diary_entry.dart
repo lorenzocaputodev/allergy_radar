@@ -46,7 +46,30 @@ class DiaryEntry {
 
   double get score => severity.toDouble();
 
-  static int medicationScore(String name) => name.toLowerCase().contains('cortison') ? 2 : 1;
+  static const _steroids = [
+    'cortison',
+    'mometason',
+    'fluticason',
+    'budesonid',
+    'beclometason',
+    'triamcinolon',
+    'ciclesonid',
+    'flunisolid',
+    'prednison',
+    'prednisolon',
+    'betametason',
+    'desametason',
+    'deflazacort',
+    'avamys',
+    'nasonex',
+    'rinocort',
+    'flixonase',
+  ];
+
+  static int medicationScore(String name) {
+    final n = name.trim().toLowerCase();
+    return n == 'spray nasale' || _steroids.any(n.contains) ? 2 : 1;
+  }
 
   int get medScore => meds.fold(0, (m, name) => m > medicationScore(name) ? m : medicationScore(name));
 

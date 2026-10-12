@@ -200,7 +200,8 @@ class PlacePrivacyNote extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Usiamo solo la zona, arrotondata a circa 1 km: la tua posizione esatta non lascia il telefono.',
+              'Per i pollini usiamo solo la zona, arrotondata a circa 1 km. Con «Usa la mia posizione» il nome del comune lo '
+              'trova il servizio di localizzazione di Android, che può inviare le coordinate a Google.',
               style: TextStyle(fontSize: 13, height: 1.45, color: p.ink2),
             ),
           ),

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:allergy_radar/models/allergen.dart';
 import 'package:allergy_radar/models/diary_entry.dart';
 import 'package:allergy_radar/models/level.dart';
@@ -118,6 +120,11 @@ void main() {
       expect(DiaryEntry.medicationScore('Spray nasale al cortisone'), 2);
       expect(DiaryEntry.medicationScore('Cetirizina'), 1);
       expect(DiaryEntry.medicationScore('Collirio antistaminico'), 1);
+      expect(DiaryEntry.medicationScore('Mometasone'), 2);
+      expect(DiaryEntry.medicationScore('Fluticasone spray'), 2);
+      expect(DiaryEntry.medicationScore('Avamys'), 2);
+      expect(DiaryEntry.medicationScore('Spray nasale'), 2);
+      expect(DiaryEntry.medicationScore('Spray nasale salino'), 1);
       expect(
         DiaryEntry(date: today, nose: 2, meds: const ['Cetirizina', 'Spray nasale al cortisone']).combinedScore,
         4,
@@ -149,6 +156,46 @@ void main() {
       expect(d.entryFor(day)!.pollen[Allergens.parietaria.id], Level.high.index);
       expect(d.entryFor(day.subtract(const Duration(days: 1)))!.pollen, isEmpty);
       expect(DiaryState(await SharedPreferences.getInstance()).entryFor(day)!.pollen, isNotEmpty);
+    });
+
+    test('diario rovinato: le voci leggibili restano, le altre si saltano', () async {
+      SharedPreferences.setMockInitialValues({
+        DiaryState.kEntries: '[{"date":"2026-09-29","nose":2},{"date":"boh"},3]',
+      });
+      final d = DiaryState(await SharedPreferences.getInstance());
+      expect(d.entries.single.nose, 2);
+      SharedPreferences.setMockInitialValues({DiaryState.kEntries: '{rotto'});
+      expect(DiaryState(await SharedPreferences.getInstance()).entries, isEmpty);
+    });
+
+    test('dopo un import le misure già arrivate completano le voci', () async {
+      final prefs = await SharedPreferences.getInstance();
+      final d = DiaryState(prefs);
+      const bologna = Place(name: 'Bologna', lat: 44.49, lon: 11.34);
+      final day = today.subtract(const Duration(days: 5));
+      await d.fillMeasured(
+        PollenSnapshot(
+          place: bologna,
+          fetchedAt: today,
+          air: const AirStatus(),
+          area: Area.north,
+          statuses: {
+            Allergens.parietaria.id: AllergenStatus(
+              allergen: Allergens.parietaria,
+              kind: DataKind.measured,
+              level: Level.high,
+              series: [DayValue(day, 73, Level.high)],
+            ),
+          },
+        ),
+      );
+      await prefs.setString(
+        DiaryState.kEntries,
+        jsonEncode([DiaryEntry(date: day, nose: 1, place: bologna.cacheKey).toJson()]),
+      );
+      d.reload();
+      await pumpEventQueue();
+      expect(d.entryFor(day)!.pollen[Allergens.parietaria.id], Level.high.index);
     });
 
     test('confronto: le voci fuori periodo non contano', () async {

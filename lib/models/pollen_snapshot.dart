@@ -1,4 +1,3 @@
-import '../utils/days.dart';
 import 'allergen.dart';
 import 'level.dart';
 import 'place.dart';
@@ -39,8 +38,7 @@ class AllergenStatus {
   final NearStation? station;
 
   Level? levelOn(DateTime day) => switch (kind) {
-    DataKind.forecast => series.where((d) => d.date == day).firstOrNull?.level,
-    DataKind.measured => date != null && day.daysSince(date!) <= 1 ? level : null,
+    DataKind.forecast || DataKind.measured => series.where((d) => d.date == day).firstOrNull?.level,
     DataKind.estimate => null,
   };
 }

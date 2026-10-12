@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
@@ -29,7 +30,7 @@ class DiaryInsight {
   final double highMean;
   final double lowMean;
 
-  static const maxScore = 6;
+  static const maxScore = 5;
 
   bool get clear => (highMean - lowMean).abs() >= 1;
 }
@@ -66,19 +67,31 @@ class DiaryState extends ChangeNotifier {
   void _read() {
     _entries.clear();
     final raw = _prefs.getString(kEntries);
-    if (raw != null) {
-      for (final e in (jsonDecode(raw) as List).cast<Map<String, dynamic>>()) {
-        final entry = DiaryEntry.fromJson(e);
+    final list = raw == null ? null : _tryDecode(raw);
+    for (final e in list is List ? list : const []) {
+      try {
+        final entry = DiaryEntry.fromJson(e as Map<String, dynamic>);
         _entries[entry.key] = entry;
+      } on Object {
+        continue;
       }
     }
     final saved = _prefs.getStringList(kMeds);
     medications = saved == null || listEquals(saved, _oldDefaults) ? defaultMedications : saved;
   }
 
+  static Object? _tryDecode(String raw) {
+    try {
+      return jsonDecode(raw);
+    } on Object {
+      return null;
+    }
+  }
+
   void reload() {
     _read();
     notifyListeners();
+    if (_measured case final snap?) unawaited(fillMeasured(snap));
   }
 
   // --- Voci ---
@@ -123,7 +136,10 @@ class DiaryState extends ChangeNotifier {
   Future<void> _persist() => _prefs.setString(kEntries, jsonEncode(_entries.values.map((e) => e.toJson()).toList()));
 
   // --- Misure arrivate dopo ---
+  PollenSnapshot? _measured;
+
   Future<void> fillMeasured(PollenSnapshot snap) async {
+    _measured = snap;
     var changed = false;
     for (final st in snap.statuses.values.where((s) => s.kind == DataKind.measured)) {
       for (final d in st.series) {

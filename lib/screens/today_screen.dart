@@ -241,7 +241,7 @@ class _Hero extends StatelessWidget {
                 if (state.dayLevelSource case final kind? when kind != DataKind.forecast) ...[
                   const SizedBox(width: 10),
                   Text(
-                    SourceChip.label(kind).toLowerCase(),
+                    kind.label.toLowerCase(),
                     style: TextStyle(fontSize: 16, color: p.onHero.withValues(alpha: 0.85)),
                   ),
                 ],
@@ -291,9 +291,8 @@ class _Forecast extends StatelessWidget {
         : [for (var i = 0; i < 4; i++) today.plusDays(i)];
 
     String source(AllergenStatus s) => switch (s.kind) {
-      DataKind.forecast => 'previsione',
-      DataKind.measured => 'misura del ${Fmt.shortDate(s.date!)}',
-      DataKind.estimate => 'stima',
+      DataKind.measured => '${s.kind.label.toLowerCase()} del ${Fmt.shortDate(s.date!)}',
+      _ => s.kind.label.toLowerCase(),
     };
 
     _DayCell cell(AllergenStatus s, DateTime d) {
@@ -583,7 +582,7 @@ class _OthersState extends State<_Others> {
 String _othersNote(AllergenStatus s, Area area, DateTime today) {
   if (s.level == Level.none && s.allergen.calendarFor(area)[today.month - 1] == 0) return 'Fuori stagione';
   if (s.value != null) return Fmt.grains(s.value!);
-  return s.kind == DataKind.estimate ? 'Stima (valore tipico)' : SourceChip.label(s.kind);
+  return s.kind == DataKind.estimate ? '${s.kind.label} (valore tipico)' : s.kind.label;
 }
 
 // --- Diario ---

@@ -4,6 +4,7 @@
     <string name="widget_estimate">stima</string>
     <string name="widget_refresh">Aggiorna</string>
     <string name="widget_updating">Aggiorno…</string>
+    <string name="widget_yesterday">ieri %1$s</string>
     <string name="widget_prev">Allergeni precedenti</string>
     <string name="widget_next">Altri allergeni</string>
     <string name="widget_empty">Apri l\'app</string>

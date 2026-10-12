@@ -5,7 +5,15 @@ import 'level.dart';
 
 export 'area.dart';
 
-enum DataKind { forecast, measured, estimate }
+enum DataKind {
+  forecast('Previsione'),
+  measured('Misura'),
+  estimate('Stima');
+
+  const DataKind(this.label);
+
+  final String label;
+}
 
 class Allergen {
   const Allergen({

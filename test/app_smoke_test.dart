@@ -1,6 +1,8 @@
 import 'package:allergy_radar/main.dart';
+import 'package:allergy_radar/models/diary_entry.dart';
 import 'package:allergy_radar/models/level.dart';
 import 'package:allergy_radar/screens/allergen_detail_screen.dart';
+import 'package:allergy_radar/screens/home_shell.dart';
 import 'package:allergy_radar/screens/log_entry_screen.dart';
 import 'package:allergy_radar/services/open_meteo_client.dart';
 import 'package:allergy_radar/state/app_state.dart';
@@ -101,9 +103,16 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Oggi: sintomi forti'), findsOneWidget);
+    final app = tester.element(find.byType(HomeShell)).read<AppState>();
+    final diary = tester.element(find.byType(HomeShell)).read<DiaryState>();
+    final today = DiaryEntry.day(DateTime.now());
+    final saved = diary.entryFor(today)!;
+    expect(saved.place, app.place.cacheKey);
+    expect(saved.pollen, app.snapshot!.levelsOn(today));
+    final logged = diary.withLevel(app.followedAllergens.first, DateTime.now(), 30).length;
     await tester.tap(find.byTooltip('Andamento e confronti'));
     await tester.pumpAndSettle();
-    expect(find.textContaining(RegExp(r'^Ancora 1[34] giorni$')), findsOneWidget);
+    expect(find.text('Ancora ${DiaryState.minDaysForInsight - logged} giorni'), findsOneWidget);
   });
 
   testWidgets('campanella e schermate del Profilo', (tester) async {

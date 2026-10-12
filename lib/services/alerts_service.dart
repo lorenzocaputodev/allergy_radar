@@ -155,14 +155,24 @@ class AlertsService {
     );
     try {
       final on = await enabled();
+      final keep = {
+        if (on && app.snapshot == null)
+          for (final k in [AlertKind.briefing, AlertKind.tomorrow])
+            if (app.alerts.isOn(k)) k,
+      };
       final unfired = await _unfired();
+      final stored = await AlertLog.pending(prefs);
+      final kept = [
+        for (final m in stored)
+          if (keep.contains(m.kind) && unfired.contains(m.kind) && m.at.isAfter(now)) m,
+      ];
       final split = AlertLog.split(
-        await AlertLog.pending(prefs),
+        stored,
         unfired: unfired,
         now: now,
         wanted: (k) => on && app.alerts.isOn(k) && !(k == AlertKind.diary && diaryDone),
       );
-      final waiting = {for (final m in split.late) m.kind};
+      final waiting = {...keep, for (final m in split.late) m.kind};
       final messages = on ? planned.where((m) => !waiting.contains(m.kind)).toList() : <AlertMessage>[];
       final mode = await exact() ? AndroidScheduleMode.exactAllowWhileIdle : AndroidScheduleMode.inexactAllowWhileIdle;
       for (final k in AlertKind.values) {
@@ -181,7 +191,7 @@ class AlertsService {
           payload: _payload(m),
         );
       }
-      await AlertLog.update(prefs, pending: [...split.late, ...messages], arrived: split.arrived);
+      await AlertLog.update(prefs, pending: [...kept, ...split.late, ...messages], arrived: split.arrived);
     } on Object catch (e) {
       debugPrint('Avvisi non programmati: $e');
     }
