@@ -43,6 +43,7 @@ class AllergyWidgetProvider : AppWidgetProvider() {
     companion object {
         const val PREFS = "FlutterSharedPreferences"
         const val KEY = "flutter.widget_data"
+        const val THEME_KEY = "flutter.widget_theme"
         private const val PAGES = "allergy_widget_pages"
         const val ACTION_PAGE = "dev.lorenzocaputo.allergyradar.widget.PAGE"
         const val EXTRA_STEP = "step"
@@ -83,9 +84,9 @@ class AllergyWidgetProvider : AppWidgetProvider() {
 
         private fun update(context: Context, manager: AppWidgetManager, id: Int) {
             val views = RemoteViews(context.packageName, R.layout.allergy_widget)
-            val raw = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY, null)
-            val data = raw?.let { JSONObject(it) }
-            val palette = if (data?.optString("theme") == "light") LIGHT else DARK
+            val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            val data = prefs.getString(KEY, null)?.let { JSONObject(it) }
+            val palette = if (prefs.getString(THEME_KEY, null) == "light") LIGHT else DARK
             val text = palette.text
             val fill = palette.fill
             val muted = palette.muted

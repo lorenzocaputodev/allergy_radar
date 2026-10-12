@@ -11,6 +11,8 @@ class AllergyRadarApplication : Application(), SharedPreferences.OnSharedPrefere
     }
 
     override fun onSharedPreferenceChanged(prefs: SharedPreferences?, key: String?) {
-        if (key == AllergyWidgetProvider.KEY) AllergyWidgetProvider.updateAll(this)
+        if (key == AllergyWidgetProvider.KEY || key == AllergyWidgetProvider.THEME_KEY) {
+            AllergyWidgetProvider.updateAll(this)
+        }
     }
 }
