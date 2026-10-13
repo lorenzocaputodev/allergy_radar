@@ -60,8 +60,16 @@ Future<void> main() async {
   state.addListener(reschedule);
   diary.addListener(reschedule);
 
+  Future<void> reloadDiary() async {
+    await prefs.reload();
+    diary.reload();
+  }
+
+  AlertsService.diaryChanged.addListener(() => unawaited(reloadDiary()));
+
   AppLifecycleListener(
     onResume: () {
+      unawaited(reloadDiary());
       reschedule();
       if (state.onboarded && state.isStale) unawaited(state.refresh());
     },

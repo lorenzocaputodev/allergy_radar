@@ -158,6 +158,33 @@ void main() {
       expect(DiaryState(await SharedPreferences.getInstance()).entryFor(day)!.pollen, isNotEmpty);
     });
 
+    test('nessun sintomo dalla notifica: livelli e luogo del giorno, mai sopra una voce esistente', () async {
+      final d = DiaryState(await SharedPreferences.getInstance());
+      final snap = PollenSnapshot(
+        place: Place.lecce,
+        fetchedAt: today,
+        air: const AirStatus(),
+        area: Area.south,
+        statuses: {
+          Allergens.parietaria.id: AllergenStatus(
+            allergen: Allergens.parietaria,
+            kind: DataKind.measured,
+            level: Level.high,
+            series: [DayValue(today, 73, Level.high)],
+          ),
+        },
+      );
+      expect(await d.saveNoSymptoms(today.add(const Duration(hours: 20)), snapshot: snap), isTrue);
+      final saved = DiaryState(await SharedPreferences.getInstance()).entryFor(today)!;
+      expect(saved.severity, 0);
+      expect(saved.place, Place.lecce.cacheKey);
+      expect(saved.pollen, {Allergens.parietaria.id: Level.high.index});
+
+      await d.save(DiaryEntry(date: today, nose: 2));
+      expect(await d.saveNoSymptoms(today, snapshot: snap), isFalse);
+      expect(d.entryFor(today)!.nose, 2);
+    });
+
     test('diario rovinato: le voci leggibili restano, le altre si saltano', () async {
       SharedPreferences.setMockInitialValues({
         DiaryState.kEntries: '[{"date":"2026-09-29","nose":2},{"date":"boh"},3]',

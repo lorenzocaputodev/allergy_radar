@@ -112,6 +112,13 @@ class DiaryState extends ChangeNotifier {
     await _persist();
   }
 
+  Future<bool> saveNoSymptoms(DateTime day, {PollenSnapshot? snapshot}) async {
+    if (entryFor(day) != null) return false;
+    final d = DiaryEntry.day(day);
+    await save(DiaryEntry(date: d, pollen: snapshot?.levelsOn(d) ?? const {}, place: snapshot?.place.cacheKey));
+    return true;
+  }
+
   Future<void> delete(DateTime d) async {
     _entries.remove(DiaryEntry.keyOf(d));
     notifyListeners();

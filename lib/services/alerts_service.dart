@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:io';
+import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -34,6 +36,14 @@ void alertsCallbackDispatcher() {
   });
 }
 
+@pragma('vm:entry-point')
+void alertsNotificationAction(NotificationResponse response) {
+  if (response.actionId != AlertsService.noSymptomsAction) return;
+  DartPluginRegistrant.ensureInitialized();
+  WidgetsFlutterBinding.ensureInitialized();
+  unawaited(AlertsService.recordNoSymptoms(response.payload));
+}
+
 class AlertsService {
   static const _task = 'pollen_check';
 
@@ -58,7 +68,11 @@ class AlertsService {
   static final _plugin = FlutterLocalNotificationsPlugin();
   static bool _ready = false;
 
+  static const noSymptomsAction = 'no_symptoms';
+
   static final opened = ValueNotifier<({AlertKind kind, DateTime? at})?>(null);
+
+  static final diaryChanged = ValueNotifier<int>(0);
 
   static bool get isSupported => !kIsWeb && Platform.isAndroid;
 
@@ -72,7 +86,8 @@ class AlertsService {
     try {
       await _plugin.initialize(
         const InitializationSettings(android: AndroidInitializationSettings(_statusIcon)),
-        onDidReceiveNotificationResponse: (r) => _open(r.payload),
+        onDidReceiveNotificationResponse: _respond,
+        onDidReceiveBackgroundNotificationResponse: alertsNotificationAction,
       );
       if (!background) {
         await Workmanager().initialize(alertsCallbackDispatcher);
@@ -226,23 +241,48 @@ class AlertsService {
   }
 
   // --- Controllo in background ---
+  static Future<AppState> _backgroundState(SharedPreferences prefs, http.Client client) async {
+    final repo = PollenRepository(
+      openMeteo: OpenMeteoClient(client),
+      pollnet: PollnetClient(client),
+      stations: StationDirectory.parse(await rootBundle.loadString('assets/data/stations.json')),
+    );
+    final app = AppState(repo, prefs);
+    await app.load();
+    return app;
+  }
+
   static Future<void> runInBackground({bool force = false}) async {
     await init(background: true);
     final prefs = await SharedPreferences.getInstance();
     await prefs.reload();
     final client = http.Client();
     try {
-      final repo = PollenRepository(
-        openMeteo: OpenMeteoClient(client),
-        pollnet: PollnetClient(client),
-        stations: StationDirectory.parse(await rootBundle.loadString('assets/data/stations.json')),
-      );
-      final app = AppState(repo, prefs);
-      await app.load();
+      final app = await _backgroundState(prefs, client);
       if (!app.onboarded) return;
       if (force || app.isStale) await app.refresh();
       await WidgetBridge.save(prefs, app);
       await reschedule(prefs, app, DiaryState(prefs));
+    } finally {
+      client.close();
+    }
+  }
+
+  // --- Nessun sintomo dalla notifica ---
+  static Future<void> recordNoSymptoms(String? payload) async {
+    final at = _parse(payload)?.at ?? DateTime.now();
+    await init(background: true);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.reload();
+    final client = http.Client();
+    try {
+      final app = await _backgroundState(prefs, client);
+      final diary = DiaryState(prefs);
+      if (!app.onboarded) return;
+      await diary.saveNoSymptoms(DiaryEntry.day(at), snapshot: app.snapshot);
+      await reschedule(prefs, app, diary);
+    } on Object catch (e) {
+      debugPrint('Voce del diario non salvata: $e');
     } finally {
       client.close();
     }
@@ -253,11 +293,20 @@ class AlertsService {
 
   static String _payload(AlertMessage m) => '${m.kind.name}|${m.at.toIso8601String()}';
 
-  static void _open(String? payload) {
+  static ({AlertKind kind, DateTime? at})? _parse(String? payload) {
     final [name, ...rest] = (payload ?? '').split('|');
     final kind = AlertKind.values.asNameMap()[name];
-    if (kind == null) return;
-    opened.value = (kind: kind, at: rest.isEmpty ? null : DateTime.tryParse(rest.first));
+    if (kind == null) return null;
+    return (kind: kind, at: rest.isEmpty ? null : DateTime.tryParse(rest.first));
+  }
+
+  static void _open(String? payload) {
+    if (_parse(payload) case final p?) opened.value = p;
+  }
+
+  static void _respond(NotificationResponse r) {
+    if (r.actionId != noSymptomsAction) return _open(r.payload);
+    unawaited(recordNoSymptoms(r.payload).then((_) => diaryChanged.value++));
   }
 
   static NotificationDetails _details(AlertKind kind, String body) {
@@ -272,6 +321,10 @@ class AlertsService {
         icon: _statusIcon,
         color: _accent,
         styleInformation: BigTextStyleInformation(body),
+        actions: [
+          if (kind == AlertKind.diary)
+            const AndroidNotificationAction(noSymptomsAction, 'Nessun sintomo', cancelNotification: true),
+        ],
       ),
     );
   }
