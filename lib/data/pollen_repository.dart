@@ -5,6 +5,7 @@ import '../models/level.dart';
 import '../models/place.dart';
 import '../models/pollen_snapshot.dart';
 import '../models/station.dart';
+import '../models/weather.dart';
 import '../services/open_meteo_client.dart';
 import '../services/pollnet_client.dart';
 import '../utils/days.dart';
@@ -27,18 +28,21 @@ class RawPollenData {
     required this.place,
     required this.fetchedAt,
     required this.openMeteo,
+    this.weather,
     this.measures = const [],
   });
 
   final Place place;
   final DateTime fetchedAt;
   final String openMeteo;
+  final String? weather;
   final List<StationCsv> measures;
 
   Map<String, dynamic> toJson() => {
     'place': place.toJson(),
     'fetchedAt': fetchedAt.toIso8601String(),
     'openMeteo': openMeteo,
+    'weather': ?weather,
     'measures': [for (final m in measures) m.toJson()],
   };
 
@@ -48,6 +52,7 @@ class RawPollenData {
       place: Place.fromJson(j['place'] as Map<String, dynamic>),
       fetchedAt: DateTime.parse(j['fetchedAt'] as String),
       openMeteo: j['openMeteo'] as String,
+      weather: j['weather'] as String?,
       measures: [
         for (final m in (j['measures'] as List? ?? const [])) StationCsv.fromJson(m as Map<String, dynamic>),
         if (legacy != null && j['stationId'] != null)
@@ -75,8 +80,16 @@ class PollenRepository {
 
   Future<RawPollenData> fetch(Place place) async {
     final now = _now();
-    final (om, measures) = await (openMeteo.fetchForecast(place), _measures(place, now)).wait;
-    return RawPollenData(place: place, fetchedAt: now, openMeteo: om, measures: measures);
+    final (om, weather, measures) = await (openMeteo.fetchForecast(place), _weather(place), _measures(place, now)).wait;
+    return RawPollenData(place: place, fetchedAt: now, openMeteo: om, weather: weather, measures: measures);
+  }
+
+  Future<String?> _weather(Place place) async {
+    try {
+      return await openMeteo.fetchWeather(place);
+    } on Exception {
+      return null;
+    }
   }
 
   Future<List<StationCsv>> _measures(Place place, DateTime now) async {
@@ -122,10 +135,21 @@ class PollenRepository {
       fetchedAt: raw.fetchedAt,
       statuses: statuses,
       air: _air(om, today),
+      weather: _hourlyWeather(raw.weather),
       area: area,
       measuringStation: used.firstOrNull,
       nearestStation: stations.near(raw.place).firstOrNull,
     );
+  }
+
+  HourlyWeather? _hourlyWeather(String? body) {
+    if (body == null) return null;
+    try {
+      final w = OpenMeteoData.parse(body);
+      return HourlyWeather(w.times, w.series);
+    } on Object {
+      return null;
+    }
   }
 
   AllergenStatus? _forecast(Allergen a, OpenMeteoData om, DateTime today) {

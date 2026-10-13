@@ -17,6 +17,9 @@ MockClient fakeHttp({bool ispraDown = false, List<Uri>? log}) => MockClient((req
   if (req.url.host == 'air-quality-api.open-meteo.com') {
     return utf8Response(fixture('open_meteo_lecce.json'));
   }
+  if (req.url.host == 'api.open-meteo.com') {
+    return utf8Response(fixture('weather_lecce.json'));
+  }
   if (req.url.host == 'geocoding-api.open-meteo.com') {
     return utf8Response(fixture('geocoding_lecce.json'));
   }

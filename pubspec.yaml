@@ -36,6 +36,7 @@ dependencies:
 
   # Utility
   intl: ^0.20.2
+  clock: ^1.1.3
 
 dev_dependencies:
   flutter_test:

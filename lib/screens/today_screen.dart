@@ -1,17 +1,24 @@
+import 'dart:async';
+
+import 'package:clock/clock.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../models/allergen.dart';
 import '../models/diary_entry.dart';
 import '../models/level.dart';
+import '../models/outdoor_plan.dart';
 import '../models/pollen_snapshot.dart';
+import '../models/weather.dart';
 import '../state/app_state.dart';
 import '../state/diary_state.dart';
 import '../theme/palette.dart';
 import '../utils/days.dart';
 import '../utils/format.dart';
+import '../widgets/air_sheet.dart';
 import '../widgets/allergen_card.dart';
 import '../widgets/level_widgets.dart';
+import '../widgets/outdoor_sheet.dart';
 import 'allergen_detail_screen.dart';
 import 'log_entry_screen.dart';
 import 'notifications_screen.dart';
@@ -26,7 +33,7 @@ class TodayScreen extends StatelessWidget {
     final p = context.palette;
     final snap = s.snapshot;
     final above = s.aboveThreshold;
-    final now = DateTime.now();
+    final now = clock.now();
 
     void openDetail(AllergenStatus st) =>
         Navigator.of(context)
@@ -178,30 +185,62 @@ class _Banner extends StatelessWidget {
 }
 
 // --- Riquadro del giorno ---
-class _Hero extends StatelessWidget {
+class _Hero extends StatefulWidget {
   const _Hero({required this.state});
 
   final AppState state;
 
   @override
+  State<_Hero> createState() => _HeroState();
+}
+
+class _HeroState extends State<_Hero> {
+  Timer? _tick;
+  late final AppLifecycleListener _life;
+
+  static String _names(List<String> names) => names.length > 3 ? '${names.length} allergeni' : Fmt.list(names);
+
+  @override
+  void initState() {
+    super.initState();
+    _life = AppLifecycleListener(onResume: () => setState(() {}));
+    _arm();
+  }
+
+  void _arm() {
+    final now = clock.now();
+    final next = DateTime(now.year, now.month, now.day, now.hour + 1);
+    _tick = Timer(next.difference(now), () {
+      if (!mounted) return;
+      setState(() {});
+      _arm();
+    });
+  }
+
+  @override
+  void dispose() {
+    _tick?.cancel();
+    _life.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final state = widget.state;
     final p = context.palette;
     final level = state.dayLevel;
     final above = state.aboveThreshold;
     final followed = state.followedStatuses;
 
-    String summary;
-    if (followed.isEmpty) {
-      summary = 'Scegli i tuoi allergeni da Profilo.';
-    } else if (above.isEmpty) {
-      summary = 'Oggi i tuoi allergeni restano sotto la soglia.';
-    } else {
-      summary = 'Sopra la tua soglia: ${Fmt.list([for (final s in above) s.allergen.name])}.';
-    }
-    final estimated = followed.where((s) => s.kind == DataKind.estimate).map((s) => s.allergen);
-    final noMeasure = [for (final a in estimated.where((a) => !a.hasForecast)) a.name];
-    final noForecast = [for (final a in estimated.where((a) => a.hasForecast)) a.name];
-    final noStation = state.snapshot?.nearestStation == null;
+    final summary = followed.isEmpty
+        ? 'Scegli i tuoi allergeni da Profilo.'
+        : above.isEmpty
+        ? null
+        : 'Sopra la tua soglia: ${Fmt.list([for (final s in above) s.allergen.name])}.';
+    final estimated = [for (final s in followed.where((s) => s.kind == DataKind.estimate)) s.allergen.name];
+    final now = clock.now();
+    final weather = level == Level.none ? null : state.snapshot?.weather?.hintAt(now);
+    final plan = OutdoorPlan.of(followed, now);
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -249,21 +288,75 @@ class _Hero extends StatelessWidget {
             ),
             const SizedBox(height: 14),
             RiskBar(level, track: p.heroTrack),
-            const SizedBox(height: 14),
-            Text(summary),
-            for (final note in [
-              if (noMeasure.isNotEmpty)
-                noStation
-                    ? 'Stima per ${Fmt.list(noMeasure)}: non ci sono stazioni di misura vicine.'
-                    : 'Stima per ${Fmt.list(noMeasure)}: nessuna misura recente dalle stazioni vicine.',
-              if (noForecast.isNotEmpty) 'Stima per ${Fmt.list(noForecast)}: la previsione non è disponibile.',
-            ]) ...[
-              const SizedBox(height: 10),
-              Text(note, style: TextStyle(fontSize: 13, color: p.onHero.withValues(alpha: 0.85))),
-            ],
+            for (final line in [
+              if (summary != null) Text(summary),
+              if (weather != null) _WeatherLine(weather),
+              if (plan != null)
+                _HeroLine(
+                  Icons.schedule,
+                  'Meglio uscire ${plan.goodText}',
+                  onTap: () => showOutdoorSheet(context, plan),
+                ),
+              if (estimated.isNotEmpty)
+                Text(
+                  'Stima: ${_names(estimated)}',
+                  style: TextStyle(fontSize: 13, color: p.onHero.withValues(alpha: 0.85)),
+                ),
+            ]) ...[const SizedBox(height: 12), line],
           ],
         ),
       ),
+    );
+  }
+}
+
+class _WeatherLine extends StatelessWidget {
+  const _WeatherLine(this.hint);
+
+  final WeatherHint hint;
+
+  @override
+  Widget build(BuildContext context) {
+    final h = hint.ongoing ? null : '${hint.at.hour}';
+    final (icon, text) = switch (hint.event) {
+      WeatherEvent.storm => (
+        Icons.thunderstorm_outlined,
+        '${h == null ? 'Temporale in corso' : 'Temporale verso le $h'}: attenzione se hai l\'asma',
+      ),
+      WeatherEvent.rain => (Icons.water_drop_outlined, '${h == null ? 'Piove' : 'Pioggia dalle $h'}: pollini in calo'),
+      WeatherEvent.wind => (Icons.air, 'Vento forte${h == null ? '' : ' dalle $h'}: più pollini in aria'),
+    };
+    return _HeroLine(icon, text);
+  }
+}
+
+class _HeroLine extends StatelessWidget {
+  const _HeroLine(this.icon, this.text, {this.onTap});
+
+  final IconData icon;
+  final String text;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = context.palette.onHero;
+    final row = Row(
+      children: [
+        Icon(icon, size: 20, color: color),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            text,
+            style: TextStyle(fontSize: 15, height: 1.3, fontWeight: FontWeight.w600, color: color),
+          ),
+        ),
+        if (onTap != null) Icon(Icons.chevron_right, size: 20, color: color.withValues(alpha: 0.7)),
+      ],
+    );
+    if (onTap == null) return row;
+    return Material(
+      type: MaterialType.transparency,
+      child: InkWell(onTap: onTap, borderRadius: BorderRadius.circular(8), child: row),
     );
   }
 }
@@ -418,34 +511,51 @@ class _Air extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    Widget tile(String name, double? v, String unit, Level Function(double) lv, {bool dust = false}) {
-      final level = v == null ? null : lv(v);
-      final label = level == null ? '–' : (dust && level == Level.none ? 'Assente' : level.label);
+    Widget tile(AirMetric m) {
+      final v = air.valueOf(m);
+      final level = v == null ? null : m.levelOf(v);
       return Expanded(
-        child: Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(color: p.chip, borderRadius: BorderRadius.circular(14)),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontSize: 12, color: p.ink3),
+        child: Material(
+          color: p.chip,
+          borderRadius: BorderRadius.circular(14),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(14),
+            onTap: () => showAirSheet(context, m, v),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          m.label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontSize: 12, color: p.ink3),
+                        ),
+                      ),
+                      Icon(Icons.info_outline, size: 14, color: p.ink3),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    level == null ? '–' : m.levelLabel(level),
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: level == null ? p.ink3 : p.text(level),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    v == null ? '' : '${v.round()} ${AirMetric.unit}',
+                    style: TextStyle(fontSize: 12, color: p.ink2),
+                  ),
+                ],
               ),
-              const SizedBox(height: 6),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: level == null ? p.ink3 : p.text(level),
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(v == null ? '' : '${v.round()} $unit', style: TextStyle(fontSize: 12, color: p.ink2)),
-            ],
+            ),
           ),
         ),
       );
@@ -458,18 +568,21 @@ class _Air extends StatelessWidget {
           children: [
             Text('Aria', style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 2),
-            Text('Smog e polvere possono peggiorare i sintomi.', style: TextStyle(fontSize: 13, color: p.ink3)),
+            Text(
+              'Smog e sabbia possono peggiorare i sintomi. Tocca un riquadro per saperne di più.',
+              style: TextStyle(fontSize: 13, color: p.ink3),
+            ),
           ],
         ),
         IntrinsicHeight(
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              tile('Ozono', air.ozoneMax, 'µg/m³', AirStatus.ozoneLevel),
+              tile(AirMetric.ozone),
               const SizedBox(width: 8),
-              tile('PM2.5', air.pm25Mean, 'µg/m³', AirStatus.pm25Level),
+              tile(AirMetric.pm25),
               const SizedBox(width: 8),
-              tile('Polvere', air.dustMax, 'µg/m³', AirStatus.dustLevel, dust: true),
+              tile(AirMetric.dust),
             ],
           ),
         ),
@@ -561,7 +674,7 @@ class _OthersState extends State<_Others> {
                             overflow: TextOverflow.ellipsis,
                           ),
                           Text(
-                            _othersNote(s, context.read<AppState>().area, DateTime.now()),
+                            _othersNote(s, context.read<AppState>().area, clock.now()),
                             style: TextStyle(fontSize: 12, color: p.ink3),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -592,7 +705,7 @@ class _DiaryCta extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    final today = DiaryEntry.day(DateTime.now());
+    final today = DiaryEntry.day(clock.now());
     final diary = context.watch<DiaryState>();
     final e = diary.entryFor(today);
     final yesterday = diary.entryFor(today.plusDays(-1));

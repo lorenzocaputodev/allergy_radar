@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 
 import '../models/allergen.dart';
 import '../models/place.dart';
+import '../models/weather.dart';
 import '../utils/days.dart';
 
 class OpenMeteoClient {
@@ -24,6 +25,20 @@ class OpenMeteoClient {
   Future<String> fetchForecast(Place p) async {
     final res = await _http.get(forecastUri(p)).timeout(const Duration(seconds: 20));
     if (res.statusCode != 200) throw OpenMeteoException('Open-Meteo ha risposto ${res.statusCode}');
+    return utf8.decode(res.bodyBytes);
+  }
+
+  Uri weatherUri(Place p) => Uri.https('api.open-meteo.com', '/v1/forecast', {
+    'latitude': p.roundedLat.toStringAsFixed(2),
+    'longitude': p.roundedLon.toStringAsFixed(2),
+    'hourly': WeatherHint.keys.join(','),
+    'timezone': 'Europe/Rome',
+    'forecast_days': '2',
+  });
+
+  Future<String> fetchWeather(Place p) async {
+    final res = await _http.get(weatherUri(p)).timeout(const Duration(seconds: 20));
+    if (res.statusCode != 200) throw OpenMeteoException('Open-Meteo meteo ha risposto ${res.statusCode}');
     return utf8.decode(res.bodyBytes);
   }
 

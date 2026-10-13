@@ -2,9 +2,13 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:allergy_radar/data/pollen_repository.dart';
 import 'package:allergy_radar/models/allergen.dart';
 import 'package:allergy_radar/models/diary_entry.dart';
+import 'package:allergy_radar/models/level.dart';
+import 'package:allergy_radar/models/outdoor_plan.dart';
 import 'package:allergy_radar/models/place.dart';
+import 'package:allergy_radar/models/pollen_snapshot.dart';
 import 'package:allergy_radar/screens/alerts_screen.dart';
 import 'package:allergy_radar/screens/allergen_detail_screen.dart';
 import 'package:allergy_radar/screens/home_shell.dart';
@@ -13,14 +17,18 @@ import 'package:allergy_radar/screens/onboarding_screen.dart';
 import 'package:allergy_radar/screens/place_search_screen.dart';
 import 'package:allergy_radar/screens/trend_screen.dart';
 import 'package:allergy_radar/services/open_meteo_client.dart';
+import 'package:allergy_radar/services/pollnet_client.dart';
 import 'package:allergy_radar/state/app_state.dart';
 import 'package:allergy_radar/state/diary_state.dart';
 import 'package:allergy_radar/theme/app_theme.dart';
+import 'package:allergy_radar/widgets/outdoor_sheet.dart';
 import 'package:allergy_radar/widgets/page_list.dart';
 import 'package:allergy_radar/widgets/radar_mark.dart';
+import 'package:clock/clock.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/testing.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -53,6 +61,7 @@ void main() {
     bool diary = false,
     bool onboarded = true,
     bool all = false,
+    PollenRepository? repo,
   }) async {
     SharedPreferences.setMockInitialValues({
       'onboarded': onboarded,
@@ -60,7 +69,7 @@ void main() {
       'place': '{"name":"${place.name}","region":null,"lat":${place.lat},"lon":${place.lon}}',
       if (diary) 'diary': jsonEncode(_sampleDiary()),
     });
-    final s = AppState(repository(now), await SharedPreferences.getInstance());
+    final s = AppState(repo ?? repository(now), await SharedPreferences.getInstance());
     return s;
   }
 
@@ -133,6 +142,103 @@ void main() {
   testWidgets('oggi bologna', (tester) async {
     await shot(tester, '02_oggi_bologna', const HomeShell(), s: await state(bologna, bolognaNow), height: 2300);
   });
+
+  for (final b in Brightness.values) {
+    final t = b == Brightness.light ? 'chiaro' : 'scuro';
+    testWidgets('aria $t', (tester) async {
+      await shot(
+        tester,
+        '02_aria_$t',
+        const HomeShell(),
+        s: await state(Place.lecce, lecceNow),
+        b: b,
+        height: 2300,
+        before: () async {
+          await tester.tap(find.text('Ozono'));
+          await tester.pumpAndSettle();
+        },
+      );
+    });
+  }
+
+  for (final b in Brightness.values) {
+    final t = b == Brightness.light ? 'chiaro' : 'scuro';
+    testWidgets('oggi righe $t', (tester) async {
+      final air = jsonDecode(fixture('open_meteo_lecce.json')) as Map<String, dynamic>;
+      final hourly = air['hourly'] as Map<String, dynamic>;
+      final times = (hourly['time'] as List).cast<String>();
+      const grass = {
+        7: 2,
+        8: 2,
+        9: 2,
+        10: 15,
+        11: 15,
+        12: 40,
+        13: 40,
+        14: 40,
+        15: 40,
+        16: 40,
+        17: 15,
+        18: 15,
+        19: 2,
+        20: 2,
+        21: 2,
+      };
+      hourly['grass_pollen'] = [
+        for (final time in times)
+          time.startsWith('2026-09-30') ? (grass[int.parse(time.substring(11, 13))] ?? 0.2) : 0.2,
+      ];
+      final inner = fakeHttp();
+      final client = MockClient((req) async {
+        if (req.url.host == 'air-quality-api.open-meteo.com') return utf8Response(jsonEncode(air));
+        return inner.get(req.url);
+      });
+      final repo = PollenRepository(
+        openMeteo: OpenMeteoClient(client),
+        pollnet: PollnetClient(client),
+        stations: stationDirectory(),
+        clock: () => lecceNow,
+      );
+      await withClock(Clock.fixed(lecceNow), () async {
+        await shot(
+          tester,
+          '01_oggi_righe_$t',
+          const HomeShell(),
+          s: await state(Place.lecce, lecceNow, repo: repo),
+          b: b,
+          height: 900,
+        );
+      });
+    });
+
+    testWidgets('ora per ora $t', (tester) async {
+      final day = DateTime(2026, 5, 10);
+      const grass = [1, 1, 1, 2, 2, 3, 3, 3, 3, 3, 2, 2, 1, 1, 1];
+      final status = AllergenStatus(
+        allergen: Allergens.grass,
+        kind: DataKind.forecast,
+        level: Level.high,
+        hourly: [
+          for (var i = 0; i < grass.length; i++)
+            DayValue(day.add(Duration(hours: 7 + i)), 0, Level.fromIndex(grass[i])),
+        ],
+      );
+      final plan = OutdoorPlan.of([status], day.add(const Duration(hours: 8)))!;
+      await shot(
+        tester,
+        '02_ora_per_ora_$t',
+        Scaffold(
+          body: Align(
+            alignment: Alignment.bottomCenter,
+            child: OutdoorSheet(plan: plan),
+          ),
+        ),
+        s: await state(Place.lecce, lecceNow),
+        b: b,
+        height: 520,
+      );
+    });
+  }
 
   for (final (id, place, now) in [
     ('parietaria', Place.lecce, lecceNow),
