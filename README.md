@@ -82,6 +82,7 @@ Prerequisiti, con le versioni su cui la build è verificata:
 - **JDK 21** — Gradle 8.14.5 non supporta JDK 25, quindi va agganciato con
   `flutter config --jdk-dir "<percorso del JDK 21>"`
 - Visual Studio Code
+- Solo per la versione Windows: Visual Studio Build Tools con i componenti C++ e **C++ ATL**
 
 La catena di build usa Gradle 8.14.5, AGP 8.13.2 e Kotlin 2.2.21, volutamente
 entro la linea 8.x di AGP.
