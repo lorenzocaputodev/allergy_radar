@@ -550,7 +550,7 @@ class _Air extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    v == null ? '' : '${v.round()} ${AirMetric.unit}',
+                    v == null ? '' : '${v.floor()} ${AirMetric.unit}',
                     style: TextStyle(fontSize: 12, color: p.ink2),
                   ),
                 ],

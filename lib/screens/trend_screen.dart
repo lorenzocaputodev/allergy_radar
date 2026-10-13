@@ -54,15 +54,13 @@ class _TrendScreenState extends State<TrendScreen> {
                 ),
             ],
           ),
-          if (diary.entries.length >= DiaryState.minDaysForInsight) ...[
-            const SizedBox(height: 12),
-            SegmentedButton<int>(
-              segments: [for (final e in _periods.entries) ButtonSegment(value: e.key, label: Text(e.value))],
-              selected: {_period},
-              showSelectedIcon: false,
-              onSelectionChanged: (v) => setState(() => _period = v.first),
-            ),
-          ],
+          const SizedBox(height: 12),
+          SegmentedButton<int>(
+            segments: [for (final e in _periods.entries) ButtonSegment(value: e.key, label: Text(e.value))],
+            selected: {_period},
+            showSelectedIcon: false,
+            onSelectionChanged: (v) => setState(() => _period = v.first),
+          ),
           const SizedBox(height: 14),
           if (insight == null)
             _Progress(allergen: a, logged: logged, status: app.snapshot?[a.id])
@@ -173,7 +171,7 @@ class _Answer extends StatelessWidget {
               child: Text(label, style: TextStyle(fontSize: 14, color: p.onHero)),
             ),
             Text(
-              '${Fmt.number(value)} su ${DiaryInsight.maxScore}',
+              '${Fmt.mean(value)} su ${DiaryInsight.maxScore}',
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: p.onHero),
             ),
           ],
@@ -277,7 +275,7 @@ class _TrendState extends State<_Trend> {
     if (mean == null) return 'Nessun giorno registrato';
     return [
       '${b.logged} ${b.logged == 1 ? 'giorno registrato' : 'giorni registrati'}',
-      'sintomi in media ${Fmt.number(mean)} su 3',
+      'sintomi in media ${Fmt.mean(mean)} su 3',
       if (pollen != null) '$name fino a ${pollen.label.toLowerCase()}',
     ].join(' · ');
   }

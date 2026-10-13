@@ -32,9 +32,14 @@ abstract final class Fmt {
   static String time(DateTime d) => '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
 
   static String number(double v) {
-    final tenth = (v * 10).round() / 10;
-    if (v >= 10 || tenth == tenth.roundToDouble()) return v.round().toString();
+    final tenth = (v * 10).floor() / 10;
+    if (v >= 10 || tenth == tenth.roundToDouble()) return v.floor().toString();
     return tenth.toStringAsFixed(1).replaceAll('.', ',');
+  }
+
+  static String mean(double v) {
+    final tenth = (v * 10).round() / 10;
+    return tenth == tenth.roundToDouble() ? tenth.round().toString() : tenth.toStringAsFixed(1).replaceAll('.', ',');
   }
 
   static String grains(double v) => '${number(v)} granuli/m³';

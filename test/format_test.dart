@@ -2,14 +2,21 @@ import 'package:allergy_radar/utils/format.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('i numeri dei granuli: niente «0,0», una cifra decimale solo se serve', () {
+  test('i numeri dei granuli: troncati, mai sopra la soglia del livello mostrato', () {
     expect(Fmt.number(0), '0');
-    expect(Fmt.number(0.03), '0');
-    expect(Fmt.number(0.06), '0,1');
-    expect(Fmt.number(2.96), '3');
+    expect(Fmt.number(0.07), '0', reason: 'sotto la soglia di 0,1 resta 0, non 0,1');
+    expect(Fmt.number(0.1), '0,1');
+    expect(Fmt.number(2.96), '2,9');
     expect(Fmt.number(7.04), '7');
-    expect(Fmt.number(7.25), '7,3');
-    expect(Fmt.number(9.97), '10');
+    expect(Fmt.number(7.25), '7,2');
+    expect(Fmt.number(9.97), '9,9', reason: 'sotto la soglia di 10 non diventa 10');
+    expect(Fmt.number(29.9), '29');
     expect(Fmt.number(73.4), '73');
+  });
+
+  test('le medie si arrotondano', () {
+    expect(Fmt.mean(2.25), '2,3');
+    expect(Fmt.mean(1.96), '2');
+    expect(Fmt.mean(0), '0');
   });
 }

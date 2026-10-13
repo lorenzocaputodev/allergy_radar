@@ -96,7 +96,7 @@ class AirSheet extends StatelessWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      '${metric.statLabel}: ${v.round()} ${AirMetric.unit}',
+                      '${metric.statLabel}: ${v.floor()} ${AirMetric.unit}',
                       style: TextStyle(fontSize: 13, color: p.ink2),
                     ),
                   ),

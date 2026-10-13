@@ -8,7 +8,7 @@ double widestText(BuildContext context, Iterable<String> texts, TextStyle style)
   var widest = 0.0;
   for (final t in texts) {
     final painter = TextPainter(
-      text: TextSpan(text: t, style: style),
+      text: TextSpan(text: t, style: DefaultTextStyle.of(context).style.merge(style)),
       textDirection: TextDirection.ltr,
       textScaler: MediaQuery.textScalerOf(context),
     )..layout();

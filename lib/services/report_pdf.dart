@@ -10,6 +10,7 @@ import '../models/level.dart';
 import '../state/diary_state.dart';
 import '../theme/palette.dart';
 import '../utils/days.dart';
+import '../utils/format.dart';
 
 class ReportPdf {
   static const days = 90;
@@ -40,7 +41,6 @@ class ReportPdf {
   static PdfColor _pdf(Color c) => PdfColor.fromInt(c.toARGB32());
   static String _date(DateTime d) => '${d.day} ${_months[d.month - 1]} ${d.year}';
   static String _days(int n) => n == 1 ? '1 giorno' : '$n giorni';
-  static String _num(double v) => v == v.roundToDouble() ? '${v.round()}' : v.toStringAsFixed(1).replaceAll('.', ',');
 
   static Future<Uint8List> build({
     required DiaryState diary,
@@ -195,7 +195,7 @@ class ReportPdf {
               pw.SizedBox(width: 8),
               summary(
                 'Intensità media',
-                avg == null ? '–' : '${_num(avg)} su 3',
+                avg == null ? '–' : '${Fmt.mean(avg)} su 3',
                 avg == null ? 'nessuna voce' : _symptom[avg.round()],
               ),
               pw.SizedBox(width: 8),
@@ -235,8 +235,8 @@ class ReportPdf {
                       ),
                       pw.TextSpan(
                         text:
-                            'punteggio sintomi + farmaci ${_num(i.highMean)} su ${DiaryInsight.maxScore} nei giorni '
-                            'sopra la soglia personale (${_days(i.highDays)}), ${_num(i.lowMean)} negli altri '
+                            'punteggio sintomi + farmaci ${Fmt.mean(i.highMean)} su ${DiaryInsight.maxScore} nei giorni '
+                            'sopra la soglia personale (${_days(i.highDays)}), ${Fmt.mean(i.lowMean)} negli altri '
                             '(${_days(i.lowDays)}).',
                       ),
                     ],

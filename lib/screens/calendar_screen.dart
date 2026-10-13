@@ -23,7 +23,7 @@ class CalendarScreen extends StatelessWidget {
     final others = Allergens.all.where((a) => !state.followed.contains(a.id)).toList();
     const nameStyle = TextStyle(fontSize: 13, fontWeight: FontWeight.w600);
     final nameWidth = (36 + widestText(context, Allergens.all.map((a) => a.name), nameStyle) + 8)
-        .clamp(0, MediaQuery.sizeOf(context).width * 0.4)
+        .clamp(0, MediaQuery.sizeOf(context).width * 0.45)
         .toDouble();
 
     Widget header() => Row(
