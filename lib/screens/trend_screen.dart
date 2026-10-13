@@ -276,7 +276,8 @@ class _TrendState extends State<_Trend> {
     return [
       '${b.logged} ${b.logged == 1 ? 'giorno registrato' : 'giorni registrati'}',
       'sintomi in media ${Fmt.mean(mean)} su 3',
-      if (pollen != null) '$name fino a ${pollen.label.toLowerCase()}',
+      if (pollen != null)
+        pollen == Level.none ? 'nessun polline di $name' : '$name fino a ${pollen.label.toLowerCase()}',
     ].join(' · ');
   }
 
