@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../models/allergen.dart';
 import '../models/level.dart';
+import '../state/app_state.dart';
 import '../theme/palette.dart';
+import '../utils/format.dart';
 
 double widestText(BuildContext context, Iterable<String> texts, TextStyle style) {
   var widest = 0.0;
@@ -186,8 +189,6 @@ class SeasonStrip extends StatelessWidget {
   final List<int> calendar;
   final int month;
 
-  static const _m = ['G', 'F', 'M', 'A', 'M', 'G', 'L', 'A', 'S', 'O', 'N', 'D'];
-
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
@@ -208,7 +209,7 @@ class SeasonStrip extends StatelessWidget {
                 ),
                 const SizedBox(height: 5),
                 Text(
-                  _m[i],
+                  Fmt.initial(i + 1),
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: i == month - 1 ? FontWeight.w800 : FontWeight.w400,
@@ -251,4 +252,23 @@ class SeverityDots extends StatelessWidget {
       ],
     ),
   );
+}
+
+class ThresholdPicker extends StatelessWidget {
+  const ThresholdPicker({super.key, required this.allergen});
+
+  final Allergen allergen;
+
+  @override
+  Widget build(BuildContext context) {
+    final state = context.watch<AppState>();
+    return SegmentedButton<Level>(
+      segments: [
+        for (final l in [Level.low, Level.moderate, Level.high]) ButtonSegment(value: l, label: Text(l.label)),
+      ],
+      selected: {state.thresholdOf(allergen)},
+      showSelectedIcon: false,
+      onSelectionChanged: (v) => state.setThreshold(allergen, v.first),
+    );
+  }
 }

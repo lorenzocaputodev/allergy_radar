@@ -118,7 +118,7 @@ class AllergenDetailScreen extends StatelessWidget {
                 ),
                 Align(
                   alignment: Alignment.centerLeft,
-                  child: SourceChip(s.kind, detail: Fmt.sourceDetail(s, now)),
+                  child: SourceChip(s.kind, detail: Fmt.sourceDetail(s)),
                 ),
               ],
             ),
@@ -203,16 +203,7 @@ class AllergenDetailScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              SegmentedButton<Level>(
-                segments: const [
-                  ButtonSegment(value: Level.low, label: Text('Basso')),
-                  ButtonSegment(value: Level.moderate, label: Text('Moderato')),
-                  ButtonSegment(value: Level.high, label: Text('Alto')),
-                ],
-                selected: {state.thresholdOf(a)},
-                showSelectedIcon: false,
-                onSelectionChanged: (v) => state.setThreshold(a, v.first),
-              ),
+              ThresholdPicker(allergen: a),
             ],
           ),
           const SizedBox(height: 14),

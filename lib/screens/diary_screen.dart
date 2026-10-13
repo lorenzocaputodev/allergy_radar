@@ -319,7 +319,6 @@ class _Legend extends StatelessWidget {
 }
 
 // --- Ultimi giorni ---
-const _outdoor = ['meno di 1 ora', '1–3 ore', 'più di 3 ore'];
 
 class _EntryCard extends StatelessWidget {
   const _EntryCard({required this.entry, required this.followed, required this.onTap});
@@ -409,7 +408,7 @@ class _EntryCard extends StatelessWidget {
               const SizedBox(height: 4),
               line('Sintomi', parts.isEmpty ? 'nessuno' : parts.join(' · ')),
               if (e.meds.isNotEmpty) line('Farmaci', e.meds.join(', ')),
-              if (e.outdoor case final o?) line('All’aperto', _outdoor[o]),
+              if (e.outdoor case final o?) line('All’aperto', DiaryEntry.outdoorNames[o]),
               if (pollen.isNotEmpty) line('Pollini', pollen.join(' · ')),
               if (e.note.isNotEmpty) line('Nota', e.note),
             ],

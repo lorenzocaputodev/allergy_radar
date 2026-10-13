@@ -75,6 +75,10 @@ class Backup {
     switch (k) {
       case AppState.kPlace:
         Place.fromJson(map(v));
+      case AppState.kPlaces:
+        for (final j in jsonDecode(v as String) as List) {
+          Place.fromJson(j as Map<String, dynamic>);
+        }
       case AppState.kThresholds:
         map(v).forEach((_, l) => _range(l as int, 4));
       case AppState.kAlerts:
@@ -95,7 +99,7 @@ class Backup {
         }
       case AppState.kFollowed || DiaryState.kMeds:
         return (v as List).cast<String>().toList();
-      case AppState.kOnboarded:
+      case AppState.kOnboarded || AppState.kFollowLocation:
         return v as bool;
     }
     return v as String;
@@ -112,7 +116,6 @@ class Backup {
       return s.contains(RegExp('[;"\r\n]')) ? '"${s.replaceAll('"', '""')}"' : s;
     }
 
-    const outdoor = ['meno di 1 ora', '1–3 ore', 'più di 3 ore'];
     final rows = <List<Object?>>[
       [
         'data',
@@ -137,7 +140,7 @@ class Backup {
           e.severity,
           e.badSleep ? 'sì' : 'no',
           e.meds.join(', '),
-          e.outdoor == null ? '' : outdoor[e.outdoor!],
+          e.outdoor == null ? '' : DiaryEntry.outdoorNames[e.outdoor!],
           e.note,
           for (final a in allergens) e.pollen[a.id] == null ? '' : Level.fromIndex(e.pollen[a.id]!).label,
         ],

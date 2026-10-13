@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../models/diary_entry.dart';
 import '../services/backup.dart';
 import '../services/file_service.dart';
 import '../services/report_pdf.dart';
@@ -195,8 +196,6 @@ class ProfileScreen extends StatelessWidget {
   }
 }
 
-String _stamp(DateTime d) => '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
-
 void _toast(BuildContext context, String message) =>
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
 
@@ -221,7 +220,7 @@ Future<void> _exportPdf(BuildContext context) {
       now: now,
       thresholdOf: state.thresholdOf,
     );
-    return FileService.saveBytes('allergy-radar-diario-${_stamp(now)}.pdf', bytes, mime: 'application/pdf');
+    return FileService.saveBytes('allergy-radar-diario-${DiaryEntry.keyOf(now)}.pdf', bytes, mime: 'application/pdf');
   }, 'PDF salvato.');
 }
 
@@ -232,7 +231,7 @@ Future<void> _exportCsv(BuildContext context) {
   return _report(
     context,
     () => FileService.saveText(
-      'allergy-radar-diario-${_stamp(now)}.csv',
+      'allergy-radar-diario-${DiaryEntry.keyOf(now)}.csv',
       Backup.diaryCsv(diary.entries, followed: followed),
       mime: 'text/csv',
     ),
@@ -247,7 +246,7 @@ Future<void> _exportBackup(BuildContext context) async {
   return _report(
     context,
     () => FileService.saveText(
-      'allergy-radar-backup-${_stamp(now)}.json',
+      'allergy-radar-backup-${DiaryEntry.keyOf(now)}.json',
       Backup.export(prefs, now),
       mime: 'application/json',
     ),

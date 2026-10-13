@@ -6,6 +6,7 @@ typedef HourSpan = (int from, int to);
 class OutdoorPlan {
   const OutdoorPlan({
     required this.allergens,
+    required this.others,
     required this.levels,
     required this.nowHour,
     required this.peak,
@@ -18,6 +19,7 @@ class OutdoorPlan {
   static const minHours = 2;
 
   final List<String> allergens;
+  final List<AllergenStatus> others;
   final Map<int, Level> levels;
   final int nowHour;
   final Level peak;
@@ -27,7 +29,11 @@ class OutdoorPlan {
   static OutdoorPlan? of(List<AllergenStatus> followed, DateTime now) {
     final hourly = followed.where((s) => s.hourly.isNotEmpty).toList();
     if (hourly.isEmpty) return null;
-    final floor = followed.where((s) => s.hourly.isEmpty).fold(Level.none, (l, s) => l.max(s.level));
+    final others = [
+      for (final s in followed)
+        if (s.hourly.isEmpty && s.level != Level.none) s,
+    ];
+    final floor = others.fold(Level.none, (l, s) => l.max(s.level));
 
     final levels = <int, Level>{};
     for (final s in hourly) {
@@ -52,6 +58,7 @@ class OutdoorPlan {
     if (good.isEmpty) return null;
     return OutdoorPlan(
       allergens: [for (final s in hourly) s.allergen.name],
+      others: others,
       levels: levels,
       nowHour: now.hour,
       peak: peak,

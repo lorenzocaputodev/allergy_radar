@@ -34,6 +34,7 @@ class DiaryEntry {
 
   static const severityNames = ['Nessuno', 'Lievi', 'Medi', 'Forti'];
   static const symptomNames = ['Nessun sintomo', 'Sintomi lievi', 'Sintomi medi', 'Sintomi forti'];
+  static const outdoorNames = ['meno di 1 ora', '1–3 ore', 'più di 3 ore'];
 
   static DateTime day(DateTime d) => d.dateOnly;
 

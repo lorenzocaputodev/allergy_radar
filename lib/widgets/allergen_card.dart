@@ -76,7 +76,7 @@ class AllergenCard extends StatelessWidget {
                 runSpacing: 6,
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
-                  SourceChip(status.kind, detail: Fmt.sourceDetail(status, today)),
+                  SourceChip(status.kind, detail: Fmt.sourceDetail(status)),
                   if (aboveThreshold)
                     Text(
                       'Sopra la tua soglia',

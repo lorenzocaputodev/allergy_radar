@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../models/allergen.dart';
-import '../models/level.dart';
 import '../state/app_state.dart';
 import '../theme/palette.dart';
 import '../widgets/level_widgets.dart';
@@ -42,16 +41,7 @@ class AllergensScreen extends StatelessWidget {
                 children: [
                   Text('Soglia: ti dà fastidio da', style: TextStyle(fontSize: 13, color: p.ink2)),
                   const SizedBox(height: 6),
-                  SegmentedButton<Level>(
-                    segments: const [
-                      ButtonSegment(value: Level.low, label: Text('Basso')),
-                      ButtonSegment(value: Level.moderate, label: Text('Moderato')),
-                      ButtonSegment(value: Level.high, label: Text('Alto')),
-                    ],
-                    selected: {state.thresholdOf(a)},
-                    showSelectedIcon: false,
-                    onSelectionChanged: (v) => state.setThreshold(a, v.first),
-                  ),
+                  ThresholdPicker(allergen: a),
                 ],
               ),
             ),

@@ -14,6 +14,13 @@ void main() {
     expect(Fmt.number(73.4), '73');
   });
 
+  test('quando sono stati aggiornati i dati', () {
+    final now = DateTime(2026, 10, 13, 9);
+    expect(Fmt.updated(DateTime(2026, 10, 13, 8, 5), now), 'aggiornato alle 08:05');
+    expect(Fmt.updated(DateTime(2026, 10, 12, 18, 5), now), 'aggiornato ieri alle 18:05');
+    expect(Fmt.updated(DateTime(2026, 10, 10, 18, 5), now), 'aggiornato il 10 ott alle 18:05');
+  });
+
   test('le medie si arrotondano', () {
     expect(Fmt.mean(2.25), '2,3');
     expect(Fmt.mean(1.96), '2');

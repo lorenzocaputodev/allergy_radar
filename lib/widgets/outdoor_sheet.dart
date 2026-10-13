@@ -86,7 +86,18 @@ class OutdoorSheet extends StatelessWidget {
               verdict(Icons.do_not_disturb_on_outlined, p.text(plan.peak), 'Evita: ${plan.avoidSpan(a)}'),
             ],
             const SizedBox(height: 18),
-            const SourceChip(DataKind.forecast, detail: 'Open-Meteo, CAMS Europa'),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                const SourceChip(DataKind.forecast, detail: 'Open-Meteo, CAMS Europa'),
+                for (final kind in {for (final s in plan.others) s.kind})
+                  SourceChip(
+                    kind,
+                    detail: Fmt.list([for (final s in plan.others.where((s) => s.kind == kind)) s.allergen.name]),
+                  ),
+              ],
+            ),
           ],
         ),
       ),

@@ -19,6 +19,11 @@ class AlertMessage {
 class AlertPlanner {
   const AlertPlanner();
 
+  static DateTime nextAt(DateTime now, int minutes) {
+    final at = DateTime(now.year, now.month, now.day, minutes ~/ 60, minutes % 60);
+    return at.isAfter(now) ? at : DateTime(now.year, now.month, now.day + 1, minutes ~/ 60, minutes % 60);
+  }
+
   List<AlertMessage> schedule({
     required DateTime now,
     required AlertSettings settings,
@@ -30,7 +35,7 @@ class AlertPlanner {
     final today = now.dateOnly;
     final tomorrow = today.plusDays(1);
     DateTime at(DateTime day, int minutes) => DateTime(day.year, day.month, day.day, minutes ~/ 60, minutes % 60);
-    DateTime next(int minutes) => at(today, minutes).isAfter(now) ? at(today, minutes) : at(tomorrow, minutes);
+    DateTime next(int minutes) => nextAt(now, minutes);
     bool above(Allergen a, Level l) => l != Level.none && l >= thresholdOf(a);
 
     final out = <AlertMessage>[];

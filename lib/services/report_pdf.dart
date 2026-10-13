@@ -16,30 +16,16 @@ class ReportPdf {
   static const days = 90;
   static const _maxWideAllergens = 7;
 
-  static const _ink = PdfColor.fromInt(0xFF17201C);
-  static const _muted = PdfColor.fromInt(0xFF5C6661);
-  static const _line = PdfColor.fromInt(0xFFE2DED3);
+  static final _ink = _pdf(AppPalette.light.ink);
+  static final _muted = _pdf(AppPalette.light.ink3);
+  static final _line = _pdf(AppPalette.light.line);
   static const _zebra = PdfColor.fromInt(0xFFF7F6F1);
-  static const _soft = PdfColor.fromInt(0xFFE1ECE6);
-  static const _pine = PdfColor.fromInt(0xFF1F5A4A);
+  static final _soft = _pdf(AppPalette.light.pineSoft);
+  static final _pine = _pdf(AppPalette.light.pine);
   static const _symptom = ['nessuno', 'lieve', 'medio', 'forte'];
-  static const _months = [
-    'gennaio',
-    'febbraio',
-    'marzo',
-    'aprile',
-    'maggio',
-    'giugno',
-    'luglio',
-    'agosto',
-    'settembre',
-    'ottobre',
-    'novembre',
-    'dicembre',
-  ];
 
   static PdfColor _pdf(Color c) => PdfColor.fromInt(c.toARGB32());
-  static String _date(DateTime d) => '${d.day} ${_months[d.month - 1]} ${d.year}';
+  static String _date(DateTime d) => '${d.day} ${Fmt.month(d.month)} ${d.year}';
   static String _days(int n) => n == 1 ? '1 giorno' : '$n giorni';
 
   static Future<Uint8List> build({
@@ -69,8 +55,8 @@ class ReportPdf {
       ..sort((x, y) => (y.highMean - y.lowMean).compareTo(x.highMean - x.lowMean));
 
     // --- Stili e celle ---
-    pw.Widget small(String s, {PdfColor color = _muted}) =>
-        pw.Text(s, style: pw.TextStyle(fontSize: 8.5, color: color));
+    pw.Widget small(String s, {PdfColor? color}) =>
+        pw.Text(s, style: pw.TextStyle(fontSize: 8.5, color: color ?? _muted));
     pw.Widget heading(String s) => pw.Padding(
       padding: const pw.EdgeInsets.only(top: 18, bottom: 8),
       child: pw.Text(s, style: pw.TextStyle(fontSize: 13, fontWeight: pw.FontWeight.bold)),
@@ -96,11 +82,11 @@ class ReportPdf {
       ),
     );
 
-    pw.Widget cell(String s, {PdfColor? fill, PdfColor color = _ink, bool center = false}) => pw.Container(
+    pw.Widget cell(String s, {PdfColor? fill, PdfColor? color, bool center = false}) => pw.Container(
       color: fill,
       alignment: center ? pw.Alignment.center : pw.Alignment.centerLeft,
       padding: const pw.EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-      child: pw.Text(s, style: pw.TextStyle(fontSize: 8, color: color)),
+      child: pw.Text(s, style: pw.TextStyle(fontSize: 8, color: color ?? _ink)),
     );
     pw.Widget symptom(int v) => cell(
       v == 0 ? '–' : _symptom[v],
@@ -150,7 +136,7 @@ class ReportPdf {
         theme: pw.ThemeData.withFont(
           base: regular,
           bold: bold,
-        ).copyWith(defaultTextStyle: const pw.TextStyle(color: _ink, fontSize: 10)),
+        ).copyWith(defaultTextStyle: pw.TextStyle(color: _ink, fontSize: 10)),
         footer: (ctx) => pw.Row(
           mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
           children: [
@@ -219,7 +205,7 @@ class ReportPdf {
             pw.Text(
               'Per un confronto servono almeno ${DiaryState.minDaysForInsight} giorni registrati, '
               'con un livello del polline, di cui almeno 3 sopra la soglia personale e 3 sotto.',
-              style: const pw.TextStyle(fontSize: 10, color: _muted),
+              style: pw.TextStyle(fontSize: 10, color: _muted),
             )
           else
             for (final i in insights)
@@ -245,10 +231,10 @@ class ReportPdf {
               ),
           heading('Giorno per giorno'),
           if (entries.isEmpty)
-            pw.Text('Nessuna voce nel periodo.', style: const pw.TextStyle(fontSize: 10, color: _muted))
+            pw.Text('Nessuna voce nel periodo.', style: pw.TextStyle(fontSize: 10, color: _muted))
           else
             pw.Table(
-              border: const pw.TableBorder(horizontalInside: pw.BorderSide(color: _line, width: 0.5)),
+              border: pw.TableBorder(horizontalInside: pw.BorderSide(color: _line, width: 0.5)),
               columnWidths: {
                 0: const pw.FixedColumnWidth(30),
                 for (var c = 1; c <= 4; c++) c: const pw.FixedColumnWidth(34),
@@ -259,7 +245,7 @@ class ReportPdf {
               },
               children: [
                 pw.TableRow(
-                  decoration: const pw.BoxDecoration(color: _pine),
+                  decoration: pw.BoxDecoration(color: _pine),
                   repeat: true,
                   children: [
                     for (final h in ['Data', 'Naso', 'Occhi', 'Gola', 'Respiro', 'Sonno', 'Farmaci']) head(h),

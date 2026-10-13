@@ -78,6 +78,7 @@ void main() {
     expect(plan.good, [(7, 11), (17, 21)]);
     expect(plan.levels[7], Level.low);
     expect(plan.peak, Level.high);
+    expect(plan.others.single.allergen, Allergens.parietaria);
   });
 
   test('dopo le 21 o senza dati orari: nessuna riga', () {

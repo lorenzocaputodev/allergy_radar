@@ -3,11 +3,15 @@ import 'dart:convert';
 import 'package:allergy_radar/models/allergen.dart';
 import 'package:allergy_radar/models/diary_entry.dart';
 import 'package:allergy_radar/models/level.dart';
+import 'package:allergy_radar/models/place.dart';
 import 'package:allergy_radar/services/backup.dart';
 import 'package:allergy_radar/services/report_pdf.dart';
+import 'package:allergy_radar/state/app_state.dart';
 import 'package:allergy_radar/state/diary_state.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'helpers.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -36,6 +40,26 @@ void main() {
     expect(prefs.getStringList('followed'), ['grass', 'parietaria']);
     expect(prefs.getBool('onboarded'), isTrue);
     expect(DiaryState(prefs).entryFor(DateTime(2026, 9, 29))!.meds, ['Cetirizina']);
+  });
+
+  test('i backup dell’app si reimportano, compresi luoghi salvati e «segui la mia posizione»', () async {
+    final prefs = await SharedPreferences.getInstance();
+    final state = AppState(repository(now), prefs);
+    await state.load();
+    await state.setPlace(const Place(name: 'Roma', lat: 41.9, lon: 12.5));
+    await state.startFollowing(Place.lecce);
+    final json = Backup.export(prefs, now);
+    for (final k in [AppState.kPlaces, AppState.kFollowLocation]) {
+      expect(json, contains('"$k"'), reason: k);
+    }
+
+    await prefs.clear();
+    await Backup.restore(prefs, json);
+    final again = AppState(repository(now), prefs);
+    await again.load();
+    expect(again.followLocation, isTrue);
+    expect(again.saved.first.name, 'Roma');
+    expect(again.place.name, 'Lecce');
   });
 
   test('rifiuta file che non sono backup, senza toccare i dati', () async {

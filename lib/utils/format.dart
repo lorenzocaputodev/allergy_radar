@@ -31,6 +31,12 @@ abstract final class Fmt {
 
   static String time(DateTime d) => '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
 
+  static String updated(DateTime at, DateTime now) {
+    if (at.isSameDay(now)) return 'aggiornato alle ${time(at)}';
+    if (at.isSameDay(now.plusDays(-1))) return 'aggiornato ieri alle ${time(at)}';
+    return 'aggiornato il ${shortDate(at)} alle ${time(at)}';
+  }
+
   static String number(double v) {
     final tenth = (v * 10).floor() / 10;
     if (v >= 10 || tenth == tenth.roundToDouble()) return v.floor().toString();
@@ -46,10 +52,9 @@ abstract final class Fmt {
 
   static String month(int m) => _months[m - 1];
 
-  static String? sourceDetail(AllergenStatus s, DateTime today) => switch (s.kind) {
-    DataKind.forecast => null,
-    DataKind.measured =>
-      '${s.station!.station.name}, ${s.station!.km.round()} km · ${s.date == null ? '' : shortDate(s.date!)}',
-    DataKind.estimate => null,
-  };
+  static String initial(int m) => _months[m - 1][0].toUpperCase();
+
+  static String? sourceDetail(AllergenStatus s) => s.kind == DataKind.measured
+      ? '${s.station!.station.name}, ${s.station!.km.round()} km · ${s.date == null ? '' : shortDate(s.date!)}'
+      : null;
 }

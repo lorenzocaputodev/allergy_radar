@@ -93,7 +93,7 @@ class TodayScreen extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
             child: Text(
-              snap == null ? Fmt.longDate(now) : '${Fmt.longDate(now)} · aggiornato alle ${Fmt.time(snap.fetchedAt)}',
+              snap == null ? Fmt.longDate(now) : '${Fmt.longDate(now)} · ${Fmt.updated(snap.fetchedAt, now)}',
               style: TextStyle(fontSize: 14, color: p.ink3),
             ),
           ),

@@ -247,7 +247,7 @@ class _TrendState extends State<_Trend> {
     final back = widget.buckets.length - 1 - i;
     final every = widget.step == TrendStep.day ? 7 : 4;
     return switch (widget.step) {
-      TrendStep.month => _capital(Fmt.month(b.from.month))[0],
+      TrendStep.month => Fmt.initial(b.from.month),
       _ when back % every != 0 => '',
       _ => back == 0 ? 'Oggi' : '${b.from.day}/${b.from.month}',
     };

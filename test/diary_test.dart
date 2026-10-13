@@ -185,6 +185,21 @@ void main() {
       expect(d.entryFor(today)!.nose, 2);
     });
 
+    test('una voce salvata da un altro isolate non si perde al salvataggio successivo', () async {
+      final prefs = await SharedPreferences.getInstance();
+      final app = DiaryState(prefs);
+      final background = DiaryState(prefs);
+      expect(await background.saveNoSymptoms(today), isTrue);
+      await app.save(DiaryEntry(date: today.subtract(const Duration(days: 1)), nose: 2));
+      final disk = DiaryState(prefs);
+      expect(disk.entryFor(today), isNotNull);
+      expect(disk.entryFor(today.subtract(const Duration(days: 1)))!.nose, 2);
+      expect(app.entryFor(today), isNotNull);
+
+      await app.delete(today);
+      expect(DiaryState(prefs).entryFor(today), isNull);
+    });
+
     test('diario rovinato: le voci leggibili restano, le altre si saltano', () async {
       SharedPreferences.setMockInitialValues({
         DiaryState.kEntries: '[{"date":"2026-09-29","nose":2},{"date":"boh"},3]',

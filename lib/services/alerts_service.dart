@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
 import 'dart:ui';
@@ -15,6 +16,7 @@ import 'package:workmanager/workmanager.dart';
 import '../data/pollen_repository.dart';
 import '../models/alert_log.dart';
 import '../models/diary_entry.dart';
+import '../models/place.dart';
 import '../models/station.dart';
 import '../state/app_state.dart';
 import '../state/diary_state.dart';
@@ -198,18 +200,24 @@ class AlertsService {
           await _plugin.cancel(_id(k));
         }
       }
+      final scheduled = <AlertMessage>[];
       for (final m in messages) {
-        await _plugin.zonedSchedule(
-          _id(m.kind),
-          m.title,
-          m.body,
-          tz.TZDateTime.from(m.at, tz.UTC),
-          _details(m.kind, m.body),
-          androidScheduleMode: mode,
-          payload: _payload(m),
-        );
+        try {
+          await _plugin.zonedSchedule(
+            _id(m.kind),
+            m.title,
+            m.body,
+            tz.TZDateTime.from(m.at, tz.UTC),
+            _details(m.kind, m.body),
+            androidScheduleMode: mode,
+            payload: _payload(m),
+          );
+          scheduled.add(m);
+        } on Object catch (e) {
+          debugPrint('Avviso ${m.kind.name} non programmato: $e');
+        }
       }
-      await AlertLog.update(prefs, pending: [...kept, ...split.late, ...messages], arrived: split.arrived);
+      await AlertLog.update(prefs, pending: [...kept, ...split.late, ...scheduled], arrived: split.arrived);
     } on Object catch (e) {
       debugPrint('Avvisi non programmati: $e');
     }
@@ -264,11 +272,18 @@ class AlertsService {
       final app = await _backgroundState(prefs, client);
       if (!app.onboarded) return;
       if (force || app.isStale) await app.refresh();
+      await prefs.reload();
+      if (_placeKey(prefs) != app.place.cacheKey) return;
       await WidgetBridge.save(prefs, app);
       await reschedule(prefs, app, DiaryState(prefs));
     } finally {
       client.close();
     }
+  }
+
+  static String? _placeKey(SharedPreferences prefs) {
+    final saved = prefs.getString(AppState.kPlace);
+    return saved == null ? null : Place.fromJson(jsonDecode(saved) as Map<String, dynamic>).cacheKey;
   }
 
   // --- Nessun sintomo dalla notifica ---

@@ -65,19 +65,23 @@ class DiaryState extends ChangeNotifier {
 
   // --- Caricamento ---
   void _read() {
-    _entries.clear();
+    _entries
+      ..clear()
+      ..addEntries(_stored().map((e) => MapEntry(e.key, e)));
+    final saved = _prefs.getStringList(kMeds);
+    medications = saved == null || listEquals(saved, _oldDefaults) ? defaultMedications : saved;
+  }
+
+  Iterable<DiaryEntry> _stored() sync* {
     final raw = _prefs.getString(kEntries);
     final list = raw == null ? null : _tryDecode(raw);
     for (final e in list is List ? list : const []) {
       try {
-        final entry = DiaryEntry.fromJson(e as Map<String, dynamic>);
-        _entries[entry.key] = entry;
+        yield DiaryEntry.fromJson(e as Map<String, dynamic>);
       } on Object {
         continue;
       }
     }
-    final saved = _prefs.getStringList(kMeds);
-    medications = saved == null || listEquals(saved, _oldDefaults) ? defaultMedications : saved;
   }
 
   static Object? _tryDecode(String raw) {
@@ -120,9 +124,10 @@ class DiaryState extends ChangeNotifier {
   }
 
   Future<void> delete(DateTime d) async {
-    _entries.remove(DiaryEntry.keyOf(d));
+    final key = DiaryEntry.keyOf(d);
+    _entries.remove(key);
     notifyListeners();
-    await _persist();
+    await _persist(removed: key);
   }
 
   // --- Farmaci ---
@@ -140,7 +145,18 @@ class DiaryState extends ChangeNotifier {
     await _prefs.setStringList(kMeds, medications);
   }
 
-  Future<void> _persist() => _prefs.setString(kEntries, jsonEncode(_entries.values.map((e) => e.toJson()).toList()));
+  Future<void> _persist({String? removed}) async {
+    await _prefs.reload();
+    var added = false;
+    for (final e in _stored()) {
+      if (e.key != removed && !_entries.containsKey(e.key)) {
+        _entries[e.key] = e;
+        added = true;
+      }
+    }
+    await _prefs.setString(kEntries, jsonEncode(_entries.values.map((e) => e.toJson()).toList()));
+    if (added) notifyListeners();
+  }
 
   // --- Misure arrivate dopo ---
   PollenSnapshot? _measured;

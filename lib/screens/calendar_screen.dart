@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../models/allergen.dart';
+import '../models/level.dart';
 import '../state/app_state.dart';
 import '../theme/palette.dart';
 import '../utils/format.dart';
@@ -10,8 +11,6 @@ import 'allergen_detail_screen.dart';
 
 class CalendarScreen extends StatelessWidget {
   const CalendarScreen({super.key});
-
-  static const _m = ['G', 'F', 'M', 'A', 'M', 'G', 'L', 'A', 'S', 'O', 'N', 'D'];
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +31,7 @@ class CalendarScreen extends StatelessWidget {
         for (var i = 0; i < 12; i++)
           Expanded(
             child: Text(
-              _m[i],
+              Fmt.initial(i + 1),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 11,
@@ -116,7 +115,7 @@ class CalendarScreen extends StatelessWidget {
               spacing: 12,
               runSpacing: 6,
               children: [
-                for (final (i, n) in [(0, 'Assente'), (1, 'Basso'), (2, 'Moderato'), (3, 'Alto')])
+                for (final (i, n) in [for (final l in Level.values.take(4)) (l.index, l.label)])
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [

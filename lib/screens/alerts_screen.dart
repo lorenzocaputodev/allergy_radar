@@ -78,10 +78,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
       1 => 'domani',
       _ => 'dopodomani',
     };
-    DateTime nextAt(int minutes) {
-      final at = DateTime(now.year, now.month, now.day, minutes ~/ 60, minutes % 60);
-      return at.isAfter(now) ? at : DateTime(now.year, now.month, now.day + 1, minutes ~/ 60, minutes % 60);
-    }
+    DateTime nextAt(int minutes) => AlertPlanner.nextAt(now, minutes);
 
     String next(DateTime at) => '${day(at)} alle ${AlertSettingsEditor.time(at.hour * 60 + at.minute)}';
     final briefing = planned[AlertKind.briefing];

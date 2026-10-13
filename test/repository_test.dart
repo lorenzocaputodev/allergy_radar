@@ -66,6 +66,12 @@ void main() {
     expect(snap[Allergens.hazel.id]!.kind, DataKind.estimate);
   });
 
+  test('previsione senza abbastanza ore per oggi: stima, non il valore di domani', () async {
+    final repo = repository(DateTime(2026, 10, 4, 10));
+    final snap = repo.build(await repo.fetch(Place.lecce));
+    expect(snap[Allergens.grass.id]!.kind, DataKind.estimate);
+  });
+
   test('misura troppo vecchia: si torna alla stima', () async {
     final repo = repository(DateTime(2026, 10, 5, 10));
     final snap = repo.build(await repo.fetch(bologna));
@@ -74,7 +80,7 @@ void main() {
   });
 
   test('ISPRA giù: la previsione arriva lo stesso', () async {
-    final repo = repository(DateTime(2026, 9, 25, 10), ispraDown: true);
+    final repo = repository(DateTime(2026, 9, 30, 10), ispraDown: true);
     final snap = repo.build(await repo.fetch(bologna));
     expect(snap[Allergens.grass.id]!.kind, DataKind.forecast);
     expect(snap[Allergens.parietaria.id]!.kind, DataKind.estimate);

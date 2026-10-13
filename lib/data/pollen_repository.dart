@@ -158,7 +158,7 @@ class PollenRepository {
       for (final e in days.entries)
         if (!e.key.isBefore(today)) _day(a, e.key, e.value.reduce((x, y) => x + y) / e.value.length),
     ];
-    if (series.isEmpty) return null;
+    if (series.isEmpty || series.first.date != today) return null;
     final midnight = today.plusDays(1);
     final hourly = <DayValue>[];
     for (var i = 0; i < om.times.length; i++) {
