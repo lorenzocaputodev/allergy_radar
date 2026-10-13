@@ -20,16 +20,21 @@ class Allergen {
     required this.id,
     required this.name,
     required this.family,
+    required this.habitat,
+    required this.crossReactions,
     required this.icon,
     required this.pollnetId,
     required this.thresholds,
     required this.calendar,
     this.openMeteoKeys = const [],
+    this.inkPlate = false,
   });
 
   final String id;
   final String name;
   final String family;
+  final String habitat;
+  final String crossReactions;
   final IconData icon;
 
   final List<String> openMeteoKeys;
@@ -42,6 +47,10 @@ class Allergen {
 
   List<int> calendarFor(Area area) => calendar[area]!;
 
+  final bool inkPlate;
+
+  String get plate => 'assets/images/plants/$id.webp';
+
   bool get hasForecast => openMeteoKeys.isNotEmpty;
 }
 
@@ -50,6 +59,8 @@ abstract final class Allergens {
     id: 'grass',
     name: 'Graminacee',
     family: 'Poacee',
+    habitat: 'Prati, campi incolti e bordi delle strade.',
+    crossReactions: 'Tra tutte le graminacee; a volte pomodoro, melone, anguria, kiwi e arancia.',
     icon: Icons.grass,
     openMeteoKeys: ['grass_pollen'],
     pollnetId: 1352,
@@ -65,6 +76,8 @@ abstract final class Allergens {
     id: 'parietaria',
     name: 'Parietaria',
     family: 'Urticacee',
+    habitat: 'Muri, ruderi e bordi delle strade, anche in città.',
+    crossReactions: 'Rare con altri pollini e con i cibi.',
     icon: Icons.local_florist_outlined,
     pollnetId: 1362,
     thresholds: Thresholds(2, 20, 70),
@@ -79,6 +92,8 @@ abstract final class Allergens {
     id: 'olive',
     name: 'Olivo',
     family: 'Oleacee',
+    habitat: 'Oliveti, giardini e viali, soprattutto al Centro-Sud.',
+    crossReactions: 'Frassino e ligustro.',
     icon: Icons.eco_outlined,
     openMeteoKeys: ['olive_pollen'],
     pollnetId: 1391,
@@ -94,6 +109,8 @@ abstract final class Allergens {
     id: 'cypress',
     name: 'Cipresso',
     family: 'Cupressacee',
+    habitat: 'Viali, cimiteri e siepi; anche tuie e ginepri.',
+    crossReactions: 'Tuia e ginepro; a volte pesca e agrumi.',
     icon: Icons.park_outlined,
     pollnetId: 1330,
     thresholds: Thresholds(4, 30, 90),
@@ -108,6 +125,8 @@ abstract final class Allergens {
     id: 'oak',
     name: 'Quercia',
     family: 'Fagacee',
+    habitat: 'Boschi di collina e parchi; il leccio anche in città e sulle coste.',
+    crossReactions: 'Betulla, nocciolo e castagno.',
     icon: Icons.nature_outlined,
     pollnetId: 1384,
     thresholds: Thresholds(1, 20, 40),
@@ -122,6 +141,8 @@ abstract final class Allergens {
     id: 'plantago',
     name: 'Piantaggine',
     family: 'Plantaginacee',
+    habitat: 'Prati, bordi delle strade e terreni calpestati.',
+    crossReactions: 'A volte melone.',
     icon: Icons.grain,
     pollnetId: 1350,
     thresholds: Thresholds(0.1, 0.4, 2),
@@ -136,6 +157,8 @@ abstract final class Allergens {
     id: 'mugwort',
     name: 'Artemisia',
     family: 'Composite',
+    habitat: 'Incolti, bordi delle strade e massicciate.',
+    crossReactions: 'Ambrosia; sedano, carota, finocchio e alcune spezie.',
     icon: Icons.filter_vintage_outlined,
     openMeteoKeys: ['mugwort_pollen'],
     pollnetId: 1379,
@@ -151,6 +174,8 @@ abstract final class Allergens {
     id: 'ragweed',
     name: 'Ambrosia',
     family: 'Composite',
+    habitat: 'Campi incolti e cantieri, soprattutto in Lombardia e Piemonte.',
+    crossReactions: 'Artemisia; melone, anguria, banana e zucchina.',
     icon: Icons.spa_outlined,
     openMeteoKeys: ['ragweed_pollen'],
     pollnetId: 1378,
@@ -166,6 +191,8 @@ abstract final class Allergens {
     id: 'birch',
     name: 'Betulla e ontano',
     family: 'Betulacee',
+    habitat: 'Betulla in parchi e montagna al Nord; ontano lungo i fiumi.',
+    crossReactions: 'Nocciolo, carpino e quercia; mela, pera, pesca, ciliegia, nocciola, carota e sedano crudi.',
     icon: Icons.forest_outlined,
     openMeteoKeys: ['birch_pollen', 'alder_pollen'],
     pollnetId: 1323,
@@ -181,6 +208,8 @@ abstract final class Allergens {
     id: 'hazel',
     name: 'Nocciolo e carpino',
     family: 'Corilacee',
+    habitat: 'Noccioleti, siepi e boschi; il carpino nero in collina.',
+    crossReactions: 'Betulla e ontano; nocciola e mela.',
     icon: Icons.eco,
     pollnetId: 1329,
     thresholds: Thresholds(0.5, 16, 50),
@@ -195,6 +224,8 @@ abstract final class Allergens {
     id: 'ash',
     name: 'Frassino',
     family: 'Oleacee',
+    habitat: 'Boschi e viali; l’orniello sulle colline del Centro-Sud.',
+    crossReactions: 'Olivo e ligustro.',
     icon: Icons.nature_people_outlined,
     pollnetId: 1417,
     thresholds: Thresholds(0.5, 5, 25),
@@ -209,6 +240,8 @@ abstract final class Allergens {
     id: 'plane',
     name: 'Platano',
     family: 'Platanacee',
+    habitat: 'Viali e piazze delle città.',
+    crossReactions: 'A volte nocciola, arachide e mela.',
     icon: Icons.location_city_outlined,
     pollnetId: 1351,
     thresholds: Thresholds(1, 20, 40),
@@ -223,6 +256,8 @@ abstract final class Allergens {
     id: 'chestnut',
     name: 'Castagno',
     family: 'Fagacee',
+    habitat: 'Boschi di collina e montagna.',
+    crossReactions: 'Quercia, betulla e nocciolo.',
     icon: Icons.terrain_outlined,
     pollnetId: 1386,
     thresholds: Thresholds(1, 20, 40),
@@ -237,6 +272,8 @@ abstract final class Allergens {
     id: 'chenopod',
     name: 'Chenopodio',
     family: 'Amarantacee',
+    habitat: 'Incolti, orti e bordi delle strade.',
+    crossReactions: 'Amaranto e salsola.',
     icon: Icons.yard_outlined,
     pollnetId: 1327,
     thresholds: Thresholds(0.1, 5, 25),
@@ -251,6 +288,9 @@ abstract final class Allergens {
     id: 'alternaria',
     name: 'Alternaria',
     family: 'Muffa',
+    habitat: 'Terreno e piante in decomposizione; spore nell’aria nei giorni caldi e ventosi.',
+    crossReactions: 'Altre muffe, come il Cladosporium.',
+    inkPlate: true,
     icon: Icons.bubble_chart_outlined,
     pollnetId: 1364,
     thresholds: Thresholds(1, 10, 100),

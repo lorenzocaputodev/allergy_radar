@@ -57,6 +57,7 @@ flutter:
 
   assets:
     - assets/data/
+    - assets/images/plants/
 
   # Font inclusi: nessuna chiamata a Google Fonts a runtime.
   fonts:

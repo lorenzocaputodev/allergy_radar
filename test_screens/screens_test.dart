@@ -12,6 +12,7 @@ import 'package:allergy_radar/models/pollen_snapshot.dart';
 import 'package:allergy_radar/screens/alerts_screen.dart';
 import 'package:allergy_radar/screens/allergen_detail_screen.dart';
 import 'package:allergy_radar/screens/home_shell.dart';
+import 'package:allergy_radar/screens/info_screen.dart';
 import 'package:allergy_radar/screens/log_entry_screen.dart';
 import 'package:allergy_radar/screens/notifications_screen.dart';
 import 'package:allergy_radar/screens/onboarding_screen.dart';
@@ -101,6 +102,12 @@ void main() {
         child: MaterialApp(debugShowCheckedModeBanner: false, theme: AppTheme.of(b), home: home),
       ),
     );
+    await tester.pumpAndSettle();
+    await tester.runAsync(() async {
+      for (final e in find.byType(Image).evaluate()) {
+        await precacheImage((e.widget as Image).image, e);
+      }
+    });
     await tester.pumpAndSettle();
     if (before != null) await before();
     await expectLater(find.byType(MaterialApp), matchesGoldenFile('out/$name.png'));
@@ -242,6 +249,10 @@ void main() {
       );
     });
   }
+
+  testWidgets('fonti', (tester) async {
+    await shot(tester, '14_fonti', const InfoScreen(), s: await state(Place.lecce, lecceNow));
+  });
 
   testWidgets('campanella', (tester) async {
     final now = DateTime.now();

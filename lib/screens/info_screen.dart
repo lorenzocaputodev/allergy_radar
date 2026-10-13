@@ -33,6 +33,13 @@ class InfoScreen extends StatelessWidget {
                 text:
                     'Se mancano previsione e misura: il valore tipico del mese nella tua area, dalla media 2016–2025.',
               ),
+              _Item(
+                icon: Icons.local_florist_outlined,
+                title: 'Illustrazioni',
+                text:
+                    'Tavole botaniche di pubblico dominio da Wikimedia Commons: Thomé (1885), Köhler (1887–1898), '
+                    'Lindman (1901–1926), Duhamel du Monceau (1801–1819), Flora Batava; l’Alternaria da Elliott (1917).',
+              ),
             ],
           ),
           const SizedBox(height: 14),

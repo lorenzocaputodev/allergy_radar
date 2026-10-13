@@ -215,8 +215,86 @@ class AllergenDetailScreen extends StatelessWidget {
               ),
             ],
           ),
+          const SizedBox(height: 14),
+          _Facts(allergen: a),
         ],
       ),
+    );
+  }
+}
+
+// --- Da sapere ---
+class _Facts extends StatelessWidget {
+  const _Facts({required this.allergen});
+
+  final Allergen allergen;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    final a = allergen;
+    Widget fact(IconData icon, String title, String text) => Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 20, color: p.pineText),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: p.ink),
+              ),
+              const SizedBox(height: 2),
+              Text(text, style: TextStyle(fontSize: 14, height: 1.4, color: p.ink2)),
+            ],
+          ),
+        ),
+      ],
+    );
+    return SectionCard(
+      children: [
+        Text('Da sapere', style: Theme.of(context).textTheme.titleLarge),
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SizedBox(
+                width: 120,
+                child: Stack(
+                  children: [
+                    Positioned.fill(
+                      child: Image.asset(
+                        a.plate,
+                        fit: BoxFit.contain,
+                        color: a.inkPlate ? p.ink : null,
+                        colorBlendMode: a.inkPlate ? BlendMode.srcIn : null,
+                        semanticLabel: 'Illustrazione botanica: ${a.name}',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    fact(Icons.place_outlined, 'Dove cresce', a.habitat),
+                    const SizedBox(height: 12),
+                    fact(Icons.sync_alt, 'Reazioni crociate', a.crossReactions),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        Text(
+          'Le reazioni crociate non capitano a tutti: parlane con l’allergologo.',
+          style: TextStyle(fontSize: 12, color: p.ink3),
+        ),
+      ],
     );
   }
 }
