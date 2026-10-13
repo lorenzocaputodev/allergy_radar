@@ -322,7 +322,19 @@ void main() {
   }
 
   testWidgets('ricerca luogo', (tester) async {
-    await shot(tester, '06_luogo', const PlaceSearchScreen(), s: await state(Place.lecce, lecceNow));
+    final saved = [Place.lecce, bologna, const Place(name: 'Ugento', region: 'Puglia', lat: 39.93, lon: 18.16)];
+    await shot(
+      tester,
+      '06_luogo',
+      const PlaceSearchScreen(),
+      s: await state(
+        Place.lecce,
+        lecceNow,
+        extra: {
+          'places': jsonEncode([for (final p in saved) p.toJson()]),
+        },
+      ),
+    );
   });
 
   for (final (tab, h) in [('Diario', 1700.0)]) {

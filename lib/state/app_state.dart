@@ -24,13 +24,30 @@ class AppState extends ChangeNotifier {
   static const kTheme = 'theme';
   static const kAlerts = 'alerts';
   static const kWidgetTheme = 'widget_theme';
+  static const kPlaces = 'places';
+  static const kFollowLocation = 'follow_location';
   static const _kCache = 'cache';
 
-  static const backupKeys = [kPlace, kFollowed, kThresholds, kOnboarded, kTheme, kAlerts, kWidgetTheme];
+  static const backupKeys = [
+    kPlace,
+    kFollowed,
+    kThresholds,
+    kOnboarded,
+    kTheme,
+    kAlerts,
+    kWidgetTheme,
+    kPlaces,
+    kFollowLocation,
+  ];
+
+  static const maxSaved = 5;
+  static const followKm = 5.0;
 
   static const freshFor = Duration(hours: 1);
 
   Place place = Place.lecce;
+  List<Place> saved = const [];
+  bool followLocation = false;
   static final _defaultFollowed = {Allergens.grass.id, Allergens.parietaria.id};
 
   Set<String> followed = {..._defaultFollowed};
@@ -93,6 +110,14 @@ class AppState extends ChangeNotifier {
     onboarded = read(() => _prefs.getBool(kOnboarded) ?? false, false);
     final p = read(() => _prefs.getString(kPlace), null);
     place = p == null ? Place.lecce : read(() => Place.fromJson(jsonDecode(p) as Map<String, dynamic>), Place.lecce);
+    final s = read(() => _prefs.getString(kPlaces), null);
+    saved = s == null
+        ? (p == null ? const [] : [place])
+        : read(
+            () => [for (final j in jsonDecode(s) as List) Place.fromJson(j as Map<String, dynamic>)],
+            const <Place>[],
+          );
+    followLocation = read(() => _prefs.getBool(kFollowLocation) ?? false, false);
     final f = read(() => _prefs.getStringList(kFollowed), null);
     followed = f == null ? {..._defaultFollowed} : f.where((id) => Allergens.byId(id) != null).toSet();
     final t = read(() => _prefs.getString(kThresholds), null);
@@ -172,13 +197,51 @@ class AppState extends ChangeNotifier {
   }
 
   // --- Impostazioni ---
-  Future<void> setPlace(Place p) async {
+  Future<void> setPlace(Place p, {bool following = false}) async {
     place = p;
     snapshot = null;
+    if (!following) {
+      followLocation = false;
+      saved = [p, ...saved.where((s) => s.cacheKey != p.cacheKey)].take(maxSaved).toList();
+      await _prefs.setBool(kFollowLocation, false);
+      await _savePlaces();
+    }
     await _prefs.setString(kPlace, jsonEncode(p.toJson()));
     await _prefs.remove(_kCache);
     notifyListeners();
     await refresh();
+  }
+
+  Future<void> forget(Place p) async {
+    saved = saved.where((s) => s.cacheKey != p.cacheKey).toList();
+    notifyListeners();
+    await _savePlaces();
+  }
+
+  Future<void> _savePlaces() => _prefs.setString(kPlaces, jsonEncode([for (final s in saved) s.toJson()]));
+
+  Future<void> startFollowing(Place here) async {
+    followLocation = true;
+    await _prefs.setBool(kFollowLocation, true);
+    await setPlace(here, following: true);
+  }
+
+  Future<void> stopFollowing() async {
+    followLocation = false;
+    notifyListeners();
+    await _prefs.setBool(kFollowLocation, false);
+  }
+
+  Future<void> follow(Future<Place> Function() locate) async {
+    if (!followLocation) return;
+    final Place here;
+    try {
+      here = await locate();
+    } on Object {
+      return;
+    }
+    if (!followLocation || distanceKm(place.lat, place.lon, here.lat, here.lon) < followKm) return;
+    await setPlace(here, following: true);
   }
 
   Future<void> setFollowed(Allergen a, bool on) async {

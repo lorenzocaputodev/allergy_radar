@@ -21,12 +21,12 @@ typedef ReverseGeocoder = Future<({String name, String? region})?> Function(doub
 class LocationService {
   static const fallbackName = 'La mia posizione';
 
-  static Future<Place> current({ReverseGeocoder? reverse}) async {
+  static Future<Place> current({ReverseGeocoder? reverse, bool ask = true}) async {
     if (!await Geolocator.isLocationServiceEnabled()) {
       throw const LocationException('La localizzazione del telefono è spenta.');
     }
     var permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) permission = await Geolocator.requestPermission();
+    if (permission == LocationPermission.denied && ask) permission = await Geolocator.requestPermission();
     if (permission == LocationPermission.denied) {
       throw const LocationException('Permesso negato. Puoi sempre cercare una città.');
     }

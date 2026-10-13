@@ -65,7 +65,11 @@ class ProfileScreen extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
-                  Icon(Icons.place_outlined, color: p.pineText, size: 28),
+                  Icon(
+                    state.followLocation ? Icons.near_me_outlined : Icons.place_outlined,
+                    color: p.pineText,
+                    size: 28,
+                  ),
                   const SizedBox(width: 14),
                   Expanded(
                     child: Column(

@@ -9,11 +9,11 @@ import '../services/open_meteo_client.dart';
 import '../theme/palette.dart';
 
 class PlaceSearch extends StatefulWidget {
-  const PlaceSearch({super.key, required this.onSelected, this.selected, this.autofocus = false});
+  const PlaceSearch({super.key, required this.onSelected, this.selected, this.showLocate = true});
 
   final void Function(Place) onSelected;
   final Place? selected;
-  final bool autofocus;
+  final bool showLocate;
 
   @override
   State<PlaceSearch> createState() => _PlaceSearchState();
@@ -95,22 +95,23 @@ class _PlaceSearchState extends State<PlaceSearch> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        OutlinedButton.icon(
-          onPressed: _locating ? null : _useLocation,
-          icon: _locating
-              ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-              : const Icon(Icons.my_location),
-          label: const Text('Usa la mia posizione'),
-          style: OutlinedButton.styleFrom(
-            minimumSize: const Size.fromHeight(52),
-            backgroundColor: p.card,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        if (widget.showLocate) ...[
+          OutlinedButton.icon(
+            onPressed: _locating ? null : _useLocation,
+            icon: _locating
+                ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                : const Icon(Icons.my_location),
+            label: const Text('Usa la mia posizione'),
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size.fromHeight(52),
+              backgroundColor: p.card,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            ),
           ),
-        ),
-        if (_found case final found?) ...[const SizedBox(height: 10), _FoundPlace(place: found)],
-        const SizedBox(height: 12),
+          if (_found case final found?) ...[const SizedBox(height: 10), _FoundPlace(place: found)],
+          const SizedBox(height: 12),
+        ],
         TextField(
-          autofocus: widget.autofocus,
           onChanged: _onChanged,
           textInputAction: TextInputAction.search,
           decoration: InputDecoration(
@@ -200,7 +201,7 @@ class PlacePrivacyNote extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Per i pollini usiamo solo la zona, arrotondata a circa 1 km. Con «Usa la mia posizione» il nome del comune lo '
+              'Per i pollini usiamo solo la zona, arrotondata a circa 1 km. Se usi la tua posizione, il nome del comune lo '
               'trova il servizio di localizzazione di Android, che può inviare le coordinate a Google.',
               style: TextStyle(fontSize: 13, height: 1.45, color: p.ink2),
             ),

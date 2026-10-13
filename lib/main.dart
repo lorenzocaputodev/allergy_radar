@@ -16,6 +16,7 @@ import 'screens/log_entry_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'services/alert_planner.dart';
 import 'services/alerts_service.dart';
+import 'services/location_service.dart';
 import 'services/open_meteo_client.dart';
 import 'services/pollnet_client.dart';
 import 'services/widget_bridge.dart';
@@ -69,6 +70,7 @@ Future<void> main() async {
     await reloadDiary();
     await state.syncCache();
     reschedule();
+    if (state.onboarded) await state.follow(() => LocationService.current(ask: false));
     if (state.onboarded && state.isStale) await state.refresh();
   }
 
@@ -104,6 +106,7 @@ Future<void> main() async {
   await AlertsService.init();
   if (state.onboarded) await AlertsService.startBackground();
   reschedule();
+  if (state.onboarded) await state.follow(() => LocationService.current(ask: false));
   if (state.onboarded && state.isStale) await state.refresh();
 }
 

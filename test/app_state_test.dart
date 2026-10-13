@@ -152,4 +152,54 @@ void main() {
     expect(state.alerts.anyEnabled, isTrue);
     expect(state.followed, {'grass'});
   });
+
+  group('luoghi', () {
+    Place at(String name, double lat) => Place(name: name, lat: lat, lon: 18.17);
+
+    Future<AppState> fresh() async {
+      SharedPreferences.setMockInitialValues({'onboarded': true});
+      final state = AppState(repository(DateTime(2026, 9, 30, 10)), await SharedPreferences.getInstance());
+      await state.load();
+      return state;
+    }
+
+    test('i luoghi scelti si salvano: il più recente in cima, niente doppioni, al massimo 5', () async {
+      final state = await fresh();
+      for (final (i, name) in ['A', 'B', 'C', 'D', 'E', 'F'].indexed) {
+        await state.setPlace(at(name, 40.0 + i));
+      }
+      await state.setPlace(at('D di nuovo', 43));
+      expect(state.saved.map((p) => p.name), ['D di nuovo', 'F', 'E', 'C', 'B']);
+
+      await state.forget(state.saved[1]);
+      final again = AppState(repository(DateTime(2026, 9, 30, 10)), await SharedPreferences.getInstance());
+      await again.load();
+      expect(again.saved.map((p) => p.name), ['D di nuovo', 'E', 'C', 'B']);
+      expect(AppState.backupKeys, containsAll([AppState.kPlaces, AppState.kFollowLocation]));
+    });
+
+    test('seguire la posizione: cambia luogo solo oltre 5 km e non riempie i luoghi salvati', () async {
+      final state = await fresh();
+      await state.startFollowing(at('Qui', 40.35));
+      expect(state.followLocation, isTrue);
+      expect(state.place.name, 'Qui');
+      expect(state.saved, isEmpty);
+
+      await state.follow(() async => at('Poco più in là', 40.37));
+      expect(state.place.name, 'Qui');
+      await state.follow(() async => at('Altrove', 40.5));
+      expect(state.place.name, 'Altrove');
+      await state.follow(() async => throw Exception('GPS spento'));
+      expect(state.place.name, 'Altrove');
+    });
+
+    test('scegliere un luogo a mano smette di seguire la posizione', () async {
+      final state = await fresh();
+      await state.startFollowing(at('Qui', 40.35));
+      await state.setPlace(at('Roma', 41.9));
+      expect(state.followLocation, isFalse);
+      await state.follow(() async => at('Altrove', 40.5));
+      expect(state.place.name, 'Roma');
+    });
+  });
 }

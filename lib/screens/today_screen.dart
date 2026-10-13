@@ -63,7 +63,7 @@ class TodayScreen extends StatelessWidget {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.place_outlined, color: p.ink),
+                              Icon(s.followLocation ? Icons.near_me_outlined : Icons.place_outlined, color: p.ink),
                               const SizedBox(width: 6),
                               Flexible(
                                 child: Text(
