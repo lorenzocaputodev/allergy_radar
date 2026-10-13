@@ -408,6 +408,22 @@ void main() {
     );
   });
 
+  for (final (name, period) in [('3_mesi', '3 mesi'), ('1_anno', '1 anno')]) {
+    testWidgets('andamento $period', (tester) async {
+      await shot(
+        tester,
+        '09_andamento_$name',
+        const TrendScreen(),
+        s: await state(Place.lecce, lecceNow, extra: {'diary': jsonEncode(_yearDiary())}),
+        height: 1100,
+        before: () async {
+          await tester.tap(find.text(period));
+          await tester.pumpAndSettle();
+        },
+      );
+    });
+  }
+
   for (final (name, tab) in [('oggi', 'Oggi'), ('diario', 'Diario'), ('calendario', 'Calendario')]) {
     testWidgets('readme $name', (tester) async {
       await shot(
@@ -504,4 +520,18 @@ List<Map<String, dynamic>> _sampleDiary() {
     );
   }
   return out;
+}
+
+List<Map<String, dynamic>> _yearDiary() {
+  final today = DiaryEntry.day(DateTime.now());
+  return [
+    for (var i = 1; i < 365; i++)
+      if (i % 5 != 0)
+        () {
+          final day = today.subtract(Duration(days: i));
+          final par = Allergens.parietaria.calendarFor(Area.south)[day.month - 1];
+          final sym = par >= 3 ? (i.isEven ? 3 : 2) : (par == 2 ? (i % 3 == 0 ? 2 : 1) : (i % 4 == 0 ? 1 : 0));
+          return DiaryEntry(date: day, nose: sym, pollen: {'parietaria': par}).toJson();
+        }(),
+  ];
 }

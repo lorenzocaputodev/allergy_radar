@@ -5,10 +5,10 @@ import '../models/allergen.dart';
 import '../models/diary_entry.dart';
 import '../models/level.dart';
 import '../models/pollen_snapshot.dart';
+import '../models/trend.dart';
 import '../state/app_state.dart';
 import '../state/diary_state.dart';
 import '../theme/palette.dart';
-import '../utils/days.dart';
 import '../utils/format.dart';
 import '../widgets/level_widgets.dart';
 import '../widgets/page_list.dart';
@@ -22,7 +22,6 @@ class TrendScreen extends StatefulWidget {
 }
 
 class _TrendScreenState extends State<TrendScreen> {
-  static const _days = 30;
   static const _periods = {30: '30 giorni', 90: '3 mesi', 365: '1 anno'};
   static const _since = {30: 'negli ultimi 30 giorni', 90: 'negli ultimi 3 mesi', 365: 'nell’ultimo anno'};
   String? _allergenId;
@@ -35,8 +34,6 @@ class _TrendScreenState extends State<TrendScreen> {
     final choices = app.followedAllergens.isEmpty ? Allergens.all : app.followedAllergens;
     final now = DateTime.now();
     final a = Allergens.byId(_allergenId ?? '') ?? _mostTelling(diary, app, choices, now) ?? choices.first;
-    final today = DiaryEntry.day(now);
-    final days = [for (var i = _days - 1; i >= 0; i--) today.plusDays(-i)];
     final insight = diary.insight(a, now, threshold: app.thresholdOf(a), days: _period);
     final logged = diary.withLevel(a, now, _period).length;
 
@@ -72,7 +69,12 @@ class _TrendScreenState extends State<TrendScreen> {
           else
             _Answer(insight: insight, period: _since[_period]!),
           const SizedBox(height: 14),
-          _DayByDay(allergen: a, days: days, diary: diary),
+          _Trend(
+            key: ValueKey((a.id, _period)),
+            allergen: a,
+            step: TrendBucket.stepFor(_period),
+            buckets: TrendBucket.build(entries: diary.entries, allergenId: a.id, period: _period, today: now),
+          ),
           const SizedBox(height: 12),
           Text(
             'È un confronto, non una diagnosi: portalo all’allergologo.',
@@ -219,63 +221,99 @@ class _Answer extends StatelessWidget {
   }
 }
 
-// --- Giorno per giorno ---
-class _DayByDay extends StatefulWidget {
-  const _DayByDay({required this.allergen, required this.days, required this.diary});
+// --- Andamento nel tempo ---
+class _Trend extends StatefulWidget {
+  const _Trend({super.key, required this.allergen, required this.step, required this.buckets});
 
   final Allergen allergen;
-  final List<DateTime> days;
-  final DiaryState diary;
+  final TrendStep step;
+  final List<TrendBucket> buckets;
 
   @override
-  State<_DayByDay> createState() => _DayByDayState();
+  State<_Trend> createState() => _TrendState();
 }
 
-class _DayByDayState extends State<_DayByDay> {
+class _TrendState extends State<_Trend> {
   static const _barHeight = 90.0;
-  late int _selected = widget.days.length - 1;
+  late int _selected = widget.buckets.length - 1;
 
   void _pick(double dx, double width) {
-    final i = (dx / width * widget.days.length).floor().clamp(0, widget.days.length - 1);
+    final i = (dx / width * widget.buckets.length).floor().clamp(0, widget.buckets.length - 1);
     if (i != _selected) setState(() => _selected = i);
+  }
+
+  static String _capital(String s) => '${s[0].toUpperCase()}${s.substring(1)}';
+
+  String _tick(int i) {
+    final b = widget.buckets[i];
+    final back = widget.buckets.length - 1 - i;
+    final every = widget.step == TrendStep.day ? 7 : 4;
+    return switch (widget.step) {
+      TrendStep.month => _capital(Fmt.month(b.from.month))[0],
+      _ when back % every != 0 => '',
+      _ => back == 0 ? 'Oggi' : '${b.from.day}/${b.from.month}',
+    };
+  }
+
+  String _title(TrendBucket b) => switch (widget.step) {
+    TrendStep.day => Fmt.longDate(b.from),
+    TrendStep.week => '${Fmt.shortDate(b.from)} – ${Fmt.shortDate(b.to)}',
+    TrendStep.month => '${_capital(Fmt.month(b.from.month))} ${b.from.year}',
+  };
+
+  String _detail(TrendBucket b) {
+    final pollen = b.pollen;
+    final name = widget.allergen.name;
+    if (widget.step == TrendStep.day) {
+      final e = b.entries.firstOrNull;
+      if (e == null) return 'Non registrato';
+      return [
+        DiaryEntry.symptomNames[e.severity],
+        if (pollen != null) '$name ${pollen.label.toLowerCase()}',
+        if (e.meds.isNotEmpty) e.meds.join(', '),
+      ].join(' · ');
+    }
+    final mean = b.symptoms;
+    if (mean == null) return 'Nessun giorno registrato';
+    return [
+      '${b.logged} ${b.logged == 1 ? 'giorno registrato' : 'giorni registrati'}',
+      'sintomi in media ${Fmt.number(mean)} su 3',
+      if (pollen != null) '$name fino a ${pollen.label.toLowerCase()}',
+    ].join(' · ');
   }
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    final days = widget.days;
-    final diary = widget.diary;
-    final allergen = widget.allergen;
+    final buckets = widget.buckets;
+    final step = widget.step;
     TextStyle label() => TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: p.ink2);
 
-    Widget columns(Widget Function(DateTime d, DiaryEntry? e) cell) => Row(
+    Widget columns(Widget Function(int i, TrendBucket b) cell) => Row(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        for (final (i, d) in days.indexed) ...[
+        for (final (i, b) in buckets.indexed) ...[
           Expanded(
             child: DecoratedBox(
               decoration: BoxDecoration(
                 color: i == _selected ? p.pine.withValues(alpha: 0.22) : null,
                 borderRadius: BorderRadius.circular(4),
               ),
-              child: cell(d, diary.entryFor(d)),
+              child: cell(i, b),
             ),
           ),
-          if (d != days.last) const SizedBox(width: 2),
+          if (i < buckets.length - 1) const SizedBox(width: 2),
         ],
       ],
     );
 
-    final day = days[_selected];
-    final entry = diary.entryFor(day);
-    final pollen = entry?.pollen[allergen.id];
-    final detail = entry == null
-        ? 'Non registrato'
-        : [
-            DiaryEntry.symptomNames[entry.severity],
-            if (pollen != null) '${allergen.name} ${Level.fromIndex(pollen).label.toLowerCase()}',
-            if (entry.meds.isNotEmpty) entry.meds.join(', '),
-          ].join(' · ');
+    final selected = buckets[_selected];
+    final day = step == TrendStep.day ? selected.from : null;
+    final (title, hint) = switch (step) {
+      TrendStep.day => ('Giorno per giorno', 'un giorno'),
+      TrendStep.week => ('Settimana per settimana', 'una settimana'),
+      TrendStep.month => ('Mese per mese', 'un mese'),
+    };
 
     return SectionCard(
       gap: 10,
@@ -283,9 +321,9 @@ class _DayByDayState extends State<_DayByDay> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Giorno per giorno', style: Theme.of(context).textTheme.titleLarge),
+            Text(title, style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 2),
-            Text('Tocca o trascina sul grafico per vedere un giorno.', style: TextStyle(fontSize: 13, color: p.ink3)),
+            Text('Tocca o trascina sul grafico per vedere $hint.', style: TextStyle(fontSize: 13, color: p.ink3)),
           ],
         ),
         LayoutBuilder(
@@ -296,14 +334,14 @@ class _DayByDayState extends State<_DayByDay> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(allergen.name, style: label()),
+                Text(widget.allergen.name, style: label()),
                 const SizedBox(height: 6),
-                columns((d, e) {
-                  final l = e?.pollen[allergen.id];
+                columns((i, b) {
+                  final l = b.pollen;
                   return Container(
                     height: 16,
                     decoration: BoxDecoration(
-                      color: l == null ? null : p.fill(Level.fromIndex(l)),
+                      color: l == null ? null : p.fill(l),
                       borderRadius: BorderRadius.circular(3),
                       border: l == null ? Border.all(color: p.line) : null,
                     ),
@@ -314,33 +352,30 @@ class _DayByDayState extends State<_DayByDay> {
                 const SizedBox(height: 6),
                 SizedBox(
                   height: _barHeight,
-                  child: columns(
-                    (d, e) => Align(
+                  child: columns((i, b) {
+                    final v = b.symptoms;
+                    return Align(
                       alignment: Alignment.bottomCenter,
                       child: Container(
-                        height: e == null || e.severity == 0 ? 3 : e.severity / 3 * _barHeight,
+                        height: v == null || v == 0 ? 3 : v / 3 * _barHeight,
                         decoration: BoxDecoration(
-                          color: e == null ? p.line : p.symFill[e.severity == 0 ? 1 : e.severity],
+                          color: v == null ? p.line : p.symFill[v.round().clamp(1, 3)],
                           borderRadius: const BorderRadius.vertical(top: Radius.circular(3)),
                         ),
                       ),
-                    ),
-                  ),
+                    );
+                  }),
                 ),
                 const SizedBox(height: 6),
-                columns((d, e) {
-                  final back = days.last.daysSince(d);
-                  if (back % 7 != 0) return const SizedBox(height: 14);
+                columns((i, b) {
+                  final text = _tick(i);
+                  if (text.isEmpty) return const SizedBox(height: 14);
                   return SizedBox(
                     height: 14,
                     child: OverflowBox(
                       maxWidth: 48,
-                      alignment: back == 0 ? Alignment.centerRight : Alignment.center,
-                      child: Text(
-                        back == 0 ? 'Oggi' : '${d.day}/${d.month}',
-                        softWrap: false,
-                        style: TextStyle(fontSize: 10, color: p.ink3),
-                      ),
+                      alignment: text == 'Oggi' ? Alignment.centerRight : Alignment.center,
+                      child: Text(text, softWrap: false, style: TextStyle(fontSize: 10, color: p.ink3)),
                     ),
                   );
                 }),
@@ -353,27 +388,30 @@ class _DayByDayState extends State<_DayByDay> {
           borderRadius: BorderRadius.circular(14),
           child: InkWell(
             borderRadius: BorderRadius.circular(14),
-            onTap: () =>
-                Navigator.of(context)
-                    .push(MaterialPageRoute<void>(builder: (_) => LogEntryScreen(date: day), fullscreenDialog: true)),
+            onTap: day == null
+                ? null
+                : () => Navigator.of(context)
+                      .push(MaterialPageRoute<void>(builder: (_) => LogEntryScreen(date: day), fullscreenDialog: true)),
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(14, 10, 8, 10),
+              padding: EdgeInsets.fromLTRB(14, 10, day == null ? 14 : 8, 10),
               child: Row(
                 children: [
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(Fmt.longDate(day), style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
-                        Text(detail, style: TextStyle(fontSize: 13, height: 1.35, color: p.ink2)),
+                        Text(_title(selected), style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                        Text(_detail(selected), style: TextStyle(fontSize: 13, height: 1.35, color: p.ink2)),
                       ],
                     ),
                   ),
-                  Text(
-                    entry == null ? 'Registra' : 'Apri',
-                    style: TextStyle(fontWeight: FontWeight.w600, color: p.pineText),
-                  ),
-                  Icon(Icons.chevron_right, color: p.pineText),
+                  if (day != null) ...[
+                    Text(
+                      selected.entries.isEmpty ? 'Registra' : 'Apri',
+                      style: TextStyle(fontWeight: FontWeight.w600, color: p.pineText),
+                    ),
+                    Icon(Icons.chevron_right, color: p.pineText),
+                  ],
                 ],
               ),
             ),
