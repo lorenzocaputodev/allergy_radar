@@ -1,0 +1,1 @@
+Location no longer uses Google Play Services: it works on phones without Google services too.

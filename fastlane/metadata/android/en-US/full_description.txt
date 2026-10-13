@@ -1,0 +1,19 @@
+<p>Find out how much pollen is in the air where you are in Italy, and which pollens really bother you. No account and no ads: your data stays on your phone. The app is in Italian.</p>
+<p><b>Features</b></p>
+<ul>
+<li>Today: level of the day, your allergens, the next days, air quality and other pollens nearby</li>
+<li>15 allergens across Italy; every value says whether it is a forecast, a measurement or an estimate</li>
+<li>Rain, wind or storms on the way and the best hour to go out</li>
+<li>Air: ozone, fine dust and desert sand, with what to do</li>
+<li>Page for each allergen with a vintage botanical plate, season and cross-reactions</li>
+<li>10-second symptom diary with medicines, sleep and time outdoors</li>
+<li>Trends over 30 days, 3 months or 1 year: whether you feel worse on days above your threshold</li>
+<li>Seasonal calendar for the North, Centre and South of Italy</li>
+<li>Place from city search or approximate location, optionally updated when you open the app</li>
+<li>Home screen widget</li>
+<li>Alerts: today's pollen, tomorrow's warning and diary reminder</li>
+<li>PDF for your allergist, diary as CSV, backup and restore</li>
+<li>Dark, light or system theme</li>
+</ul>
+<p><b>Data sources</b></p>
+<p>Forecasts and weather from Open-Meteo (Copernicus CAMS), measurements from ISPRA's POLLnet-SNPA network, both under CC BY 4.0. No backend: the app only talks to these services.</p>
