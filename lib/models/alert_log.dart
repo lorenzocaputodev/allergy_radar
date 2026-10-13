@@ -60,9 +60,16 @@ abstract final class AlertLog {
   static Future<void> _drop(SharedPreferences prefs, AlertMessage m) =>
       prefs.setString(key, _encode(_decode(prefs.getString(key)).where((x) => !_same(m)(x)).toList()));
 
-  static Future<void> restore(SharedPreferences prefs, AlertMessage m) async {
+  static Future<List<AlertMessage>> clear(SharedPreferences prefs) async {
     await prefs.reload();
-    await prefs.setString(key, _encode(_merge([..._decode(prefs.getString(key)), m])));
+    final all = read(prefs);
+    await prefs.setString(key, _encode(const []));
+    return all;
+  }
+
+  static Future<void> restore(SharedPreferences prefs, Iterable<AlertMessage> list) async {
+    await prefs.reload();
+    await prefs.setString(key, _encode(_merge([..._decode(prefs.getString(key)), ...list])));
   }
 
   static bool Function(AlertMessage) _same(AlertMessage m) =>

@@ -120,6 +120,7 @@ void main() {
     await tester.tap(find.byTooltip('Avvisi ricevuti'));
     await tester.pumpAndSettle();
     expect(find.text('Nessun avviso, per ora'), findsOneWidget);
+    expect(find.byTooltip('Cancella tutti'), findsNothing);
     tester.state<NavigatorState>(find.byType(Navigator).first).pop();
     await tester.pumpAndSettle();
 

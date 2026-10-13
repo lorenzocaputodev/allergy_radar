@@ -76,8 +76,22 @@ void main() {
     await AlertLog.remove(prefs, at(8));
     expect(AlertLog.read(prefs), isEmpty);
 
-    await AlertLog.restore(prefs, at(8));
+    await AlertLog.restore(prefs, [at(8)]);
     expect(AlertLog.read(prefs).single.title, 'Avviso delle 8');
+  });
+
+  test('cancella tutti: il registro si svuota; Annulla rimette tutto', () async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    await AlertLog.update(prefs, pending: [at(22)], arrived: [at(8), at(9)]);
+
+    final removed = await AlertLog.clear(prefs);
+    expect(removed.map((m) => m.title), ['Avviso delle 9', 'Avviso delle 8']);
+    expect(AlertLog.read(prefs), isEmpty);
+    expect(await AlertLog.pending(prefs), hasLength(1));
+
+    await AlertLog.restore(prefs, removed);
+    expect(AlertLog.read(prefs), hasLength(2));
   });
 
   test('registro rovinato: elenco vuoto, niente eccezioni', () async {

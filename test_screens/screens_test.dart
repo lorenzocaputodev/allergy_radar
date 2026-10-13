@@ -13,6 +13,7 @@ import 'package:allergy_radar/screens/alerts_screen.dart';
 import 'package:allergy_radar/screens/allergen_detail_screen.dart';
 import 'package:allergy_radar/screens/home_shell.dart';
 import 'package:allergy_radar/screens/log_entry_screen.dart';
+import 'package:allergy_radar/screens/notifications_screen.dart';
 import 'package:allergy_radar/screens/onboarding_screen.dart';
 import 'package:allergy_radar/screens/place_search_screen.dart';
 import 'package:allergy_radar/screens/trend_screen.dart';
@@ -62,12 +63,14 @@ void main() {
     bool onboarded = true,
     bool all = false,
     PollenRepository? repo,
+    Map<String, Object> extra = const {},
   }) async {
     SharedPreferences.setMockInitialValues({
       'onboarded': onboarded,
       if (all) 'followed': [for (final a in Allergens.all) a.id],
       'place': '{"name":"${place.name}","region":null,"lat":${place.lat},"lon":${place.lon}}',
       if (diary) 'diary': jsonEncode(_sampleDiary()),
+      ...extra,
     });
     final s = AppState(repo ?? repository(now), await SharedPreferences.getInstance());
     return s;
@@ -239,6 +242,31 @@ void main() {
       );
     });
   }
+
+  testWidgets('campanella', (tester) async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final log = [
+      {
+        'kind': 'briefing',
+        'at': today.add(const Duration(hours: 7, minutes: 30)).toIso8601String(),
+        'title': 'Pollini di oggi a Lecce',
+        'body': 'Parietaria bassa, Graminacee assenti.',
+      },
+      {
+        'kind': 'diary',
+        'at': today.subtract(const Duration(hours: 3)).toIso8601String(),
+        'title': 'Com’è andata oggi?',
+        'body': 'Bastano 10 secondi: col tempo scopri quali pollini ti danno fastidio.',
+      },
+    ];
+    await shot(
+      tester,
+      '13_campanella',
+      const NotificationsScreen(),
+      s: await state(Place.lecce, lecceNow, extra: {'alerts_log': jsonEncode(log)}),
+    );
+  });
 
   for (final (id, place, now) in [
     ('parietaria', Place.lecce, lecceNow),
