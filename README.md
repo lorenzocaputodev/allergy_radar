@@ -6,7 +6,7 @@
 
 > **Scopri quanti pollini ci sono nella tua zona e quali ti danno davvero fastidio.**
 
-- 🌿 Graminacee, Parietaria e altri 8 allergeni in tutta Italia: sai sempre se è una previsione, una misura o una stima
+- 🌿 Graminacee, Parietaria e altri 13 allergeni in tutta Italia: sai sempre se è una previsione, una misura o una stima
 - 🔒 Senza account e senza pubblicità: i tuoi dati restano solo sul tuo telefono
 
 ## 📲 Scarica l’app

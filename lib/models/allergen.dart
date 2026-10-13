@@ -177,6 +177,76 @@ abstract final class Allergens {
     },
   );
 
+  static const hazel = Allergen(
+    id: 'hazel',
+    name: 'Nocciolo e carpino',
+    family: 'Corilacee',
+    icon: Icons.eco,
+    pollnetId: 1329,
+    thresholds: Thresholds(0.5, 16, 50),
+    calendar: {
+      Area.north: [1, 2, 2, 3, 1, 0, 0, 0, 0, 0, 0, 0],
+      Area.centre: [1, 1, 1, 3, 1, 0, 0, 0, 0, 0, 0, 0],
+      Area.south: [1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0],
+    },
+  );
+
+  static const ash = Allergen(
+    id: 'ash',
+    name: 'Frassino',
+    family: 'Oleacee',
+    icon: Icons.nature_people_outlined,
+    pollnetId: 1417,
+    thresholds: Thresholds(0.5, 5, 25),
+    calendar: {
+      Area.north: [1, 2, 2, 3, 3, 1, 0, 0, 0, 0, 0, 0],
+      Area.centre: [1, 1, 2, 3, 3, 1, 0, 0, 0, 0, 0, 0],
+      Area.south: [1, 1, 2, 2, 1, 0, 0, 0, 0, 0, 0, 1],
+    },
+  );
+
+  static const plane = Allergen(
+    id: 'plane',
+    name: 'Platano',
+    family: 'Platanacee',
+    icon: Icons.location_city_outlined,
+    pollnetId: 1351,
+    thresholds: Thresholds(1, 20, 40),
+    calendar: {
+      Area.north: [0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 0, 0],
+      Area.centre: [0, 0, 2, 3, 1, 0, 0, 0, 0, 0, 0, 0],
+      Area.south: [0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+    },
+  );
+
+  static const chestnut = Allergen(
+    id: 'chestnut',
+    name: 'Castagno',
+    family: 'Fagacee',
+    icon: Icons.terrain_outlined,
+    pollnetId: 1386,
+    thresholds: Thresholds(1, 20, 40),
+    calendar: {
+      Area.north: [0, 0, 0, 0, 0, 2, 1, 0, 0, 0, 0, 0],
+      Area.centre: [0, 0, 0, 0, 0, 2, 1, 1, 0, 0, 0, 0],
+      Area.south: [0, 0, 0, 0, 0, 2, 1, 0, 0, 0, 0, 0],
+    },
+  );
+
+  static const chenopod = Allergen(
+    id: 'chenopod',
+    name: 'Chenopodio',
+    family: 'Amarantacee',
+    icon: Icons.yard_outlined,
+    pollnetId: 1327,
+    thresholds: Thresholds(0.1, 5, 25),
+    calendar: {
+      Area.north: [0, 0, 0, 0, 1, 1, 1, 2, 2, 1, 1, 0],
+      Area.centre: [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+      Area.south: [1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1],
+    },
+  );
+
   static const alternaria = Allergen(
     id: 'alternaria',
     name: 'Alternaria',
@@ -191,7 +261,23 @@ abstract final class Allergens {
     },
   );
 
-  static const all = [grass, parietaria, olive, cypress, oak, plantago, mugwort, ragweed, birch, alternaria];
+  static const all = [
+    grass,
+    parietaria,
+    olive,
+    cypress,
+    oak,
+    plantago,
+    mugwort,
+    ragweed,
+    birch,
+    hazel,
+    ash,
+    plane,
+    chestnut,
+    chenopod,
+    alternaria,
+  ];
 
   static Allergen? byId(String id) {
     for (final a in all) {

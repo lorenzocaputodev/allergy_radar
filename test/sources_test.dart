@@ -60,7 +60,7 @@ void main() {
   group('POLLnet', () {
     test('legge il CSV di ISPRA', () {
       final m = PollnetClient.parseCsv(fixture('pollnet_bologna.csv'));
-      expect(m, hasLength(12));
+      expect(m, hasLength(13));
       final urti = m.where((x) => x.partId == Allergens.parietaria.pollnetId).toList();
       expect(urti.last.date, DateTime(2026, 9, 20));
       expect(urti.last.value, 73);

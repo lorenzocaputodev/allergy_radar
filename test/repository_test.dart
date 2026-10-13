@@ -56,6 +56,16 @@ void main() {
     expect(par.series.map((d) => d.value), [8, 14, 10, 13, 48, 73]);
   });
 
+  test('nuovi allergeni ISPRA: misura se presente, altrimenti stima', () async {
+    final repo = repository(DateTime(2026, 9, 25, 10));
+    final snap = repo.build(await repo.fetch(bologna));
+    final chen = snap[Allergens.chenopod.id]!;
+    expect(chen.kind, DataKind.measured);
+    expect(chen.value, 6);
+    expect(chen.level, Level.moderate);
+    expect(snap[Allergens.hazel.id]!.kind, DataKind.estimate);
+  });
+
   test('misura troppo vecchia: si torna alla stima', () async {
     final repo = repository(DateTime(2026, 10, 5, 10));
     final snap = repo.build(await repo.fetch(bologna));
