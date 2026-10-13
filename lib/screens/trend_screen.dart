@@ -240,8 +240,6 @@ class _TrendState extends State<_Trend> {
     if (i != _selected) setState(() => _selected = i);
   }
 
-  static String _capital(String s) => '${s[0].toUpperCase()}${s.substring(1)}';
-
   String _tick(int i) {
     final b = widget.buckets[i];
     final back = widget.buckets.length - 1 - i;
@@ -256,7 +254,7 @@ class _TrendState extends State<_Trend> {
   String _title(TrendBucket b) => switch (widget.step) {
     TrendStep.day => Fmt.longDate(b.from),
     TrendStep.week => '${Fmt.shortDate(b.from)} – ${Fmt.shortDate(b.to)}',
-    TrendStep.month => '${_capital(Fmt.month(b.from.month))} ${b.from.year}',
+    TrendStep.month => Fmt.monthTitle(b.from),
   };
 
   String _detail(TrendBucket b) {

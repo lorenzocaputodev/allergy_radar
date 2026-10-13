@@ -86,8 +86,7 @@ class AlertPlanner {
 
   static String _named(AllergenStatus s) {
     if (s.kind == DataKind.forecast) return s.allergen.name;
-    final when = s.kind == DataKind.measured && s.date != null ? ' del ${Fmt.shortDate(s.date!)}' : '';
-    return '${s.allergen.name} (${s.kind.label.toLowerCase()}$when)';
+    return '${s.allergen.name} (${Fmt.sourceOf(s)})';
   }
 
   static DayValue? _dayValue(AllergenStatus s, DateTime day) => s.series.where((d) => d.date == day).firstOrNull;

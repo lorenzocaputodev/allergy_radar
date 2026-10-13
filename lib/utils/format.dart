@@ -54,6 +54,14 @@ abstract final class Fmt {
 
   static String initial(int m) => _months[m - 1][0].toUpperCase();
 
+  static String sourceOf(AllergenStatus s) => s.kind == DataKind.measured && s.date != null
+      ? '${s.kind.label.toLowerCase()} del ${shortDate(s.date!)}'
+      : s.kind.label.toLowerCase();
+
+  static String capital(String s) => s.isEmpty ? s : '${s[0].toUpperCase()}${s.substring(1)}';
+
+  static String monthTitle(DateTime d) => '${capital(month(d.month))} ${d.year}';
+
   static String? sourceDetail(AllergenStatus s) => s.kind == DataKind.measured
       ? '${s.station!.station.name}, ${s.station!.km.round()} km · ${s.date == null ? '' : shortDate(s.date!)}'
       : null;

@@ -146,16 +146,16 @@ class DiaryState extends ChangeNotifier {
   }
 
   Future<void> _persist({String? removed}) async {
+    final mine = Map.of(_entries);
     await _prefs.reload();
-    var added = false;
     for (final e in _stored()) {
-      if (e.key != removed && !_entries.containsKey(e.key)) {
-        _entries[e.key] = e;
-        added = true;
-      }
+      if (e.key != removed && !mine.containsKey(e.key)) mine[e.key] = e;
     }
-    await _prefs.setString(kEntries, jsonEncode(_entries.values.map((e) => e.toJson()).toList()));
-    if (added) notifyListeners();
+    await _prefs.setString(kEntries, jsonEncode(mine.values.map((e) => e.toJson()).toList()));
+    _entries
+      ..clear()
+      ..addAll(mine);
+    notifyListeners();
   }
 
   // --- Misure arrivate dopo ---

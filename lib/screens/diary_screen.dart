@@ -79,7 +79,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
                 ),
                 Expanded(
                   child: Text(
-                    '${Fmt.month(_month.month)[0].toUpperCase()}${Fmt.month(_month.month).substring(1)} ${_month.year}',
+                    Fmt.monthTitle(_month),
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
@@ -328,17 +328,15 @@ class _EntryCard extends StatelessWidget {
   final List<Allergen> followed;
   final VoidCallback onTap;
 
-  static const _names = ['No', 'lieve', 'medio', 'forte'];
-
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
     final e = entry;
     final parts = [
-      if (e.nose > 0) 'Naso ${_names[e.nose]}',
-      if (e.eyes > 0) 'Occhi ${_names[e.eyes]}',
-      if (e.throat > 0) 'Gola ${_names[e.throat]}',
-      if (e.breath > 0) 'Respiro ${_names[e.breath]}',
+      if (e.nose > 0) 'Naso ${DiaryEntry.intensityNames[e.nose].toLowerCase()}',
+      if (e.eyes > 0) 'Occhi ${DiaryEntry.intensityNames[e.eyes].toLowerCase()}',
+      if (e.throat > 0) 'Gola ${DiaryEntry.intensityNames[e.throat].toLowerCase()}',
+      if (e.breath > 0) 'Respiro ${DiaryEntry.intensityNames[e.breath].toLowerCase()}',
       if (e.badSleep) 'Sonno disturbato',
     ];
     final pollen = [

@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'data/pollen_repository.dart';
 import 'models/diary_entry.dart';
+import 'models/place.dart';
 import 'models/pollen_snapshot.dart';
 import 'models/station.dart';
 import 'screens/home_shell.dart';
@@ -66,11 +67,15 @@ Future<void> main() async {
     diary.reload();
   }
 
+  Future<({double lat, double lon})> locate() => LocationService.position(ask: false);
+  Future<Place> describe(double lat, double lon) =>
+      LocationService.placeAt(lat, lon, reverse: LocationService.androidGeocoder);
+
   Future<void> resume() async {
     await reloadDiary();
     await state.syncCache();
     reschedule();
-    if (state.onboarded) await state.follow(() => LocationService.current(ask: false));
+    if (state.onboarded) await state.follow(locate, describe);
     if (state.onboarded && state.isStale) await state.refresh();
   }
 
@@ -106,7 +111,7 @@ Future<void> main() async {
   await AlertsService.init();
   if (state.onboarded) await AlertsService.startBackground();
   reschedule();
-  if (state.onboarded) await state.follow(() => LocationService.current(ask: false));
+  if (state.onboarded) await state.follow(locate, describe);
   if (state.onboarded && state.isStale) await state.refresh();
 }
 

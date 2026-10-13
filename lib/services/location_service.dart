@@ -22,6 +22,11 @@ class LocationService {
   static const fallbackName = 'La mia posizione';
 
   static Future<Place> current({ReverseGeocoder? reverse, bool ask = true}) async {
+    final pos = await position(ask: ask);
+    return placeAt(pos.lat, pos.lon, reverse: reverse ?? androidGeocoder);
+  }
+
+  static Future<({double lat, double lon})> position({bool ask = true}) async {
     if (!await Geolocator.isLocationServiceEnabled()) {
       throw const LocationException('La localizzazione del telefono è spenta.');
     }
@@ -42,7 +47,7 @@ class LocationService {
       pos = await Geolocator.getLastKnownPosition();
     }
     if (pos == null) throw const LocationException('Posizione non disponibile. Cerca una città.');
-    return placeAt(pos.latitude, pos.longitude, reverse: reverse ?? androidGeocoder);
+    return (lat: pos.latitude, lon: pos.longitude);
   }
 
   static Future<Place> placeAt(double lat, double lon, {required ReverseGeocoder reverse}) async {

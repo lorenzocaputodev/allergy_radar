@@ -11,6 +11,7 @@ import '../state/app_state.dart';
 import '../state/diary_state.dart';
 import '../theme/palette.dart';
 import '../utils/days.dart';
+import '../utils/format.dart';
 import '../widgets/page_list.dart';
 import '../widgets/settings_group.dart';
 
@@ -80,7 +81,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
     };
     DateTime nextAt(int minutes) => AlertPlanner.nextAt(now, minutes);
 
-    String next(DateTime at) => '${day(at)} alle ${AlertSettingsEditor.time(at.hour * 60 + at.minute)}';
+    String next(DateTime at) => '${day(at)} alle ${Fmt.time(at)}';
     final briefing = planned[AlertKind.briefing];
     final tomorrow = planned[AlertKind.tomorrow];
     final reminder = planned[AlertKind.diary];

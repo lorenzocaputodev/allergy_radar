@@ -153,6 +153,16 @@ void main() {
     expect(state.followed, {'grass'});
   });
 
+  test('riscegliere il luogo attivo non cancella i dati', () async {
+    SharedPreferences.setMockInitialValues({'onboarded': true});
+    final state = AppState(repository(DateTime(2026, 9, 30, 10)), await SharedPreferences.getInstance());
+    await state.load();
+    await state.refresh();
+    final before = state.snapshot;
+    await state.setPlace(Place.lecce);
+    expect(state.snapshot, same(before));
+  });
+
   group('luoghi', () {
     Place at(String name, double lat) => Place(name: name, lat: lat, lon: 18.17);
 
@@ -185,11 +195,18 @@ void main() {
       expect(state.place.name, 'Qui');
       expect(state.saved, isEmpty);
 
-      await state.follow(() async => at('Poco più in là', 40.37));
+      var described = 0;
+      Future<void> moveTo(String name, double lat) => state.follow(() async => (lat: lat, lon: 18.17), (la, lo) async {
+        described++;
+        return Place(name: name, lat: la, lon: lo);
+      });
+
+      await moveTo('Poco più in là', 40.37);
       expect(state.place.name, 'Qui');
-      await state.follow(() async => at('Altrove', 40.5));
+      expect(described, 0, reason: 'sotto i 5 km il nome del comune non si cerca');
+      await moveTo('Altrove', 40.5);
       expect(state.place.name, 'Altrove');
-      await state.follow(() async => throw Exception('GPS spento'));
+      await state.follow(() async => throw Exception('GPS spento'), (la, lo) async => at('Mai', la));
       expect(state.place.name, 'Altrove');
     });
 
@@ -198,7 +215,7 @@ void main() {
       await state.startFollowing(at('Qui', 40.35));
       await state.setPlace(at('Roma', 41.9));
       expect(state.followLocation, isFalse);
-      await state.follow(() async => at('Altrove', 40.5));
+      await state.follow(() async => (lat: 40.5, lon: 18.17), (la, lo) async => at('Altrove', la));
       expect(state.place.name, 'Roma');
     });
   });

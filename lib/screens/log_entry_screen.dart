@@ -104,11 +104,8 @@ class _LogEntryScreenState extends State<LogEntryScreen> {
         ),
         const SizedBox(height: 10),
         SegmentedButton<int>(
-          segments: const [
-            ButtonSegment(value: 0, label: Text('No')),
-            ButtonSegment(value: 1, label: Text('Lieve')),
-            ButtonSegment(value: 2, label: Text('Medio')),
-            ButtonSegment(value: 3, label: Text('Forte')),
+          segments: [
+            for (final (i, name) in DiaryEntry.intensityNames.indexed) ButtonSegment(value: i, label: Text(name)),
           ],
           selected: {value},
           showSelectedIcon: false,

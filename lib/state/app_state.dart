@@ -178,7 +178,9 @@ class AppState extends ChangeNotifier {
     final asked = place;
     try {
       final raw = await _repo.fetch(asked);
-      if (place.cacheKey == asked.cacheKey) {
+      await _prefs.reload();
+      final stored = storedPlaceKey;
+      if (place.cacheKey == asked.cacheKey && (stored == null || stored == asked.cacheKey)) {
         snapshot = _repo.build(raw);
         await _prefs.setString(_kCache, raw.encode());
       }
@@ -196,10 +198,19 @@ class AppState extends ChangeNotifier {
     if (place.cacheKey != asked.cacheKey) await refresh();
   }
 
+  String? get storedPlaceKey {
+    try {
+      final p = _prefs.getString(kPlace);
+      return p == null ? null : Place.fromJson(jsonDecode(p) as Map<String, dynamic>).cacheKey;
+    } on Object {
+      return null;
+    }
+  }
+
   // --- Impostazioni ---
   Future<void> setPlace(Place p, {bool following = false}) async {
+    final same = p.cacheKey == place.cacheKey && snapshot != null;
     place = p;
-    snapshot = null;
     if (!following) {
       followLocation = false;
       saved = [p, ...saved.where((s) => s.cacheKey != p.cacheKey)].take(maxSaved).toList();
@@ -207,6 +218,8 @@ class AppState extends ChangeNotifier {
       await _savePlaces();
     }
     await _prefs.setString(kPlace, jsonEncode(p.toJson()));
+    if (same) return notifyListeners();
+    snapshot = null;
     await _prefs.remove(_kCache);
     notifyListeners();
     await refresh();
@@ -232,16 +245,20 @@ class AppState extends ChangeNotifier {
     await _prefs.setBool(kFollowLocation, false);
   }
 
-  Future<void> follow(Future<Place> Function() locate) async {
+  Future<void> follow(
+    Future<({double lat, double lon})> Function() position,
+    Future<Place> Function(double lat, double lon) describe,
+  ) async {
     if (!followLocation) return;
     final Place here;
     try {
-      here = await locate();
+      final pos = await position();
+      if (distanceKm(place.lat, place.lon, pos.lat, pos.lon) < followKm) return;
+      here = await describe(pos.lat, pos.lon);
     } on Object {
       return;
     }
-    if (!followLocation || distanceKm(place.lat, place.lon, here.lat, here.lon) < followKm) return;
-    await setPlace(here, following: true);
+    if (followLocation) await setPlace(here, following: true);
   }
 
   Future<void> setFollowed(Allergen a, bool on) async {

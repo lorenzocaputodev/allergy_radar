@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
 import 'dart:ui';
@@ -16,7 +15,6 @@ import 'package:workmanager/workmanager.dart';
 import '../data/pollen_repository.dart';
 import '../models/alert_log.dart';
 import '../models/diary_entry.dart';
-import '../models/place.dart';
 import '../models/station.dart';
 import '../state/app_state.dart';
 import '../state/diary_state.dart';
@@ -271,19 +269,16 @@ class AlertsService {
     try {
       final app = await _backgroundState(prefs, client);
       if (!app.onboarded) return;
+      final asked = app.place.cacheKey;
       if (force || app.isStale) await app.refresh();
       await prefs.reload();
-      if (_placeKey(prefs) != app.place.cacheKey) return;
+      await app.load();
+      if (app.place.cacheKey != asked || !app.onboarded) return;
       await WidgetBridge.save(prefs, app);
       await reschedule(prefs, app, DiaryState(prefs));
     } finally {
       client.close();
     }
-  }
-
-  static String? _placeKey(SharedPreferences prefs) {
-    final saved = prefs.getString(AppState.kPlace);
-    return saved == null ? null : Place.fromJson(jsonDecode(saved) as Map<String, dynamic>).cacheKey;
   }
 
   // --- Nessun sintomo dalla notifica ---

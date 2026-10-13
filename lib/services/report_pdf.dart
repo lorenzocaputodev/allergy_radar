@@ -22,7 +22,6 @@ class ReportPdf {
   static const _zebra = PdfColor.fromInt(0xFFF7F6F1);
   static final _soft = _pdf(AppPalette.light.pineSoft);
   static final _pine = _pdf(AppPalette.light.pine);
-  static const _symptom = ['nessuno', 'lieve', 'medio', 'forte'];
 
   static PdfColor _pdf(Color c) => PdfColor.fromInt(c.toARGB32());
   static String _date(DateTime d) => '${d.day} ${Fmt.month(d.month)} ${d.year}';
@@ -89,7 +88,7 @@ class ReportPdf {
       child: pw.Text(s, style: pw.TextStyle(fontSize: 8, color: color ?? _ink)),
     );
     pw.Widget symptom(int v) => cell(
-      v == 0 ? '–' : _symptom[v],
+      v == 0 ? '–' : DiaryEntry.intensityNames[v].toLowerCase(),
       fill: _pdf(palette.symFill[v]),
       color: _pdf(palette.symOnFill[v]),
       center: true,
@@ -182,7 +181,7 @@ class ReportPdf {
               summary(
                 'Intensità media',
                 avg == null ? '–' : '${Fmt.mean(avg)} su 3',
-                avg == null ? 'nessuna voce' : _symptom[avg.round()],
+                avg == null ? 'nessuna voce' : DiaryEntry.intensityNames[avg.round()].toLowerCase(),
               ),
               pw.SizedBox(width: 8),
               summary(
@@ -294,7 +293,8 @@ class ReportPdf {
             runSpacing: 4,
             children: [
               small('Sintomi:  '),
-              for (var i = 0; i < 4; i++) swatch(palette.symFill[i], '$i ${_symptom[i]}'),
+              for (var i = 0; i < 4; i++)
+                swatch(palette.symFill[i], '$i ${DiaryEntry.intensityNames[i].toLowerCase()}'),
             ],
           ),
           if (allergens.isNotEmpty) ...[

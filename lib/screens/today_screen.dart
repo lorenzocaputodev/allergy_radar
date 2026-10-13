@@ -384,10 +384,7 @@ class _Forecast extends StatelessWidget {
         ? forecast.series.take(5).map((d) => d.date).toList()
         : [for (var i = 0; i < 4; i++) today.plusDays(i)];
 
-    String source(AllergenStatus s) => switch (s.kind) {
-      DataKind.measured => '${s.kind.label.toLowerCase()} del ${Fmt.shortDate(s.date!)}',
-      _ => s.kind.label.toLowerCase(),
-    };
+    String source(AllergenStatus s) => Fmt.sourceOf(s);
 
     _DayCell cell(AllergenStatus s, DateTime d) {
       switch (s.kind) {
@@ -693,15 +690,12 @@ class _OthersState extends State<_Others> {
 }
 
 String _othersNote(AllergenStatus s, Area area, DateTime today) {
-  if (s.level == Level.none && s.allergen.calendarFor(area)[today.month - 1] == 0) return 'Fuori stagione';
+  final source = Fmt.capital(Fmt.sourceOf(s));
+  if (s.kind == DataKind.estimate) {
+    return s.allergen.calendarFor(area)[today.month - 1] == 0 ? '$source: fuori stagione' : '$source (valore tipico)';
+  }
   final value = s.value;
-  return switch (s.kind) {
-    DataKind.measured when value != null && s.date != null =>
-      'Misura del ${Fmt.shortDate(s.date!)} · ${Fmt.grains(value)}',
-    DataKind.forecast when value != null => '${s.kind.label} · ${Fmt.grains(value)}',
-    DataKind.estimate => '${s.kind.label} (valore tipico)',
-    _ => s.kind.label,
-  };
+  return value == null ? source : '$source · ${Fmt.grains(value)}';
 }
 
 // --- Diario ---
