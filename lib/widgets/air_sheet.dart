@@ -17,7 +17,7 @@ extension AirMetricText on AirMetric {
   String get what => switch (this) {
     AirMetric.ozone =>
       'Gas che si forma con il sole a partire dallo smog di traffico e industrie. Sale nelle ore calde e nei '
-          'pomeriggi d\'estate, spesso più in periferia e in collina che in centro.',
+          'pomeriggi d’estate, spesso più in periferia e in collina che in centro.',
     AirMetric.pm25 =>
       'Particelle più piccole di 2,5 millesimi di millimetro, prodotte da traffico, riscaldamento e industria. '
           'Sono così fini da arrivare in profondità nei polmoni.',
@@ -28,22 +28,22 @@ extension AirMetricText on AirMetric {
 
   String get why => switch (this) {
     AirMetric.ozone =>
-      'Irrita naso e bronchi e li rende più sensibili: con l\'ozono alto, la stessa quantità di polline dà '
+      'Irrita naso e bronchi e li rende più sensibili: con l’ozono alto, la stessa quantità di polline dà '
           'sintomi più forti.',
     AirMetric.pm25 =>
       'Tengono infiammate le vie respiratorie e trasportano frammenti di polline: peggiorano rinite e asma.',
-    AirMetric.dust => 'Irrita occhi, naso e gola e si somma all\'effetto dei pollini.',
+    AirMetric.dust => 'Irrita occhi, naso e gola e si somma all’effetto dei pollini.',
   };
 
   String advice(Level l) => switch (l) {
     Level.none || Level.low => 'Nessuna precauzione particolare.',
-    Level.moderate => 'Se sei sensibile, tieni d\'occhio i sintomi.',
+    Level.moderate => 'Se sei sensibile, tieni d’occhio i sintomi.',
     Level.high =>
       this == AirMetric.ozone
-          ? 'Evita sforzi all\'aperto tra mezzogiorno e il tardo pomeriggio, quando l\'ozono è più alto.'
-          : 'Limita sforzi e lunghe permanenze all\'aperto.',
+          ? 'Evita sforzi all’aperto tra mezzogiorno e il tardo pomeriggio, quando l’ozono è più alto.'
+          : 'Limita sforzi e lunghe permanenze all’aperto.',
     Level.veryHigh =>
-      'Resta il più possibile al chiuso, con le finestre chiuse nelle ore peggiori. Se hai l\'asma, segui il '
+      'Resta il più possibile al chiuso, con le finestre chiuse nelle ore peggiori. Se hai l’asma, segui il '
           'piano del tuo medico.',
   };
 }
@@ -104,7 +104,7 @@ class AirSheet extends StatelessWidget {
               ),
             const SizedBox(height: 10),
             const SourceChip(DataKind.forecast, detail: 'Open-Meteo, CAMS Europa'),
-            heading('Cos\'è'),
+            heading('Cos’è'),
             body(metric.what),
             heading('Perché conta per chi ha allergie'),
             body(metric.why),

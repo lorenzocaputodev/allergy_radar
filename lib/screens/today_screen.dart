@@ -322,7 +322,7 @@ class _WeatherLine extends StatelessWidget {
     final (icon, text) = switch (hint.event) {
       WeatherEvent.storm => (
         Icons.thunderstorm_outlined,
-        '${h == null ? 'Temporale in corso' : 'Temporale verso le $h'}: attenzione se hai l\'asma',
+        '${h == null ? 'Temporale in corso' : 'Temporale verso le $h'}: attenzione se hai l’asma',
       ),
       WeatherEvent.rain => (Icons.water_drop_outlined, '${h == null ? 'Piove' : 'Pioggia dalle $h'}: pollini in calo'),
       WeatherEvent.wind => (Icons.air, 'Vento forte${h == null ? '' : ' dalle $h'}: più pollini in aria'),
@@ -411,7 +411,11 @@ class _Forecast extends StatelessWidget {
         ),
         LayoutBuilder(
           builder: (context, c) {
-            final widest = widestText(context, statuses.map((s) => s.allergen.name), _nameStyle);
+            final sourceStyle = TextStyle(fontSize: 12, color: p.ink3);
+            final widest = [
+              widestText(context, statuses.map((s) => s.allergen.name), _nameStyle),
+              widestText(context, statuses.map(source), sourceStyle),
+            ].reduce((a, b) => a > b ? a : b);
             final nameWidth = (widest + 12).clamp(0, c.maxWidth * 0.42).toDouble();
             return Column(
               children: [
@@ -443,12 +447,7 @@ class _Forecast extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(s.allergen.name, style: _nameStyle, maxLines: 1, overflow: TextOverflow.ellipsis),
-                              Text(
-                                source(s),
-                                style: TextStyle(fontSize: 12, color: p.ink3),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
+                              Text(source(s), style: sourceStyle, maxLines: 1, overflow: TextOverflow.ellipsis),
                             ],
                           ),
                         ),
