@@ -11,6 +11,7 @@ import android.os.Bundle
 import android.os.CancellationSignal
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -38,7 +39,7 @@ class MainActivity : FlutterActivity() {
     private fun locationEnabled(): Boolean = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
         manager.isLocationEnabled
     } else {
-        providers().isNotEmpty()
+        listOf(LocationManager.NETWORK_PROVIDER, LocationManager.GPS_PROVIDER).any { manager.isProviderEnabled(it) }
     }
 
     // --- Permesso ---
@@ -59,10 +60,12 @@ class MainActivity : FlutterActivity() {
         if (requestCode != REQUEST_CODE) return
         val result = pendingPermission ?: return
         pendingPermission = null
+        val prefs = getSharedPreferences(PERMISSION_PREFS, MODE_PRIVATE)
+        if (shouldShowRequestPermissionRationale(PERMISSION)) prefs.edit().putBoolean(DENIED_ONCE, true).apply()
         result.success(
             when {
                 granted() -> "granted"
-                shouldShowRequestPermissionRationale(PERMISSION) -> "denied"
+                shouldShowRequestPermissionRationale(PERMISSION) || !prefs.getBoolean(DENIED_ONCE, false) -> "denied"
                 else -> "deniedForever"
             },
         )
@@ -79,11 +82,16 @@ class MainActivity : FlutterActivity() {
         return candidates.filter { it in available && manager.isProviderEnabled(it) }
     }
 
-    private fun lastKnown(): Location? = try {
-        manager.allProviders.mapNotNull { manager.getLastKnownLocation(it) }.maxByOrNull { it.time }
-    } catch (_: SecurityException) {
-        null
-    }
+    private fun lastKnown(): Location? = manager.allProviders
+        .mapNotNull {
+            try {
+                manager.getLastKnownLocation(it)
+            } catch (_: SecurityException) {
+                null
+            }
+        }
+        .filter { SystemClock.elapsedRealtimeNanos() - it.elapsedRealtimeNanos <= LAST_KNOWN_MAX_AGE_NS }
+        .maxByOrNull { it.elapsedRealtimeNanos }
 
     private fun current(result: MethodChannel.Result) {
         if (!granted()) return result.error("denied", "Permesso di posizione assente", null)
@@ -141,6 +149,9 @@ class MainActivity : FlutterActivity() {
         private const val CHANNEL = "dev.lorenzocaputo.allergyradar/location"
         private const val PERMISSION = Manifest.permission.ACCESS_COARSE_LOCATION
         private const val REQUEST_CODE = 4710
+        private const val PERMISSION_PREFS = "location_permission"
+        private const val DENIED_ONCE = "denied_once"
         private const val TIMEOUT_MS = 15_000L
+        private const val LAST_KNOWN_MAX_AGE_NS = 60 * 60 * 1_000_000_000L
     }
 }
