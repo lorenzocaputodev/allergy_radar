@@ -195,7 +195,7 @@ class _Welcome extends StatelessWidget {
               point(
                 Icons.layers_outlined,
                 'Oggi e i prossimi giorni',
-                '15 allergeni. Sai sempre se è una previsione, una misura o una stima.',
+                '${Allergens.all.length} allergeni. Sai sempre se è una previsione, una misura o una stima.',
               ),
               point(
                 Icons.book_outlined,

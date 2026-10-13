@@ -24,10 +24,10 @@ void main() {
     expect(at(9, series()), isNull);
   });
 
-  test('pioggia nel pomeriggio: ora della prima pioggia', () {
+  test('pioggia nel pomeriggio: il dato delle 15 è la pioggia tra le 14 e le 15', () {
     final h = at(9, series(rain: {15: 2, 16: 4}))!;
     expect(h.event, WeatherEvent.rain);
-    expect(h.at.hour, 15);
+    expect(h.at.hour, 14);
     expect(h.ongoing, isFalse);
   });
 
@@ -35,14 +35,18 @@ void main() {
     expect(at(12, series(rain: {8: 5, 14: 0.4})), isNull);
   });
 
-  test('pioggia in corso', () {
-    expect(at(15, series(rain: {15: 2}))!.ongoing, isTrue);
+  test('pioggia in corso e pioggia appena finita', () {
+    expect(at(15, series(rain: {16: 2}))!.ongoing, isTrue);
+    expect(at(15, series(rain: {15: 2})), isNull);
   });
 
-  test('il temporale vince su pioggia e vento', () {
-    final h = at(9, series(rain: {11: 3}, wind: {10: 40}, code: {17: 95}))!;
-    expect(h.event, WeatherEvent.storm);
-    expect(h.at.hour, 17);
+  test('vince l’evento più vicino; a parità d’ora il temporale, poi la pioggia', () {
+    final h = at(9, series(rain: {12: 3}, wind: {13: 40}, code: {17: 95}))!;
+    expect(h.event, WeatherEvent.rain);
+    expect(h.at.hour, 11);
+    expect(at(9, series(rain: {12: 3}, wind: {11: 40}))!.event, WeatherEvent.rain);
+    expect(at(9, series(rain: {12: 3}, code: {11: 95}))!.event, WeatherEvent.storm);
+    expect(at(9, series(rain: {20: 3}, code: {17: 95}))!.event, WeatherEvent.storm);
   });
 
   test('vento forte senza pioggia', () {
@@ -50,7 +54,7 @@ void main() {
   });
 
   test('dopo le 21 non si avvisa più', () {
-    expect(at(10, series(rain: {22: 6})), isNull);
+    expect(at(10, series(rain: {23: 6}, wind: {22: 50})), isNull);
   });
 
   test('il repository legge il meteo e regge se manca', () async {
@@ -58,7 +62,7 @@ void main() {
     final snap = repo.build(await repo.fetch(Place.lecce));
     final hint = snap.weather!.hintAt(DateTime(2026, 9, 30, 10))!;
     expect(hint.event, WeatherEvent.rain);
-    expect(hint.at.hour, 15);
+    expect(hint.at.hour, 14);
     expect(snap.weather!.hintAt(DateTime(2026, 9, 30, 15, 40))!.ongoing, isTrue);
     expect(snap.weather!.hintAt(DateTime(2026, 9, 30, 17)), isNull);
     final raw = await repo.fetch(Place.lecce);

@@ -51,6 +51,27 @@ void main() {
     expect(AppState.backupKeys, contains(AppState.kWidgetTheme));
   });
 
+  test('al ritorno nell’app si usa la cache più recente scritta dal background', () async {
+    SharedPreferences.setMockInitialValues({'onboarded': true});
+    final prefs = await SharedPreferences.getInstance();
+    final app = AppState(repository(DateTime(2026, 9, 30, 8)), prefs);
+    await app.load();
+    await app.refresh();
+    expect(app.snapshot!.fetchedAt, DateTime(2026, 9, 30, 8));
+
+    final background = AppState(repository(DateTime(2026, 9, 30, 11)), prefs);
+    await background.load();
+    await background.refresh();
+    await app.syncCache();
+    expect(app.snapshot!.fetchedAt, DateTime(2026, 9, 30, 11));
+
+    final older = AppState(repository(DateTime(2026, 9, 30, 9)), prefs);
+    await older.load();
+    await older.refresh();
+    await app.syncCache();
+    expect(app.snapshot!.fetchedAt, DateTime(2026, 9, 30, 11));
+  });
+
   test('cambiare luogo durante un aggiornamento scarica il luogo nuovo', () async {
     SharedPreferences.setMockInitialValues({'onboarded': true});
     final repo = _SlowRepository(DateTime(2026, 9, 25, 10));

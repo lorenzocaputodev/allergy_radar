@@ -27,13 +27,6 @@ class OutdoorSheet extends StatelessWidget {
     final t = Theme.of(context).textTheme;
     final hours = [for (var h = OutdoorPlan.firstHour; h <= OutdoorPlan.lastHour; h++) h];
 
-    String avoidText(HourSpan s) {
-      final (from, to) = s;
-      if (from <= plan.nowHour) return 'fino alle ${to + 1}';
-      if (to >= OutdoorPlan.lastHour) return 'dalle $from in poi';
-      return 'dalle $from alle ${to + 1}';
-    }
-
     Widget verdict(IconData icon, Color color, String text) => Row(
       children: [
         Icon(icon, size: 20, color: color),
@@ -87,14 +80,10 @@ class OutdoorSheet extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 22),
-            verdict(Icons.check_circle_outline, p.pineText, 'Meglio: ${plan.good.map(plan.span).join(' e ')}'),
+            verdict(Icons.check_circle_outline, p.pineText, 'Meglio: ${plan.goodText(' e ')}'),
             if (plan.avoid case final a?) ...[
               const SizedBox(height: 10),
-              verdict(
-                Icons.do_not_disturb_on_outlined,
-                p.text(plan.levels[a.$1] ?? Level.high),
-                'Evita: ${avoidText(a)}',
-              ),
+              verdict(Icons.do_not_disturb_on_outlined, p.text(plan.peak), 'Evita: ${plan.avoidSpan(a)}'),
             ],
             const SizedBox(height: 18),
             const SourceChip(DataKind.forecast, detail: 'Open-Meteo, CAMS Europa'),
@@ -128,7 +117,7 @@ class _Bar extends StatelessWidget {
           const SizedBox(height: 15),
         const SizedBox(height: 4),
         Container(
-          height: 20.0 + 22 * (l?.index ?? 0),
+          height: 20.0 + 18 * (l?.index ?? 0),
           decoration: BoxDecoration(
             color: l == null ? p.track : (past ? p.fill(l).withValues(alpha: 0.35) : p.fill(l)),
             borderRadius: BorderRadius.circular(6),

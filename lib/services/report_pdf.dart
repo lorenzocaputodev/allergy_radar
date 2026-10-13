@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/services.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -11,6 +13,7 @@ import '../utils/days.dart';
 
 class ReportPdf {
   static const days = 90;
+  static const _maxWideAllergens = 7;
 
   static const _ink = PdfColor.fromInt(0xFF17201C);
   static const _muted = PdfColor.fromInt(0xFF5C6661);
@@ -105,10 +108,11 @@ class ReportPdf {
       color: _pdf(palette.symOnFill[v]),
       center: true,
     );
+    final compact = allergens.length > _maxWideAllergens;
     pw.Widget pollen(int? v) => v == null
         ? cell('', center: true)
         : cell(
-            Level.fromIndex(v).label.toLowerCase(),
+            compact ? '$v' : Level.fromIndex(v).label.toLowerCase(),
             fill: _pdf(palette.riskFill[v]),
             color: _pdf(palette.riskOnFill[v]),
             center: true,
@@ -249,9 +253,9 @@ class ReportPdf {
                 0: const pw.FixedColumnWidth(30),
                 for (var c = 1; c <= 4; c++) c: const pw.FixedColumnWidth(34),
                 5: const pw.FixedColumnWidth(34),
-                6: const pw.FlexColumnWidth(3),
-                for (var c = 0; c < allergens.length; c++) 7 + c: const pw.FixedColumnWidth(46),
-                7 + allergens.length: const pw.FlexColumnWidth(2),
+                6: pw.FlexColumnWidth(compact ? 2 : 3),
+                for (var c = 0; c < allergens.length; c++) 7 + c: pw.FixedColumnWidth(compact ? 22 : 46),
+                7 + allergens.length: pw.FlexColumnWidth(compact ? 3 : 2),
               },
               children: [
                 pw.TableRow(
@@ -259,7 +263,25 @@ class ReportPdf {
                   repeat: true,
                   children: [
                     for (final h in ['Data', 'Naso', 'Occhi', 'Gola', 'Respiro', 'Sonno', 'Farmaci']) head(h),
-                    for (final a in allergens) head(a.name, size: 7),
+                    for (final a in allergens)
+                      compact
+                          ? pw.Container(
+                              alignment: pw.Alignment.bottomCenter,
+                              padding: const pw.EdgeInsets.symmetric(vertical: 5),
+                              child: pw.Transform.rotateBox(
+                                angle: math.pi / 2,
+                                unconstrained: true,
+                                child: pw.Text(
+                                  a.name,
+                                  style: pw.TextStyle(
+                                    fontSize: 7,
+                                    fontWeight: pw.FontWeight.bold,
+                                    color: PdfColors.white,
+                                  ),
+                                ),
+                              ),
+                            )
+                          : head(a.name, size: 7),
                     head('Nota'),
                   ],
                 ),
@@ -295,7 +317,11 @@ class ReportPdf {
               runSpacing: 4,
               children: [
                 small('Pollini:  '),
-                for (final l in Level.values) swatch(palette.riskFill[l.index], l.label.toLowerCase()),
+                for (final l in Level.values)
+                  swatch(
+                    palette.riskFill[l.index],
+                    compact ? '${l.index} ${l.label.toLowerCase()}' : l.label.toLowerCase(),
+                  ),
               ],
             ),
           ],

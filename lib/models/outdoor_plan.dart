@@ -8,6 +8,7 @@ class OutdoorPlan {
     required this.allergens,
     required this.levels,
     required this.nowHour,
+    required this.peak,
     required this.good,
     required this.avoid,
   });
@@ -19,6 +20,7 @@ class OutdoorPlan {
   final List<String> allergens;
   final Map<int, Level> levels;
   final int nowHour;
+  final Level peak;
   final List<HourSpan> good;
   final HourSpan? avoid;
 
@@ -33,12 +35,12 @@ class OutdoorPlan {
         final d = h.date;
         if (d.year != now.year || d.month != now.month || d.day != now.day) continue;
         if (d.hour < firstHour || d.hour > lastHour) continue;
-        levels[d.hour] = (levels[d.hour] ?? floor).max(h.level);
+        levels[d.hour] = (levels[d.hour] ?? Level.none).max(h.level);
       }
     }
     final ahead = [
       for (var h = now.hour.clamp(firstHour, lastHour + 1); h <= lastHour; h++)
-        if (levels[h] case final l?) (h, l),
+        if (levels[h] case final l?) (h, l.max(floor)),
     ];
     if (ahead.length < minHours) return null;
     final peak = ahead.fold(Level.none, (l, e) => l.max(e.$2));
@@ -52,6 +54,7 @@ class OutdoorPlan {
       allergens: [for (final s in hourly) s.allergen.name],
       levels: levels,
       nowHour: now.hour,
+      peak: peak,
       good: good,
       avoid: _runs(ahead, (l) => l == peak).firstOrNull,
     );
@@ -72,12 +75,19 @@ class OutdoorPlan {
     return out;
   }
 
-  String span(HourSpan s) {
+  String goodSpan(HourSpan s) {
     final (from, to) = s;
     if (from <= nowHour) return 'prima delle ${to + 1}';
     if (to >= lastHour) return 'dopo le $from';
     return 'tra le $from e le ${to + 1}';
   }
 
-  String get goodText => good.map(span).join(' o ');
+  String avoidSpan(HourSpan s) {
+    final (from, to) = s;
+    if (from <= nowHour) return 'fino alle ${to + 1}';
+    if (to >= lastHour) return 'dalle $from in poi';
+    return 'dalle $from alle ${to + 1}';
+  }
+
+  String goodText(String joiner) => good.map(goodSpan).join(joiner);
 }

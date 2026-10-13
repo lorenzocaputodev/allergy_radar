@@ -212,6 +212,7 @@ class _HeroState extends State<_Hero> {
     final next = DateTime(now.year, now.month, now.day, now.hour + 1);
     _tick = Timer(next.difference(now), () {
       if (!mounted) return;
+      if (widget.state.onboarded && widget.state.isStale) unawaited(widget.state.refresh());
       setState(() {});
       _arm();
     });
@@ -294,7 +295,7 @@ class _HeroState extends State<_Hero> {
               if (plan != null)
                 _HeroLine(
                   Icons.schedule,
-                  'Meglio uscire ${plan.goodText}',
+                  'Meglio uscire ${plan.goodText(' o ')}',
                   onTap: () => showOutdoorSheet(context, plan),
                 ),
               if (estimated.isNotEmpty)
@@ -694,8 +695,14 @@ class _OthersState extends State<_Others> {
 
 String _othersNote(AllergenStatus s, Area area, DateTime today) {
   if (s.level == Level.none && s.allergen.calendarFor(area)[today.month - 1] == 0) return 'Fuori stagione';
-  if (s.value != null) return Fmt.grains(s.value!);
-  return s.kind == DataKind.estimate ? '${s.kind.label} (valore tipico)' : s.kind.label;
+  final value = s.value;
+  return switch (s.kind) {
+    DataKind.measured when value != null && s.date != null =>
+      'Misura del ${Fmt.shortDate(s.date!)} · ${Fmt.grains(value)}',
+    DataKind.forecast when value != null => '${s.kind.label} · ${Fmt.grains(value)}',
+    DataKind.estimate => '${s.kind.label} (valore tipico)',
+    _ => s.kind.label,
+  };
 }
 
 // --- Diario ---

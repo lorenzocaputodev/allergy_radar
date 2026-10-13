@@ -24,26 +24,24 @@ class WeatherHint {
   static WeatherHint? of(List<DateTime> times, Map<String, List<double?>> series, DateTime now) {
     final from = DateTime(now.year, now.month, now.day, now.hour);
     final to = DateTime(now.year, now.month, now.day, lastHour);
-    DateTime? first(bool Function(int i) hit) {
-      for (var i = 0; i < times.length; i++) {
-        final t = times[i];
-        if (!t.isBefore(from) && !t.isAfter(to) && hit(i)) return t;
-      }
-      return null;
-    }
-
-    double? v(String k, int i) {
+    double v(String k, int i) {
       final s = series[k];
-      return s == null || i >= s.length ? null : s[i];
+      return (s == null || i >= s.length ? null : s[i]) ?? 0;
     }
 
-    for (final (event, hit) in <(WeatherEvent, bool Function(int))>[
-      (WeatherEvent.storm, (i) => (v('weather_code', i) ?? 0) >= 95),
-      (WeatherEvent.rain, (i) => (v('precipitation', i) ?? 0) >= rainMm),
-      (WeatherEvent.wind, (i) => (v('wind_speed_10m', i) ?? 0) >= windKmh),
+    WeatherHint? best;
+    for (final (event, offset, hit) in <(WeatherEvent, int, bool Function(int))>[
+      (WeatherEvent.storm, 0, (i) => v('weather_code', i) >= 95),
+      (WeatherEvent.rain, -1, (i) => v('precipitation', i) >= rainMm),
+      (WeatherEvent.wind, 0, (i) => v('wind_speed_10m', i) >= windKmh),
     ]) {
-      if (first(hit) case final t?) return WeatherHint(event, t, ongoing: t == from);
+      for (var i = 0; i < times.length; i++) {
+        final at = times[i].add(Duration(hours: offset));
+        if (at.isBefore(from) || at.isAfter(to) || !hit(i)) continue;
+        if (best == null || at.isBefore(best.at)) best = WeatherHint(event, at, ongoing: at == from);
+        break;
+      }
     }
-    return null;
+    return best;
   }
 }

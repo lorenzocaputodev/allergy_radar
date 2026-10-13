@@ -124,6 +124,13 @@ class AppState extends ChangeNotifier {
     }
   }
 
+  Future<void> syncCache() async {
+    final cached = await _fromCache();
+    if (cached == null || (snapshot != null && !cached.fetchedAt.isAfter(snapshot!.fetchedAt))) return;
+    snapshot = cached;
+    notifyListeners();
+  }
+
   Future<void> init() async {
     await load();
     if (onboarded && isStale) await refresh();

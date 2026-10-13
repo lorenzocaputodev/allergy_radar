@@ -33,7 +33,7 @@ class OpenMeteoClient {
     'longitude': p.roundedLon.toStringAsFixed(2),
     'hourly': WeatherHint.keys.join(','),
     'timezone': 'Europe/Rome',
-    'forecast_days': '2',
+    'forecast_days': '1',
   });
 
   Future<String> fetchWeather(Place p) async {

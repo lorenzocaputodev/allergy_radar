@@ -99,6 +99,29 @@ void main() {
     expect(bytes.length, greaterThan(2000));
   });
 
+  test('PDF con tutti gli allergeni e una nota lunga', () async {
+    final diary = DiaryState(await SharedPreferences.getInstance());
+    for (var i = 0; i < 20; i++) {
+      await diary.save(
+        DiaryEntry(
+          date: now.subtract(Duration(days: i)),
+          nose: i % 4,
+          meds: const ['Cetirizina', 'Spray nasale al cortisone'],
+          note: 'Giornata ventosa, finestre aperte tutto il pomeriggio e passeggiata al parco ' * 3,
+          pollen: {for (final a in Allergens.all) a.id: i % 5},
+        ),
+      );
+    }
+    final bytes = await ReportPdf.build(
+      diary: diary,
+      allergens: Allergens.all,
+      placeName: 'Lecce',
+      now: now,
+      thresholdOf: (_) => Level.moderate,
+    );
+    expect(String.fromCharCodes(bytes.take(5)), '%PDF-');
+  });
+
   test('un formato non numerico è un backup non valido', () async {
     final prefs = await SharedPreferences.getInstance();
     final json = jsonEncode({'app': 'allergy_radar', 'format': 'uno', 'data': <String, Object>{}});

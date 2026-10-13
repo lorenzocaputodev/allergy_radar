@@ -65,20 +65,22 @@ Future<void> main() async {
     diary.reload();
   }
 
+  Future<void> resume() async {
+    await reloadDiary();
+    await state.syncCache();
+    reschedule();
+    if (state.onboarded && state.isStale) await state.refresh();
+  }
+
   AlertsService.diaryChanged.addListener(() => unawaited(reloadDiary()));
 
-  AppLifecycleListener(
-    onResume: () {
-      unawaited(reloadDiary());
-      reschedule();
-      if (state.onboarded && state.isStale) unawaited(state.refresh());
-    },
-  );
+  AppLifecycleListener(onResume: () => unawaited(resume()));
 
   AlertsService.opened.addListener(() {
     final opened = AlertsService.opened.value;
     if (opened == null || opened.kind != AlertKind.diary) return;
     AlertsService.opened.value = null;
+    WidgetsBinding.instance.scheduleFrame();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!state.onboarded) return;
       _navigator.currentState?.push(

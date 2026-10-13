@@ -26,14 +26,16 @@ void main() {
   test('picco a metà giornata: meglio mattina e sera, evita il picco', () {
     final plan = OutdoorPlan.of([hourly(Allergens.grass, grass)], at(7))!;
     expect(plan.good, [(7, 9), (19, 21)]);
-    expect(plan.goodText, 'prima delle 10 o dopo le 19');
+    expect(plan.goodText(' o '), 'prima delle 10 o dopo le 19');
+    expect(plan.avoidSpan(plan.avoid!), 'dalle 12 alle 17');
     expect(plan.avoid, (12, 16));
   });
 
   test('a metà mattina conta solo quello che resta', () {
     final plan = OutdoorPlan.of([hourly(Allergens.grass, grass)], at(13))!;
     expect(plan.good, [(19, 21)]);
-    expect(plan.goodText, 'dopo le 19');
+    expect(plan.goodText(' o '), 'dopo le 19');
+    expect(plan.avoidSpan(plan.avoid!), 'fino alle 17');
     expect(plan.avoid, (13, 16));
   });
 
@@ -41,7 +43,7 @@ void main() {
     final plan = OutdoorPlan.of([
       hourly(Allergens.grass, [3, 3, 3, 3, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 3]),
     ], at(7))!;
-    expect(plan.goodText, 'tra le 11 e le 14');
+    expect(plan.goodText(' o '), 'tra le 11 e le 14');
   });
 
   test('giornata bassa o uniforme: nessuna riga', () {
@@ -74,7 +76,8 @@ void main() {
   test('un allergene senza previsione oraria più basso alza solo il fondo', () {
     final plan = OutdoorPlan.of([hourly(Allergens.grass, grass), daily(Allergens.parietaria, Level.moderate)], at(7))!;
     expect(plan.good, [(7, 11), (17, 21)]);
-    expect(plan.levels[7], Level.moderate);
+    expect(plan.levels[7], Level.low);
+    expect(plan.peak, Level.high);
   });
 
   test('dopo le 21 o senza dati orari: nessuna riga', () {

@@ -51,30 +51,6 @@ class AirStatus {
   final double? pm25Mean;
   final double? dustMax;
 
-  static Level ozoneLevel(double v) => v < 100
-      ? Level.low
-      : v < 130
-      ? Level.moderate
-      : v < 240
-      ? Level.high
-      : Level.veryHigh;
-  static Level pm25Level(double v) => v < 10
-      ? Level.low
-      : v < 25
-      ? Level.moderate
-      : v < 50
-      ? Level.high
-      : Level.veryHigh;
-  static Level dustLevel(double v) => v < 20
-      ? Level.none
-      : v < 50
-      ? Level.low
-      : v < 100
-      ? Level.moderate
-      : v < 200
-      ? Level.high
-      : Level.veryHigh;
-
   double? valueOf(AirMetric m) => switch (m) {
     AirMetric.ozone => ozoneMax,
     AirMetric.pm25 => pm25Mean,
@@ -96,11 +72,7 @@ enum AirMetric {
 
   static const unit = 'µg/m³';
 
-  Level levelOf(double v) => switch (this) {
-    AirMetric.ozone => AirStatus.ozoneLevel(v),
-    AirMetric.pm25 => AirStatus.pm25Level(v),
-    AirMetric.dust => AirStatus.dustLevel(v),
-  };
+  Level levelOf(double v) => Level.values[firstLevel.index + limits.where((x) => v >= x).length];
 
   String levelLabel(Level l) => this == AirMetric.dust && l == Level.none ? 'Assente' : l.label;
 

@@ -213,7 +213,7 @@ void main() {
 
     testWidgets('ora per ora $t', (tester) async {
       final day = DateTime(2026, 5, 10);
-      const grass = [1, 1, 1, 2, 2, 3, 3, 3, 3, 3, 2, 2, 1, 1, 1];
+      const grass = [1, 1, 1, 2, 2, 3, 3, 4, 4, 3, 2, 2, 1, 1, 1];
       final status = AllergenStatus(
         allergen: Allergens.grass,
         kind: DataKind.forecast,

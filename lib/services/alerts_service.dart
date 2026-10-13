@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:isolate';
 import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
@@ -69,6 +70,7 @@ class AlertsService {
   static bool _ready = false;
 
   static const noSymptomsAction = 'no_symptoms';
+  static const _diaryPort = 'allergy_radar_diary';
 
   static final opened = ValueNotifier<({AlertKind kind, DateTime? at})?>(null);
 
@@ -90,6 +92,7 @@ class AlertsService {
         onDidReceiveBackgroundNotificationResponse: alertsNotificationAction,
       );
       if (!background) {
+        _listenDiary();
         await Workmanager().initialize(alertsCallbackDispatcher);
         final launch = await _plugin.getNotificationAppLaunchDetails();
         if (launch?.didNotificationLaunchApp ?? false) _open(launch!.notificationResponse?.payload);
@@ -269,6 +272,13 @@ class AlertsService {
   }
 
   // --- Nessun sintomo dalla notifica ---
+  static void _listenDiary() {
+    final port = ReceivePort();
+    IsolateNameServer.removePortNameMapping(_diaryPort);
+    IsolateNameServer.registerPortWithName(port.sendPort, _diaryPort);
+    port.listen((_) => diaryChanged.value++);
+  }
+
   static Future<void> recordNoSymptoms(String? payload) async {
     final at = _parse(payload)?.at ?? DateTime.now();
     await init(background: true);
@@ -279,7 +289,9 @@ class AlertsService {
       final app = await _backgroundState(prefs, client);
       final diary = DiaryState(prefs);
       if (!app.onboarded) return;
-      await diary.saveNoSymptoms(DiaryEntry.day(at), snapshot: app.snapshot);
+      if (await diary.saveNoSymptoms(DiaryEntry.day(at), snapshot: app.snapshot)) {
+        IsolateNameServer.lookupPortByName(_diaryPort)?.send(null);
+      }
       await reschedule(prefs, app, diary);
     } on Object catch (e) {
       debugPrint('Voce del diario non salvata: $e');
@@ -306,7 +318,7 @@ class AlertsService {
 
   static void _respond(NotificationResponse r) {
     if (r.actionId != noSymptomsAction) return _open(r.payload);
-    unawaited(recordNoSymptoms(r.payload).then((_) => diaryChanged.value++));
+    unawaited(recordNoSymptoms(r.payload));
   }
 
   static NotificationDetails _details(AlertKind kind, String body) {
