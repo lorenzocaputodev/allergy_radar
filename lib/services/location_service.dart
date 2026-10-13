@@ -1,9 +1,9 @@
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:geocoding/geocoding.dart';
-import 'package:geolocator/geolocator.dart';
 
 import '../models/place.dart';
 
@@ -26,28 +26,25 @@ class LocationService {
     return placeAt(pos.lat, pos.lon, reverse: reverse ?? androidGeocoder);
   }
 
+  static const _channel = MethodChannel('dev.lorenzocaputo.allergyradar/location');
+
   static Future<({double lat, double lon})> position({bool ask = true}) async {
-    if (!await Geolocator.isLocationServiceEnabled()) {
+    if (kIsWeb || !Platform.isAndroid) {
+      throw const LocationException('Posizione non disponibile. Cerca una città.');
+    }
+    if (await _channel.invokeMethod<bool>('enabled') != true) {
       throw const LocationException('La localizzazione del telefono è spenta.');
     }
-    var permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied && ask) permission = await Geolocator.requestPermission();
-    if (permission == LocationPermission.denied) {
-      throw const LocationException('Permesso negato. Puoi sempre cercare una città.');
-    }
-    if (permission == LocationPermission.deniedForever) {
+    final permission = await _channel.invokeMethod<String>('permission', {'ask': ask});
+    if (permission == 'deniedForever') {
       throw const LocationException('Permesso negato: si riattiva dalle impostazioni di Android.');
     }
-    Position? pos;
-    try {
-      pos = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(accuracy: LocationAccuracy.medium, timeLimit: Duration(seconds: 15)),
-      );
-    } on Object {
-      pos = await Geolocator.getLastKnownPosition();
+    if (permission != 'granted') {
+      throw const LocationException('Permesso negato. Puoi sempre cercare una città.');
     }
+    final pos = await _channel.invokeMapMethod<String, double>('current');
     if (pos == null) throw const LocationException('Posizione non disponibile. Cerca una città.');
-    return (lat: pos.latitude, lon: pos.longitude);
+    return (lat: pos['lat']!, lon: pos['lon']!);
   }
 
   static Future<Place> placeAt(double lat, double lon, {required ReverseGeocoder reverse}) async {

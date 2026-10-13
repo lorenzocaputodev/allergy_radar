@@ -25,7 +25,6 @@ dependencies:
   timezone: ^0.10.1
 
   # Posizione approssimativa e nome del comune (Geocoder di Android)
-  geolocator: ^14.1.1
   geocoding: ^5.0.0
 
   # File: backup, CSV e PDF
