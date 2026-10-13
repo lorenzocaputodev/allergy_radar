@@ -31,14 +31,16 @@ Serve Android 7.0 o successivo.
 ## ✨ Funzionalità principali
 
 - 🧭 Oggi: livello della giornata, i tuoi allergeni, i prossimi giorni, l’aria e gli altri pollini in zona
+- 🌦️ Una riga sola quando serve: pioggia, vento o temporale in arrivo, e l’ora migliore per uscire con il dettaglio ora per ora
+- 🌫️ Aria: ozono, polveri fini e sabbia del deserto, con cosa sono e cosa fare toccando ogni riquadro
 - 🏷️ Ogni valore dice se è una **previsione**, una **misura** o una **stima**
-- 🔎 Dettaglio di ogni allergene: ora per ora, prossimi giorni, stagione e la tua soglia
+- 🔎 Dettaglio di ogni allergene: ora per ora, prossimi giorni, stagione, la tua soglia e una tavola botanica d’epoca con dove cresce e le reazioni crociate
 - 📓 Diario dei sintomi da 10 secondi, con i farmaci più usati già in lista, sonno e ore all’aperto
-- 📈 Andamento: per ogni allergene, se stai peggio nei giorni sopra la tua soglia, con un punteggio sintomi + farmaci adattato dal CSMS dell’EAACI; le misure ISPRA completano da sole i giorni passati
+- 📈 Andamento su 30 giorni, 3 mesi o 1 anno (giorno, settimana o mese): per ogni allergene, se stai peggio nei giorni sopra la tua soglia, con un punteggio sintomi + farmaci adattato dal CSMS dell’EAACI; le misure ISPRA completano da sole i giorni passati
 - 🗓️ Calendario stagionale per **Nord**, **Centro** e **Sud e Isole**
-- 📍 Luogo da ricerca città o dalla posizione approssimativa, con il nome del comune
+- 📍 Luogo da ricerca città o dalla posizione approssimativa, con il nome del comune; i luoghi scelti restano a portata di tocco, e con «Segui la mia posizione» il luogo si aggiorna quando apri l’app
 - 📲 Widget Android per la schermata Home, con le pagine degli allergeni e il tasto per aggiornare
-- 🔔 Avvisi, proposti già al primo avvio, e l’elenco di quelli ricevuti, che cancelli con uno swipe
+- 🔔 Avvisi, proposti già al primo avvio, e l’elenco di quelli ricevuti, che cancelli con uno swipe o tutti insieme
 - 📄 PDF per l’allergologo, diario in CSV, backup e ripristino
 - 🎨 Tema **scuro / chiaro / sistema**
 - 🔒 Dati salvati localmente sul dispositivo
@@ -51,7 +53,7 @@ L’app può mandare tre avvisi, ognuno con il suo orario, anche ad app chiusa:
 
 - ☀️ **Pollini di oggi**: cosa c’è nell’aria oggi per i tuoi allergeni, anche solo nei giorni sopra la tua soglia
 - 📈 **Allerta per domani**: il giorno prima, se domani un tuo allergene supera la soglia
-- 📓 **Promemoria diario**: se oggi non hai ancora registrato i sintomi
+- 📓 **Promemoria diario**: se oggi non hai ancora registrato i sintomi; con «Nessun sintomo» registri la giornata direttamente dalla notifica
 
 La soglia è il livello da cui un allergene ti dà fastidio: la scegli per ognuno in «I miei allergeni».
 
@@ -121,7 +123,7 @@ flutter run
 
 ## 📂 Struttura essenziale
 
-- `lib/models/` → allergeni, livelli, luoghi, stazioni e diario
+- `lib/models/` → allergeni, livelli, luoghi, stazioni, diario, meteo e andamento
 - `lib/services/` → fonti dei dati, avvisi, posizione, widget, backup e PDF
 - `lib/data/` → scelta della fonte di ogni allergene e cache
 - `lib/state/` → stato applicativo e persistenza
@@ -136,11 +138,12 @@ flutter run
 
 - Nessun account richiesto
 - Nessun backend: l’app usa solo i dati aperti di Open-Meteo e ISPRA
-- Posizione solo approssimativa, e solo se la chiedi tu; il nome del comune lo ricava il telefono
+- Posizione solo approssimativa, e solo se la chiedi tu (una volta, o a ogni apertura con «Segui la mia posizione»); il nome del comune lo ricava il telefono
 - Le misure ISPRA arrivano una volta a settimana: quando sono più vecchie di due settimane, o non c’è una stazione vicina, l’app usa il valore tipico del mese e lo dichiara come **stima**
 - Dati salvati localmente sul dispositivo
 
-Previsioni © Copernicus/CAMS tramite Open-Meteo e misure della rete POLLnet-SNPA di ISPRA, entrambe con licenza CC BY 4.0.
+Previsioni © Copernicus/CAMS e meteo tramite Open-Meteo e misure della rete POLLnet-SNPA di ISPRA, con licenza CC BY 4.0.
+Le tavole botaniche sono di pubblico dominio (Thomé, Köhler, Lindman, Duhamel du Monceau, Flora Batava, Elliott), da Wikimedia Commons.
 L’app informa, non sostituisce il medico.
 
 ---
