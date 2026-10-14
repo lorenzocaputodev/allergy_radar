@@ -43,6 +43,7 @@ Serve Android 7.0 o successivo.
 - 🔔 Avvisi, proposti già al primo avvio, e l’elenco di quelli ricevuti, che cancelli con uno swipe o tutti insieme
 - 📄 PDF per l’allergologo, diario in CSV, backup e ripristino
 - 🎨 Tema **scuro / chiaro / sistema**
+- 🆕 Avviso in Oggi quando esce una nuova versione, con la frequenza del controllo che scegli tu (ogni giorno, settimana, mese o mai)
 - 🔒 Dati salvati localmente sul dispositivo
 
 ---
@@ -138,7 +139,7 @@ flutter run
 ## 🔐 Privacy e dati
 
 - Nessun account richiesto
-- Nessun backend: l’app usa solo i dati aperti di Open-Meteo e ISPRA
+- Nessun backend: l’app usa solo i dati aperti di Open-Meteo e ISPRA, e chiede a GitHub il numero dell’ultima versione (si spegne dal Profilo)
 - Posizione solo approssimativa, e solo se la chiedi tu (una volta, o a ogni apertura con «Segui la mia posizione»); il nome del comune lo ricava il telefono
 - Le misure ISPRA arrivano una volta a settimana: quando sono più vecchie di due settimane, o non c’è una stazione vicina, l’app usa il valore tipico del mese e lo dichiara come **stima**
 - Dati salvati localmente sul dispositivo
