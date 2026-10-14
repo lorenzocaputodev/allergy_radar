@@ -1,2 +1,0 @@
-More reliable location on phones without Google services and on older Android versions.
-A location permission dialog closed without answering can be granted again.
