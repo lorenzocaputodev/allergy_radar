@@ -61,6 +61,7 @@ class DiaryState extends ChangeNotifier {
   static const minDaysForInsight = 14;
 
   final Map<String, DiaryEntry> _entries = {};
+  final Set<String> _deleted = {};
   List<String> medications = defaultMedications;
 
   // --- Caricamento ---
@@ -112,6 +113,7 @@ class DiaryState extends ChangeNotifier {
 
   Future<void> save(DiaryEntry e) async {
     _entries[e.key] = e;
+    _deleted.remove(e.key);
     notifyListeners();
     await _persist();
   }
@@ -126,8 +128,9 @@ class DiaryState extends ChangeNotifier {
   Future<void> delete(DateTime d) async {
     final key = DiaryEntry.keyOf(d);
     _entries.remove(key);
+    _deleted.add(key);
     notifyListeners();
-    await _persist(removed: key);
+    await _persist();
   }
 
   // --- Farmaci ---
@@ -145,11 +148,11 @@ class DiaryState extends ChangeNotifier {
     await _prefs.setStringList(kMeds, medications);
   }
 
-  Future<void> _persist({String? removed}) async {
+  Future<void> _persist() async {
     final mine = Map.of(_entries);
     await _prefs.reload();
     for (final e in _stored()) {
-      if (e.key != removed && !mine.containsKey(e.key)) mine[e.key] = e;
+      if (!_deleted.contains(e.key) && !mine.containsKey(e.key)) mine[e.key] = e;
     }
     await _prefs.setString(kEntries, jsonEncode(mine.values.map((e) => e.toJson()).toList()));
     _entries

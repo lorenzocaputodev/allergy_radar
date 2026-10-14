@@ -61,6 +61,16 @@ void main() {
       expect(DiaryState(prefs).entryFor(today), isNull);
     });
 
+    test('una voce eliminata non ricompare con un salvataggio in contemporanea', () async {
+      final prefs = await SharedPreferences.getInstance();
+      final d = DiaryState(prefs);
+      await d.save(entry(0, 2, 3));
+      await d.save(entry(1, 1, 2));
+      await Future.wait([d.delete(today), d.save(entry(1, 3, 2))]);
+      expect(d.entryFor(today), isNull);
+      expect(DiaryState(prefs).entryFor(today), isNull);
+    });
+
     test('farmaci: niente duplicati né nomi vuoti', () async {
       final d = DiaryState(await SharedPreferences.getInstance());
       await d.addMedication('Cetirizina');
