@@ -50,7 +50,14 @@ class _AlertsScreenState extends State<AlertsScreen> {
             value: state.alerts,
             notes: _notes(state, diary, DateTime.now()),
             onChanged: (a) async {
-              if (a.anyEnabled && !state.alerts.anyEnabled) await AlertsService.requestPermission();
+              if (a.anyEnabled && !state.alerts.anyEnabled && !await AlertsService.requestPermission()) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Senza il permesso delle notifiche gli avvisi restano spenti.')),
+                  );
+                }
+                return;
+              }
               await state.setAlerts(a);
             },
           ),
