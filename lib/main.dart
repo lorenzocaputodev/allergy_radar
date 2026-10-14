@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:http/http.dart' as http;
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -20,9 +21,11 @@ import 'services/alerts_service.dart';
 import 'services/location_service.dart';
 import 'services/open_meteo_client.dart';
 import 'services/pollnet_client.dart';
+import 'services/update_checker.dart';
 import 'services/widget_bridge.dart';
 import 'state/app_state.dart';
 import 'state/diary_state.dart';
+import 'state/update_state.dart';
 import 'theme/app_theme.dart';
 
 final _navigator = GlobalKey<NavigatorState>();
@@ -36,6 +39,8 @@ Future<void> main() async {
   final repo = PollenRepository(openMeteo: openMeteo, pollnet: PollnetClient(client), stations: stations);
   final state = AppState(repo, prefs);
   final diary = DiaryState(prefs);
+  final info = await PackageInfo.fromPlatform();
+  final updates = UpdateState(prefs, UpdateChecker(client), current: info.version)..load();
 
   PollenSnapshot? filled;
   state.addListener(() {
@@ -77,6 +82,7 @@ Future<void> main() async {
     reschedule();
     if (state.onboarded) await state.follow(locate, describe);
     if (state.onboarded && state.isStale) await state.refresh();
+    if (state.onboarded) await updates.checkIfDue();
   }
 
   AlertsService.diaryChanged.addListener(() => unawaited(reloadDiary()));
@@ -102,6 +108,7 @@ Future<void> main() async {
         Provider.value(value: openMeteo),
         ChangeNotifierProvider.value(value: state),
         ChangeNotifierProvider.value(value: diary),
+        ChangeNotifierProvider.value(value: updates),
       ],
       child: const AllergyRadarApp(),
     ),
@@ -113,6 +120,7 @@ Future<void> main() async {
   reschedule();
   if (state.onboarded) await state.follow(locate, describe);
   if (state.onboarded && state.isStale) await state.refresh();
+  if (state.onboarded) await updates.checkIfDue();
 }
 
 class AllergyRadarApp extends StatelessWidget {

@@ -9,12 +9,13 @@ import '../models/level.dart';
 import '../models/place.dart';
 import '../state/app_state.dart';
 import '../state/diary_state.dart';
+import '../state/update_state.dart';
 
 class Backup {
   static const _app = 'allergy_radar';
   static const _format = 1;
 
-  static List<String> get _keys => [...AppState.backupKeys, ...DiaryState.backupKeys];
+  static List<String> get _keys => [...AppState.backupKeys, ...DiaryState.backupKeys, ...UpdateState.backupKeys];
 
   static String export(SharedPreferences prefs, DateTime now) {
     final data = <String, Object?>{};

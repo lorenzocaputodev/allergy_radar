@@ -12,6 +12,7 @@ import '../models/pollen_snapshot.dart';
 import '../models/weather.dart';
 import '../state/app_state.dart';
 import '../state/diary_state.dart';
+import '../state/update_state.dart';
 import '../theme/palette.dart';
 import '../utils/days.dart';
 import '../utils/format.dart';
@@ -19,6 +20,7 @@ import '../widgets/air_sheet.dart';
 import '../widgets/allergen_card.dart';
 import '../widgets/level_widgets.dart';
 import '../widgets/outdoor_sheet.dart';
+import '../widgets/update_card.dart';
 import 'allergen_detail_screen.dart';
 import 'log_entry_screen.dart';
 import 'notifications_screen.dart';
@@ -33,6 +35,7 @@ class TodayScreen extends StatelessWidget {
     final p = context.palette;
     final snap = s.snapshot;
     final above = s.aboveThreshold;
+    final update = context.watch<UpdateState>().available;
     final now = clock.now();
 
     void openDetail(AllergenStatus st) =>
@@ -98,6 +101,7 @@ class TodayScreen extends StatelessWidget {
             ),
           ),
           if (s.error != null) _Banner(message: s.error!),
+          if (update != null) UpdateCard(version: update),
           if (snap == null && s.error == null)
             const Padding(
               padding: EdgeInsets.all(48),

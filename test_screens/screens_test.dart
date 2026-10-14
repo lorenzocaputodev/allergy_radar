@@ -20,8 +20,10 @@ import 'package:allergy_radar/screens/place_search_screen.dart';
 import 'package:allergy_radar/screens/trend_screen.dart';
 import 'package:allergy_radar/services/open_meteo_client.dart';
 import 'package:allergy_radar/services/pollnet_client.dart';
+import 'package:allergy_radar/services/update_checker.dart';
 import 'package:allergy_radar/state/app_state.dart';
 import 'package:allergy_radar/state/diary_state.dart';
+import 'package:allergy_radar/state/update_state.dart';
 import 'package:allergy_radar/theme/app_theme.dart';
 import 'package:allergy_radar/widgets/outdoor_sheet.dart';
 import 'package:allergy_radar/widgets/page_list.dart';
@@ -98,6 +100,9 @@ void main() {
           Provider.value(value: OpenMeteoClient(fakeHttp())),
           ChangeNotifierProvider.value(value: s),
           ChangeNotifierProvider(create: (_) => DiaryState(prefs)),
+          ChangeNotifierProvider(
+            create: (_) => UpdateState(prefs, UpdateChecker(fakeHttp()), current: '1.1.2')..load(),
+          ),
         ],
         child: MaterialApp(debugShowCheckedModeBanner: false, theme: AppTheme.of(b), home: home),
       ),
@@ -146,6 +151,15 @@ void main() {
       const HomeShell(),
       s: await state(bologna, bolognaNow, all: true),
       height: 3400,
+    );
+  });
+
+  testWidgets('oggi aggiornamento', (tester) async {
+    await shot(
+      tester,
+      '02_oggi_aggiornamento',
+      const HomeShell(),
+      s: await state(Place.lecce, lecceNow, extra: {'update_latest': '1.2.0'}),
     );
   });
 

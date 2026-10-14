@@ -57,6 +57,13 @@ class InfoScreen extends StatelessWidget {
                     'Il nome del comune lo trova il servizio di localizzazione di Android, che può inviare le coordinate a '
                     'Google. A Open-Meteo va solo la posizione arrotondata a 1 km.',
               ),
+              _Item(
+                icon: Icons.system_update_alt,
+                title: 'Aggiornamenti',
+                text:
+                    'Ogni giorno, settimana o mese, come scegli nel Profilo, l’app chiede a GitHub il numero dell’ultima '
+                    'versione, senza inviare dati del diario o della posizione.',
+              ),
             ],
           ),
           const SizedBox(height: 16),

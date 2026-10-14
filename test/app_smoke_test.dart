@@ -5,8 +5,10 @@ import 'package:allergy_radar/screens/allergen_detail_screen.dart';
 import 'package:allergy_radar/screens/home_shell.dart';
 import 'package:allergy_radar/screens/log_entry_screen.dart';
 import 'package:allergy_radar/services/open_meteo_client.dart';
+import 'package:allergy_radar/services/update_checker.dart';
 import 'package:allergy_radar/state/app_state.dart';
 import 'package:allergy_radar/state/diary_state.dart';
+import 'package:allergy_radar/state/update_state.dart';
 import 'package:allergy_radar/widgets/allergen_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -37,6 +39,9 @@ void main() {
           Provider.value(value: OpenMeteoClient(fakeHttp())),
           ChangeNotifierProvider.value(value: state),
           ChangeNotifierProvider(create: (_) => DiaryState(prefs)),
+          ChangeNotifierProvider(
+            create: (_) => UpdateState(prefs, UpdateChecker(fakeHttp()), current: '1.1.2')..load(),
+          ),
         ],
         child: const AllergyRadarApp(),
       ),

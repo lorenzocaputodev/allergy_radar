@@ -6,10 +6,13 @@ import '../models/diary_entry.dart';
 import '../services/backup.dart';
 import '../services/file_service.dart';
 import '../services/report_pdf.dart';
+import '../services/update_checker.dart';
 import '../state/app_state.dart';
 import '../state/diary_state.dart';
+import '../state/update_state.dart';
 import '../theme/palette.dart';
 import '../widgets/settings_group.dart';
+import '../widgets/update_card.dart';
 import 'alerts_screen.dart';
 import 'allergens_screen.dart';
 import 'info_screen.dart';
@@ -23,6 +26,7 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
     final diary = context.watch<DiaryState>();
+    final updates = context.watch<UpdateState>();
     final p = context.palette;
     final measuring = state.snapshot?.measuringStation;
     final nearest = state.snapshot?.nearestStation;
@@ -183,6 +187,37 @@ class ProfileScreen extends StatelessWidget {
               ],
             ),
           ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text('Cerca nuove versioni', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final f in UpdateFrequency.values)
+                      ChoiceChip(
+                        label: Text(f.label),
+                        selected: f == updates.frequency,
+                        onSelected: (_) => updates.setFrequency(f),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.refresh),
+            title: const Text('Controlla adesso', style: TextStyle(fontWeight: FontWeight.w600)),
+            subtitle: Text('Versione installata ${updates.current}'),
+            trailing: updates.checking
+                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                : null,
+            onTap: updates.checking ? null : () => _checkUpdates(context),
+          ),
           nav(Icons.info_outline, 'Fonti e privacy', null, const InfoScreen()),
         ]),
         const SizedBox(height: 16),
@@ -198,6 +233,23 @@ class ProfileScreen extends StatelessWidget {
 
 void _toast(BuildContext context, String message) =>
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+
+Future<void> _checkUpdates(BuildContext context) async {
+  final updates = context.read<UpdateState>();
+  try {
+    final latest = await updates.check(manual: true);
+    if (!context.mounted) return;
+    if (!UpdateChecker.isNewer(latest, updates.current)) return _toast(context, 'Hai già l’ultima versione.');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('È disponibile la versione $latest.'),
+        action: SnackBarAction(label: 'Scarica', onPressed: () => openRelease(context)),
+      ),
+    );
+  } on Object {
+    if (context.mounted) _toast(context, 'Controllo non riuscito. Riprova più tardi.');
+  }
+}
 
 Future<void> _report(BuildContext context, Future<FileResult> Function() save, String done) async {
   try {
@@ -269,6 +321,7 @@ Future<void> _importBackup(BuildContext context) async {
   if (ok != true || !context.mounted) return;
   final state = context.read<AppState>();
   final diary = context.read<DiaryState>();
+  final updates = context.read<UpdateState>();
   try {
     final json = await FileService.openText(extensions: ['json'], mimes: ['application/json']);
     if (json == null) return;
@@ -276,6 +329,7 @@ Future<void> _importBackup(BuildContext context) async {
     final entries = await Backup.restore(prefs, json);
     diary.reload();
     await state.load();
+    updates.load();
     final days = entries == 1 ? '1 giorno' : '$entries giorni';
     if (context.mounted) _toast(context, 'Backup importato: $days di diario.');
     await state.refresh();
