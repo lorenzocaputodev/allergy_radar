@@ -139,6 +139,8 @@ void main() {
     ]) {
       final tile = find.widgetWithText(ListTile, entry);
       await tester.scrollUntilVisible(tile, 200, scrollable: find.byType(Scrollable).first);
+      await tester.ensureVisible(tile);
+      await tester.pumpAndSettle();
       await tester.tap(tile);
       await tester.pumpAndSettle();
       expect(find.widgetWithText(AppBar, title), findsOneWidget);
