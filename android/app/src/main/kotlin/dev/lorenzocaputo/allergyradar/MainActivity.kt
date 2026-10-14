@@ -82,7 +82,7 @@ class MainActivity : FlutterActivity() {
         return candidates.filter { it in available && manager.isProviderEnabled(it) }
     }
 
-    private fun lastKnown(): Location? = manager.allProviders
+    private fun lastKnown(maxAgeNs: Long = LAST_KNOWN_MAX_AGE_NS): Location? = manager.allProviders
         .mapNotNull {
             try {
                 manager.getLastKnownLocation(it)
@@ -90,24 +90,25 @@ class MainActivity : FlutterActivity() {
                 null
             }
         }
-        .filter { SystemClock.elapsedRealtimeNanos() - it.elapsedRealtimeNanos <= LAST_KNOWN_MAX_AGE_NS }
+        .filter { SystemClock.elapsedRealtimeNanos() - it.elapsedRealtimeNanos <= maxAgeNs }
         .maxByOrNull { it.elapsedRealtimeNanos }
 
     private fun current(result: MethodChannel.Result) {
         if (!granted()) return result.error("denied", "Permesso di posizione assente", null)
+        lastKnown(RECENT_MAX_AGE_NS)?.let { return reply(result, it) }
         val providers = providers()
         if (providers.isEmpty()) return reply(result, lastKnown())
 
         val handler = Handler(Looper.getMainLooper())
         var done = false
         var pending = providers.size
-        val signal = CancellationSignal()
+        val signals = mutableListOf<CancellationSignal>()
         val listeners = mutableListOf<LocationListener>()
         fun finish(location: Location?) {
             if (done) return
             done = true
             handler.removeCallbacksAndMessages(null)
-            signal.cancel()
+            signals.forEach { it.cancel() }
             listeners.forEach { manager.removeUpdates(it) }
             reply(result, location ?: lastKnown())
         }
@@ -119,6 +120,7 @@ class MainActivity : FlutterActivity() {
         providers.forEach { provider ->
             try {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    val signal = CancellationSignal().also { signals.add(it) }
                     manager.getCurrentLocation(provider, signal, mainExecutor) { answer(it) }
                 } else {
                     val listener = object : LocationListener {
@@ -153,5 +155,6 @@ class MainActivity : FlutterActivity() {
         private const val DENIED_ONCE = "denied_once"
         private const val TIMEOUT_MS = 15_000L
         private const val LAST_KNOWN_MAX_AGE_NS = 60 * 60 * 1_000_000_000L
+        private const val RECENT_MAX_AGE_NS = 2 * 60 * 1_000_000_000L
     }
 }

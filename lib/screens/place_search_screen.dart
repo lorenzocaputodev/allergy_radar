@@ -69,7 +69,7 @@ class _PlaceSearchScreenState extends State<PlaceSearchScreen> {
                   : Icon(Icons.near_me_outlined, color: p.pineText),
               title: const Text('Segui la mia posizione', style: TextStyle(fontWeight: FontWeight.w600)),
               subtitle: Text(
-                _error ?? 'Il luogo si aggiorna quando apri l’app.',
+                _locating ? 'Cerco la tua posizione…' : _error ?? 'Il luogo si aggiorna quando apri l’app.',
                 style: TextStyle(color: _error == null ? p.ink3 : Theme.of(context).colorScheme.error),
               ),
               value: app.followLocation,
