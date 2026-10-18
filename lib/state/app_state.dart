@@ -137,6 +137,17 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  RawPollenData? _cachedRaw() {
+    final cached = _prefs.getString(_kCache);
+    if (cached == null) return null;
+    try {
+      final raw = RawPollenData.decode(cached);
+      return raw.place.cacheKey == place.cacheKey ? raw : null;
+    } on Object {
+      return null;
+    }
+  }
+
   Future<PollenSnapshot?> _fromCache() async {
     final cached = _prefs.getString(_kCache);
     if (cached == null) return null;
@@ -176,13 +187,25 @@ class AppState extends ChangeNotifier {
     error = null;
     notifyListeners();
     final asked = place;
-    try {
-      final raw = await _repo.fetch(asked);
+    Future<bool> stillAsked() async {
       await _prefs.reload();
       final stored = storedPlaceKey;
-      if (place.cacheKey == asked.cacheKey && (stored == null || stored == asked.cacheKey)) {
-        snapshot = _repo.build(raw);
-        await _prefs.setString(_kCache, raw.encode());
+      return place.cacheKey == asked.cacheKey && (stored == null || stored == asked.cacheKey);
+    }
+
+    Future<void> show(RawPollenData raw) async {
+      snapshot = _repo.build(raw);
+      notifyListeners();
+      await _prefs.setString(_kCache, raw.encode());
+    }
+
+    try {
+      final forecast = await _repo.fetchForecast(asked);
+      if (await stillAsked()) {
+        final kept = _cachedRaw()?.measures ?? const <StationCsv>[];
+        await show(forecast.withMeasures(kept));
+        final measures = await _repo.fetchMeasures(asked, forecast.fetchedAt, fallback: kept);
+        if (await stillAsked()) await show(forecast.withMeasures(measures));
       }
     } on Object {
       if (place.cacheKey == asked.cacheKey) {

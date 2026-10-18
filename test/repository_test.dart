@@ -86,6 +86,21 @@ void main() {
     expect(snap[Allergens.parietaria.id]!.kind, DataKind.estimate);
   });
 
+  test('la previsione non aspetta ISPRA', () async {
+    final log = <Uri>[];
+    final repo = repository(DateTime(2026, 9, 25, 10), log: log);
+    final raw = await repo.fetchForecast(bologna);
+    expect(raw.measures, isEmpty);
+    expect(log.where((u) => u.host == 'sdi.isprambiente.it'), isEmpty);
+  });
+
+  test('stazione in errore: si tiene la sua misura precedente', () async {
+    final before = await repository(DateTime(2026, 9, 25, 10)).fetch(bologna);
+    final repo = repository(DateTime(2026, 9, 26, 10), ispraDown: true);
+    final measures = await repo.fetchMeasures(bologna, DateTime(2026, 9, 26, 10), fallback: before.measures);
+    expect(measures.map((m) => m.stationId), before.measures.map((m) => m.stationId));
+  });
+
   test('una stazione in errore non ferma le altre', () async {
     var calls = 0;
     final client = MockClient((req) async {

@@ -25,10 +25,28 @@ class _SlowRepository extends PollenRepository {
   final asked = <String>[];
 
   @override
-  Future<RawPollenData> fetch(Place place) async {
+  Future<RawPollenData> fetchForecast(Place place) async {
     asked.add(place.name);
     if (asked.length == 1) await gate.future;
-    return super.fetch(place);
+    return super.fetchForecast(place);
+  }
+}
+
+class _StuckIspraRepository extends PollenRepository {
+  _StuckIspraRepository(DateTime now)
+    : super(
+        openMeteo: OpenMeteoClient(fakeHttp()),
+        pollnet: PollnetClient(fakeHttp()),
+        stations: stationDirectory(),
+        clock: () => now,
+      );
+
+  final gate = Completer<void>();
+
+  @override
+  Future<List<StationCsv>> fetchMeasures(Place place, DateTime now, {List<StationCsv> fallback = const []}) async {
+    await gate.future;
+    return super.fetchMeasures(place, now, fallback: fallback);
   }
 }
 
@@ -151,6 +169,47 @@ void main() {
     expect(state.personal, isEmpty);
     expect(state.alerts.anyEnabled, isTrue);
     expect(state.followed, {'grass'});
+  });
+
+  test('ISPRA lento: la previsione si vede subito, le misure arrivano dopo', () async {
+    SharedPreferences.setMockInitialValues({
+      'onboarded': true,
+      'place': '{"name":"Bologna","region":null,"lat":44.49,"lon":11.34}',
+    });
+    final repo = _StuckIspraRepository(DateTime(2026, 9, 25, 10));
+    final state = AppState(repo, await SharedPreferences.getInstance());
+    await state.load();
+
+    final done = state.refresh();
+    await pumpEventQueue();
+    expect(state.loading, isTrue);
+    expect(state.snapshot!.fetchedAt, DateTime(2026, 9, 25, 10));
+    expect(state.snapshot![Allergens.parietaria.id]!.kind, DataKind.estimate);
+
+    repo.gate.complete();
+    await done;
+    expect(state.loading, isFalse);
+    expect(state.snapshot![Allergens.parietaria.id]!.kind, DataKind.measured);
+  });
+
+  test('ISPRA giù: restano le misure già scaricate, con la loro data', () async {
+    SharedPreferences.setMockInitialValues({
+      'onboarded': true,
+      'place': '{"name":"Bologna","region":null,"lat":44.49,"lon":11.34}',
+    });
+    final prefs = await SharedPreferences.getInstance();
+    final first = AppState(repository(DateTime(2026, 9, 25, 10)), prefs);
+    await first.load();
+    await first.refresh();
+
+    final later = AppState(repository(DateTime(2026, 9, 26, 10), ispraDown: true), prefs);
+    await later.load();
+    await later.refresh();
+    final par = later.snapshot![Allergens.parietaria.id]!;
+    expect(later.snapshot!.fetchedAt, DateTime(2026, 9, 26, 10));
+    expect(par.kind, DataKind.measured);
+    expect(par.date, DateTime(2026, 9, 20));
+    expect(later.error, isNull);
   });
 
   test('riscegliere il luogo attivo non cancella i dati', () async {

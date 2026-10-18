@@ -25,7 +25,7 @@ class PollnetClient {
       });
 
   Future<String> fetchCsv(int stationId, Iterable<int> partIds, DateTime from, DateTime to) async {
-    final res = await _http.get(concentrationsUri(stationId, partIds, from, to)).timeout(const Duration(seconds: 30));
+    final res = await _http.get(concentrationsUri(stationId, partIds, from, to)).timeout(const Duration(seconds: 15));
     if (res.statusCode != 200) throw PollnetException('ISPRA ha risposto ${res.statusCode}');
     return utf8.decode(res.bodyBytes);
   }

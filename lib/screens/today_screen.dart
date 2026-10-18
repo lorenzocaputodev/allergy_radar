@@ -102,12 +102,23 @@ class TodayScreen extends StatelessWidget {
           ),
           if (s.error != null) _Banner(message: s.error!),
           if (update != null) UpdateCard(version: update),
-          if (snap == null && s.error == null)
+          if (snap == null && s.loading)
             const Padding(
               padding: EdgeInsets.all(48),
               child: Center(child: CircularProgressIndicator()),
             )
-          else if (snap != null) ...[
+          else if (snap == null)
+            Padding(
+              padding: const EdgeInsets.all(32),
+              child: Center(
+                child: FilledButton.icon(
+                  onPressed: s.refresh,
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Riprova'),
+                ),
+              ),
+            )
+          else ...[
             _Hero(state: s),
             const SizedBox(height: 14),
             const _SectionTitle('I tuoi allergeni'),

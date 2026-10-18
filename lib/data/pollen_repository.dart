@@ -61,6 +61,9 @@ class RawPollenData {
     );
   }
 
+  RawPollenData withMeasures(List<StationCsv> measures) =>
+      RawPollenData(place: place, fetchedAt: fetchedAt, openMeteo: openMeteo, weather: weather, measures: measures);
+
   String encode() => jsonEncode(toJson());
 
   static RawPollenData decode(String s) => RawPollenData.fromJson(jsonDecode(s) as Map<String, dynamic>);
@@ -79,9 +82,14 @@ class PollenRepository {
   static const historyDays = 30;
 
   Future<RawPollenData> fetch(Place place) async {
+    final forecast = await fetchForecast(place);
+    return forecast.withMeasures(await fetchMeasures(place, forecast.fetchedAt));
+  }
+
+  Future<RawPollenData> fetchForecast(Place place) async {
     final now = _now();
-    final (om, weather, measures) = await (openMeteo.fetchForecast(place), _weather(place), _measures(place, now)).wait;
-    return RawPollenData(place: place, fetchedAt: now, openMeteo: om, weather: weather, measures: measures);
+    final (om, weather) = await (openMeteo.fetchForecast(place), _weather(place)).wait;
+    return RawPollenData(place: place, fetchedAt: now, openMeteo: om, weather: weather);
   }
 
   Future<String?> _weather(Place place) async {
@@ -92,7 +100,7 @@ class PollenRepository {
     }
   }
 
-  Future<List<StationCsv>> _measures(Place place, DateTime now) async {
+  Future<List<StationCsv>> fetchMeasures(Place place, DateTime now, {List<StationCsv> fallback = const []}) async {
     final ids = Allergens.measuredOnly.map((a) => a.pollnetId);
     Future<StationCsv?> recent(NearStation near) async {
       try {
@@ -101,7 +109,7 @@ class PollenRepository {
             .any((m) => m.value != null && now.daysSince(m.date) <= maxMeasureAgeDays);
         return ok ? StationCsv(near.station.id, near.km, body) : null;
       } on Exception {
-        return null;
+        return fallback.where((m) => m.stationId == near.station.id).firstOrNull;
       }
     }
 
