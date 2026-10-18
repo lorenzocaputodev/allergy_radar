@@ -42,7 +42,7 @@ class _LogEntryScreenState extends State<LogEntryScreen> {
 
   bool get _samePlace {
     final app = context.read<AppState>();
-    return app.snapshot != null && (_isToday || _entry.place == null || _entry.place == app.place.cacheKey);
+    return app.hasData && (_isToday || _entry.place == null || _entry.place == app.place.cacheKey);
   }
 
   Map<String, int> _pollenNow() {

@@ -92,6 +92,7 @@ class PollenSnapshot {
     this.weather,
     this.measuringStation,
     this.nearestStation,
+    this.estimated = false,
   });
 
   final Place place;
@@ -105,6 +106,8 @@ class PollenSnapshot {
   final NearStation? measuringStation;
 
   final NearStation? nearestStation;
+
+  final bool estimated;
 
   AllergenStatus? operator [](String id) => statuses[id];
 

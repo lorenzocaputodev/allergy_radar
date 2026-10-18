@@ -27,6 +27,7 @@ class MainActivity : FlutterActivity() {
                 "enabled" -> result.success(locationEnabled())
                 "permission" -> permission(call.argument<Boolean>("ask") == true, result)
                 "current" -> current(result)
+                "lastKnown" -> lastKnownNow(call.argument<Number>("maxAgeMs")?.toLong() ?: 0L, result)
                 else -> result.notImplemented()
             }
         }
@@ -92,6 +93,12 @@ class MainActivity : FlutterActivity() {
         }
         .filter { SystemClock.elapsedRealtimeNanos() - it.elapsedRealtimeNanos <= maxAgeNs }
         .maxByOrNull { it.elapsedRealtimeNanos }
+
+    private fun lastKnownNow(maxAgeMs: Long, result: MethodChannel.Result) {
+        if (!granted()) return result.error("denied", "Permesso di posizione assente", null)
+        val location = lastKnown(maxAgeMs * 1_000_000L) ?: return result.success(null)
+        reply(result, location)
+    }
 
     private fun current(result: MethodChannel.Result) {
         if (!granted()) return result.error("denied", "Permesso di posizione assente", null)

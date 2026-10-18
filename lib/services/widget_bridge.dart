@@ -23,7 +23,7 @@ class WidgetBridge {
     if (snap == null) return null;
     return jsonEncode({
       'place': app.place.name,
-      'updated': snap.fetchedAt.toIso8601String(),
+      'updated': snap.estimated ? '' : snap.fetchedAt.toIso8601String(),
       'level': app.dayLevel.index,
       'levelLabel': app.dayLevel.label,
       'source': _source(app.dayLevelSource),

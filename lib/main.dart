@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -11,6 +12,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'data/pollen_repository.dart';
 import 'models/diary_entry.dart';
 import 'models/place.dart';
+import 'models/place_index.dart';
 import 'models/pollen_snapshot.dart';
 import 'models/station.dart';
 import 'screens/home_shell.dart';
@@ -34,12 +36,14 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final prefs = await SharedPreferences.getInstance();
   final stations = StationDirectory.parse(await rootBundle.loadString('assets/data/stations.json'));
+  final placesLoad = rootBundle.loadString('assets/data/places.json').then((s) => compute(PlaceIndex.parse, s));
   final client = http.Client();
   final openMeteo = OpenMeteoClient(client);
   final repo = PollenRepository(openMeteo: openMeteo, pollnet: PollnetClient(client), stations: stations);
   final state = AppState(repo, prefs);
   final diary = DiaryState(prefs);
   final info = await PackageInfo.fromPlatform();
+  final places = await placesLoad;
   final updates = UpdateState(prefs, UpdateChecker(client), current: info.version)..load();
 
   PollenSnapshot? filled;
@@ -73,16 +77,32 @@ Future<void> main() async {
   }
 
   Future<({double lat, double lon})> locate() => LocationService.position(ask: false);
-  Future<Place> describe(double lat, double lon) =>
-      LocationService.placeAt(lat, lon, reverse: LocationService.androidGeocoder);
+  Future<Place> describe(double lat, double lon) => LocationService.placeAt(
+    lat,
+    lon,
+    reverse: LocationService.androidGeocoder,
+    index: places,
+    renamed: (p) => unawaited(state.rename(p)),
+  );
+
+  Future<void> freshenData() async {
+    final followFirst = state.followLocation && state.hasData;
+    if (followFirst) await state.follow(locate, describe);
+    if (state.isStale) await state.refresh();
+    if (state.followLocation && !followFirst) await state.follow(locate, describe);
+  }
+
+  void freshen() {
+    if (!state.onboarded) return;
+    unawaited(freshenData());
+    unawaited(updates.checkIfDue());
+  }
 
   Future<void> resume() async {
     await reloadDiary();
     await state.syncCache();
     reschedule();
-    if (state.onboarded) await state.follow(locate, describe);
-    if (state.onboarded && state.isStale) await state.refresh();
-    if (state.onboarded) await updates.checkIfDue();
+    freshen();
   }
 
   AlertsService.diaryChanged.addListener(() => unawaited(reloadDiary()));
@@ -106,6 +126,7 @@ Future<void> main() async {
     MultiProvider(
       providers: [
         Provider.value(value: openMeteo),
+        Provider.value(value: places),
         ChangeNotifierProvider.value(value: state),
         ChangeNotifierProvider.value(value: diary),
         ChangeNotifierProvider.value(value: updates),
@@ -115,12 +136,10 @@ Future<void> main() async {
   );
 
   await state.load();
+  freshen();
   await AlertsService.init();
   if (state.onboarded) await AlertsService.startBackground();
   reschedule();
-  if (state.onboarded) await state.follow(locate, describe);
-  if (state.onboarded && state.isStale) await state.refresh();
-  if (state.onboarded) await updates.checkIfDue();
 }
 
 class AllergyRadarApp extends StatelessWidget {

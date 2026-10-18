@@ -59,11 +59,9 @@ class FileService {
       return file?.readAsString();
     }
     if (_isAndroid) {
-      final path = await FlutterFileDialog.pickFile(
-        params: const OpenFileDialogParams(localOnly: true, copyFileToCacheDir: true),
-      );
+      final path = await FlutterFileDialog.pickFile(params: const OpenFileDialogParams(localOnly: true));
       if (path == null || path.trim().isEmpty) return null;
-      return File(path).readAsString(encoding: utf8);
+      return File(path).readAsString();
     }
     return null;
   }

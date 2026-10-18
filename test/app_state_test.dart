@@ -6,6 +6,7 @@ import 'package:allergy_radar/models/level.dart';
 import 'package:allergy_radar/models/place.dart';
 import 'package:allergy_radar/services/open_meteo_client.dart';
 import 'package:allergy_radar/services/pollnet_client.dart';
+import 'package:allergy_radar/services/widget_bridge.dart';
 import 'package:allergy_radar/state/app_state.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -44,9 +45,14 @@ class _StuckIspraRepository extends PollenRepository {
   final gate = Completer<void>();
 
   @override
-  Future<List<StationCsv>> fetchMeasures(Place place, DateTime now, {List<StationCsv> fallback = const []}) async {
+  Future<({List<StationCsv> measures, DateTime? at})> fetchMeasures(
+    Place place,
+    DateTime now, {
+    RawPollenData? cached,
+    bool force = false,
+  }) async {
     await gate.future;
-    return super.fetchMeasures(place, now, fallback: fallback);
+    return super.fetchMeasures(place, now, cached: cached, force: force);
   }
 }
 
@@ -107,16 +113,20 @@ void main() {
     expect(state.loading, isFalse);
   });
 
-  test('aggiornare di nuovo lo stesso luogo durante un aggiornamento non lo riscarica', () async {
+  test('aggiornare di nuovo durante un aggiornamento aspetta quello in corso, senza riscaricare', () async {
     SharedPreferences.setMockInitialValues({'onboarded': true});
     final repo = _SlowRepository(DateTime(2026, 9, 25, 10));
     final state = AppState(repo, await SharedPreferences.getInstance());
     await state.load();
 
     final first = state.refresh();
-    await state.refresh();
+    var secondDone = false;
+    final second = state.refresh().then((_) => secondDone = true);
+    await pumpEventQueue();
+    expect(secondDone, isFalse, reason: 'il pull-to-refresh resta aperto finché arrivano i dati');
     repo.gate.complete();
     await first;
+    await second;
 
     expect(repo.asked, ['Lecce']);
     expect(state.snapshot, isNotNull);
@@ -212,6 +222,98 @@ void main() {
     expect(later.error, isNull);
   });
 
+  test('Open-Meteo giù al primo avvio: stime dichiarate, e si riprova al prossimo giro', () async {
+    SharedPreferences.setMockInitialValues({'onboarded': true});
+    final state = AppState(
+      repository(DateTime(2026, 9, 30, 10), openMeteoDown: true),
+      await SharedPreferences.getInstance(),
+    );
+    await state.load();
+    await state.refresh();
+    expect(state.estimatesOnly, isTrue);
+    expect(state.snapshot!.statuses.values.every((s) => s.kind == DataKind.estimate), isTrue);
+    expect(state.error, contains('stime'));
+    expect(state.isStale, isTrue);
+  });
+
+  test('stime di ripiego: il widget non dice «aggiornato»', () async {
+    SharedPreferences.setMockInitialValues({'onboarded': true});
+    final state = AppState(
+      repository(DateTime(2026, 9, 30, 10), openMeteoDown: true),
+      await SharedPreferences.getInstance(),
+    );
+    await state.load();
+    await state.refresh();
+    expect(WidgetBridge.encode(state), contains('"updated":""'));
+  });
+
+  test('cambiare luogo non aspetta l’aggiornamento del luogo vecchio', () async {
+    SharedPreferences.setMockInitialValues({'onboarded': true});
+    final repo = _SlowRepository(DateTime(2026, 9, 25, 10));
+    final state = AppState(repo, await SharedPreferences.getInstance());
+    await state.load();
+
+    final old = state.refresh();
+    await state.setPlace(bologna);
+    expect(state.snapshot!.place.name, 'Bologna');
+    expect(state.loading, isTrue, reason: 'Lecce è ancora in corso');
+    repo.gate.complete();
+    await old;
+    expect(state.snapshot!.place.name, 'Bologna');
+    expect(state.loading, isFalse);
+  });
+
+  test('il nome arrivato dopo rinomina il luogo senza riscaricare', () async {
+    SharedPreferences.setMockInitialValues({'onboarded': true});
+    final prefs = await SharedPreferences.getInstance();
+    final state = AppState(repository(DateTime(2026, 9, 30, 10)), prefs);
+    await state.load();
+    await state.setPlace(const Place(name: 'Lecce', lat: 40.36, lon: 18.17));
+    final before = state.snapshot;
+    await state.rename(const Place(name: 'San Cesario di Lecce', region: 'Puglia', lat: 40.36, lon: 18.17));
+    expect(state.place.name, 'San Cesario di Lecce');
+    expect(state.saved.first.name, 'San Cesario di Lecce');
+    expect(state.snapshot, same(before));
+    expect(prefs.getString(AppState.kPlace), contains('San Cesario'));
+    await state.rename(const Place(name: 'Altrove', lat: 45.0, lon: 9.0));
+    expect(state.place.name, 'San Cesario di Lecce');
+  });
+
+  test('con le sole stime: niente dati veri, e riscegliere lo stesso luogo riprova', () async {
+    SharedPreferences.setMockInitialValues({'onboarded': true});
+    final prefs = await SharedPreferences.getInstance();
+    final down = AppState(repository(DateTime(2026, 9, 30, 10), openMeteoDown: true), prefs);
+    await down.load();
+    await down.refresh();
+    expect(down.snapshot, isNotNull);
+    expect(down.hasData, isFalse);
+
+    final log = <Uri>[];
+    final up = AppState(repository(DateTime(2026, 9, 30, 10), log: log), prefs);
+    await up.load();
+    await up.refresh();
+    expect(up.hasData, isTrue);
+  });
+
+  test('misure scaricate da poco: ISPRA non viene richiamato', () async {
+    SharedPreferences.setMockInitialValues({
+      'onboarded': true,
+      'place': '{"name":"Bologna","region":null,"lat":44.49,"lon":11.34}',
+    });
+    final prefs = await SharedPreferences.getInstance();
+    final first = AppState(repository(DateTime(2026, 9, 25, 10)), prefs);
+    await first.load();
+    await first.refresh();
+
+    final log = <Uri>[];
+    final later = AppState(repository(DateTime(2026, 9, 25, 12), log: log), prefs);
+    await later.load();
+    await later.refresh();
+    expect(log.where((u) => u.host == 'sdi.isprambiente.it'), isEmpty);
+    expect(later.snapshot![Allergens.parietaria.id]!.kind, DataKind.measured);
+    expect(later.snapshot!.fetchedAt, DateTime(2026, 9, 25, 12));
+  });
+
   test('riscegliere il luogo attivo non cancella i dati', () async {
     SharedPreferences.setMockInitialValues({'onboarded': true});
     final state = AppState(repository(DateTime(2026, 9, 30, 10)), await SharedPreferences.getInstance());
@@ -267,6 +369,25 @@ void main() {
       expect(state.place.name, 'Altrove');
       await state.follow(() async => throw Exception('GPS spento'), (la, lo) async => at('Mai', la));
       expect(state.place.name, 'Altrove');
+    });
+
+    test('due ritorni nell’app ravvicinati chiedono la posizione una volta sola', () async {
+      final state = await fresh();
+      await state.startFollowing(at('Qui', 40.35));
+      var asked = 0;
+      final gate = Completer<void>();
+      Future<({double lat, double lon})> slow() async {
+        asked++;
+        await gate.future;
+        return (lat: 40.35, lon: 18.17);
+      }
+
+      final first = state.follow(slow, (la, lo) async => at('Mai', la));
+      final second = state.follow(slow, (la, lo) async => at('Mai', la));
+      gate.complete();
+      await first;
+      await second;
+      expect(asked, 1);
     });
 
     test('scegliere un luogo a mano smette di seguire la posizione', () async {

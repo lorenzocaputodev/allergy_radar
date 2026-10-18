@@ -1,4 +1,5 @@
 // ignore_for_file: invalid_use_of_visible_for_testing_member
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -98,6 +99,7 @@ void main() {
       MultiProvider(
         providers: [
           Provider.value(value: OpenMeteoClient(fakeHttp())),
+          Provider.value(value: placeIndex()),
           ChangeNotifierProvider.value(value: s),
           ChangeNotifierProvider(create: (_) => DiaryState(prefs)),
           ChangeNotifierProvider(
@@ -351,6 +353,46 @@ void main() {
     );
   });
 
+  testWidgets('ricerca luogo con risultati', (tester) async {
+    await shot(
+      tester,
+      '06_luogo_ricerca',
+      const PlaceSearchScreen(),
+      s: await state(Place.lecce, lecceNow),
+      before: () async {
+        await tester.enterText(find.byType(TextField), 'san');
+        await tester.pump(const Duration(milliseconds: 400));
+        await tester.pumpAndSettle();
+      },
+    );
+  });
+
+  testWidgets('oggi stime di ripiego', (tester) async {
+    await shot(
+      tester,
+      '02_oggi_stime',
+      const HomeShell(),
+      s: await state(Place.lecce, lecceNow, repo: repository(lecceNow, openMeteoDown: true)),
+    );
+  });
+
+  testWidgets('oggi caricamento', (tester) async {
+    final repo = _WaitingRepository(lecceNow);
+    final s = await state(Place.lecce, lecceNow, repo: repo);
+    await shot(
+      tester,
+      '02_oggi_caricamento',
+      const HomeShell(),
+      s: s,
+      before: () async {
+        repo.hold = true;
+        unawaited(s.setPlace(bologna));
+        await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 50)));
+        await tester.pump();
+      },
+    );
+  });
+
   for (final (tab, h) in [('Diario', 1700.0)]) {
     testWidgets('diario pieno', (tester) async {
       await shot(
@@ -560,4 +602,20 @@ List<Map<String, dynamic>> _yearDiary() {
           return DiaryEntry(date: day, nose: sym, pollen: {'parietaria': par}).toJson();
         }(),
   ];
+}
+
+class _WaitingRepository extends PollenRepository {
+  _WaitingRepository(DateTime now)
+    : super(
+        openMeteo: OpenMeteoClient(fakeHttp()),
+        pollnet: PollnetClient(fakeHttp()),
+        stations: stationDirectory(),
+        clock: () => now,
+      );
+
+  bool hold = false;
+
+  @override
+  Future<RawPollenData> fetchForecast(Place place) =>
+      hold ? Completer<RawPollenData>().future : super.fetchForecast(place);
 }

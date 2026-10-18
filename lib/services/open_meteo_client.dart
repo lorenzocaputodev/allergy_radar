@@ -22,10 +22,25 @@ class OpenMeteoClient {
     'forecast_days': '5',
   });
 
+  static const timeout = Duration(seconds: 12);
+  static const retryAfter = Duration(seconds: 1);
+
   Future<String> fetchForecast(Place p) async {
-    final res = await _http.get(forecastUri(p)).timeout(const Duration(seconds: 20));
-    if (res.statusCode != 200) throw OpenMeteoException('Open-Meteo ha risposto ${res.statusCode}');
-    return utf8.decode(res.bodyBytes);
+    Future<String> once() async {
+      final res = await _http.get(forecastUri(p)).timeout(timeout);
+      if (res.statusCode != 200) {
+        throw OpenMeteoException('Open-Meteo ha risposto ${res.statusCode}', transient: res.statusCode >= 500);
+      }
+      return utf8.decode(res.bodyBytes);
+    }
+
+    try {
+      return await once();
+    } on Exception catch (e) {
+      if (e is OpenMeteoException && !e.transient) rethrow;
+      await Future<void>.delayed(retryAfter);
+      return once();
+    }
   }
 
   Uri weatherUri(Place p) => Uri.https('api.open-meteo.com', '/v1/forecast', {
@@ -37,7 +52,7 @@ class OpenMeteoClient {
   });
 
   Future<String> fetchWeather(Place p) async {
-    final res = await _http.get(weatherUri(p)).timeout(const Duration(seconds: 20));
+    final res = await _http.get(weatherUri(p)).timeout(timeout);
     if (res.statusCode != 200) throw OpenMeteoException('Open-Meteo meteo ha risposto ${res.statusCode}');
     return utf8.decode(res.bodyBytes);
   }
@@ -49,7 +64,7 @@ class OpenMeteoClient {
       'language': 'it',
       'countryCode': 'IT',
     });
-    final res = await _http.get(uri).timeout(const Duration(seconds: 15));
+    final res = await _http.get(uri).timeout(timeout);
     if (res.statusCode != 200) throw OpenMeteoException('Ricerca non riuscita (${res.statusCode})');
     final results = (jsonDecode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>)['results'] as List? ?? const [];
     return [
@@ -65,9 +80,10 @@ class OpenMeteoClient {
 }
 
 class OpenMeteoException implements Exception {
-  OpenMeteoException(this.message);
+  OpenMeteoException(this.message, {this.transient = false});
 
   final String message;
+  final bool transient;
 
   @override
   String toString() => message;

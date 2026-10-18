@@ -43,7 +43,7 @@ class TodayScreen extends StatelessWidget {
             .push(MaterialPageRoute<void>(builder: (_) => AllergenDetailScreen(allergenId: st.allergen.id)));
 
     return RefreshIndicator(
-      onRefresh: s.refresh,
+      onRefresh: () => s.refresh(manual: true),
       child: ListView(
         padding: const EdgeInsets.only(bottom: 24),
         children: [
@@ -96,23 +96,22 @@ class TodayScreen extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
             child: Text(
-              snap == null ? Fmt.longDate(now) : '${Fmt.longDate(now)} · ${Fmt.updated(snap.fetchedAt, now)}',
+              snap == null || s.estimatesOnly
+                  ? Fmt.longDate(now)
+                  : '${Fmt.longDate(now)} · ${Fmt.updated(snap.fetchedAt, now)}',
               style: TextStyle(fontSize: 14, color: p.ink3),
             ),
           ),
-          if (s.error != null) _Banner(message: s.error!),
+          if (s.error != null) _Banner(message: s.error!, onRetry: () => s.refresh(manual: true)),
           if (update != null) UpdateCard(version: update),
           if (snap == null && s.loading)
-            const Padding(
-              padding: EdgeInsets.all(48),
-              child: Center(child: CircularProgressIndicator()),
-            )
+            const _Skeleton()
           else if (snap == null)
             Padding(
               padding: const EdgeInsets.all(32),
               child: Center(
                 child: FilledButton.icon(
-                  onPressed: s.refresh,
+                  onPressed: () => s.refresh(manual: true),
                   icon: const Icon(Icons.refresh),
                   label: const Text('Riprova'),
                 ),
@@ -172,10 +171,39 @@ class _SectionTitle extends StatelessWidget {
   );
 }
 
+class _Skeleton extends StatelessWidget {
+  const _Skeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    Widget block(double height, {Color? color}) => Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+      child: Container(
+        height: height,
+        decoration: BoxDecoration(color: color ?? p.chip, borderRadius: BorderRadius.circular(20)),
+      ),
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        block(150, color: p.pineSoft),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 4, 20, 14),
+          child: Text('Carico le previsioni…', style: TextStyle(fontSize: 14, color: p.ink3)),
+        ),
+        block(110),
+        block(110),
+      ],
+    );
+  }
+}
+
 class _Banner extends StatelessWidget {
-  const _Banner({required this.message});
+  const _Banner({required this.message, required this.onRetry});
 
   final String message;
+  final Future<void> Function() onRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -191,6 +219,11 @@ class _Banner extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: Text(message, style: TextStyle(color: p.bg, fontSize: 14)),
+            ),
+            TextButton(
+              onPressed: onRetry,
+              style: TextButton.styleFrom(foregroundColor: p.bg),
+              child: const Text('Riprova'),
             ),
           ],
         ),

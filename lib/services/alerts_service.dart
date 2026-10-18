@@ -174,7 +174,7 @@ class AlertsService {
     try {
       final on = await enabled();
       final keep = {
-        if (on && app.snapshot == null)
+        if (on && !app.hasData)
           for (final k in [AlertKind.briefing, AlertKind.tomorrow])
             if (app.alerts.isOn(k)) k,
       };
@@ -343,10 +343,7 @@ class AlertsService {
         icon: _statusIcon,
         color: _accent,
         styleInformation: BigTextStyleInformation(body),
-        actions: [
-          if (kind == AlertKind.diary)
-            const AndroidNotificationAction(noSymptomsAction, 'Nessun sintomo', cancelNotification: true),
-        ],
+        actions: [if (kind == AlertKind.diary) const AndroidNotificationAction(noSymptomsAction, 'Nessun sintomo')],
       ),
     );
   }

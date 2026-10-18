@@ -97,8 +97,88 @@ void main() {
   test('stazione in errore: si tiene la sua misura precedente', () async {
     final before = await repository(DateTime(2026, 9, 25, 10)).fetch(bologna);
     final repo = repository(DateTime(2026, 9, 26, 10), ispraDown: true);
-    final measures = await repo.fetchMeasures(bologna, DateTime(2026, 9, 26, 10), fallback: before.measures);
-    expect(measures.map((m) => m.stationId), before.measures.map((m) => m.stationId));
+    final stale = before.withMeasures(before.measures, at: DateTime(2026, 9, 25, 10));
+    final m = await repo.fetchMeasures(bologna, DateTime(2026, 9, 26, 10), cached: stale);
+    expect(m.at, DateTime(2026, 9, 25, 10), reason: 'la data resta quella della misura vera');
+    expect(m.measures.map((m) => m.stationId), before.measures.map((m) => m.stationId));
+  });
+
+  test('stime di ripiego: solo calendario, segnate come tali', () {
+    final none = repository(DateTime(2026, 9, 26, 10)).estimates(Place.lecce);
+    expect(none.statuses.values.map((s) => s.kind).toSet(), {DataKind.estimate});
+    expect(none.air.ozoneMax, isNull);
+    expect(none.estimated, isTrue);
+    expect(none.levelsOn(DateTime(2026, 9, 26)), isEmpty, reason: 'il diario non salva stime');
+  });
+
+  test('ISPRA giù: pausa di 30 minuti senza nuovi tentativi', () async {
+    var now = DateTime(2026, 9, 26, 10);
+    final log = <Uri>[];
+    final client = fakeHttp(ispraDown: true, log: log);
+    final repo = PollenRepository(
+      openMeteo: OpenMeteoClient(client),
+      pollnet: PollnetClient(client),
+      stations: stationDirectory(),
+      clock: () => now,
+    );
+    int ispra() => log.where((u) => u.host == 'sdi.isprambiente.it').length;
+    expect((await repo.fetchMeasures(bologna, now)).at, isNull);
+    final first = ispra();
+    expect(first, greaterThan(0));
+    now = now.add(const Duration(minutes: 10));
+    await repo.fetchMeasures(bologna, now);
+    expect(ispra(), first);
+    now = now.add(const Duration(minutes: 25));
+    await repo.fetchMeasures(bologna, now);
+    expect(ispra(), greaterThan(first));
+  });
+
+  test('misure recenti riusate per 6 ore; la cache senza data delle misure si legge', () async {
+    final raw = RawPollenData.decode((await repository(DateTime(2026, 9, 25, 10)).fetch(bologna)).encode());
+    expect(raw.measuresAt, DateTime(2026, 9, 25, 10));
+    Future<int> ispraCalls(DateTime now, RawPollenData cached) async {
+      final log = <Uri>[];
+      await repository(now, log: log).fetchMeasures(bologna, now, cached: cached);
+      return log.where((u) => u.host == 'sdi.isprambiente.it').length;
+    }
+
+    expect(await ispraCalls(DateTime(2026, 9, 25, 15), raw), 0);
+    expect(await ispraCalls(DateTime(2026, 9, 25, 17), raw), greaterThan(0));
+    expect(await ispraCalls(DateTime(2026, 9, 25, 11), raw.withMeasures(raw.measures)), greaterThan(0));
+  });
+
+  test('stazioni in parte giù: la data delle misure non avanza, così si riprova', () async {
+    final client = MockClient((req) async {
+      if (req.url.host != 'sdi.isprambiente.it') return utf8Response(fixture('open_meteo_lecce.json'));
+      return req.url.queryParameters['cql_filter']!.startsWith('STAT_ID=118 ')
+          ? utf8Response(fixture('pollnet_bologna.csv'))
+          : http.Response('errore', 500);
+    });
+    final repo = PollenRepository(
+      openMeteo: OpenMeteoClient(client),
+      pollnet: PollnetClient(client),
+      stations: stationDirectory(),
+      clock: () => DateTime(2026, 9, 25, 10),
+    );
+    final m = await repo.fetchMeasures(bologna, DateTime(2026, 9, 25, 10));
+    expect(m.measures, isNotEmpty);
+    expect(m.at, isNull);
+  });
+
+  test('aggiornamento a mano: ISPRA anche in pausa e con misure recenti', () async {
+    var now = DateTime(2026, 9, 26, 10);
+    final log = <Uri>[];
+    final repo = PollenRepository(
+      openMeteo: OpenMeteoClient(fakeHttp(log: log)),
+      pollnet: PollnetClient(fakeHttp(ispraDown: true, log: log)),
+      stations: stationDirectory(),
+      clock: () => now,
+    );
+    await repo.fetchMeasures(bologna, now);
+    final before = log.length;
+    now = now.add(const Duration(minutes: 5));
+    await repo.fetchMeasures(bologna, now, force: true);
+    expect(log.length, greaterThan(before));
   });
 
   test('una stazione in errore non ferma le altre', () async {

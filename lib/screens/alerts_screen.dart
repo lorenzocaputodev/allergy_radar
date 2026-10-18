@@ -92,7 +92,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
     final briefing = planned[AlertKind.briefing];
     final tomorrow = planned[AlertKind.tomorrow];
     final reminder = planned[AlertKind.diary];
-    final noData = app.snapshot == null;
+    final noData = !app.hasData;
     return {
       AlertKind.briefing: briefing != null
           ? 'Prossimo: ${next(briefing)}'

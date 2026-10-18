@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../models/place.dart';
+import '../models/place_index.dart';
 import '../services/location_service.dart';
 import '../state/app_state.dart';
 import '../theme/palette.dart';
@@ -29,7 +30,10 @@ class _PlaceSearchScreenState extends State<PlaceSearchScreen> {
       _error = null;
     });
     try {
-      final here = await LocationService.current();
+      final here = await LocationService.current(
+        index: context.read<PlaceIndex>(),
+        renamed: (p) => unawaited(app.rename(p)),
+      );
       if (!mounted) return;
       unawaited(app.startFollowing(here));
       Navigator.of(context).pop();

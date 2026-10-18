@@ -30,6 +30,7 @@ class RawPollenData {
     required this.openMeteo,
     this.weather,
     this.measures = const [],
+    this.measuresAt,
   });
 
   final Place place;
@@ -37,6 +38,7 @@ class RawPollenData {
   final String openMeteo;
   final String? weather;
   final List<StationCsv> measures;
+  final DateTime? measuresAt;
 
   Map<String, dynamic> toJson() => {
     'place': place.toJson(),
@@ -44,6 +46,7 @@ class RawPollenData {
     'openMeteo': openMeteo,
     'weather': ?weather,
     'measures': [for (final m in measures) m.toJson()],
+    'measuresAt': ?measuresAt?.toIso8601String(),
   };
 
   factory RawPollenData.fromJson(Map<String, dynamic> j) {
@@ -53,6 +56,7 @@ class RawPollenData {
       fetchedAt: DateTime.parse(j['fetchedAt'] as String),
       openMeteo: j['openMeteo'] as String,
       weather: j['weather'] as String?,
+      measuresAt: j['measuresAt'] == null ? null : DateTime.parse(j['measuresAt'] as String),
       measures: [
         for (final m in (j['measures'] as List? ?? const [])) StationCsv.fromJson(m as Map<String, dynamic>),
         if (legacy != null && j['stationId'] != null)
@@ -61,8 +65,14 @@ class RawPollenData {
     );
   }
 
-  RawPollenData withMeasures(List<StationCsv> measures) =>
-      RawPollenData(place: place, fetchedAt: fetchedAt, openMeteo: openMeteo, weather: weather, measures: measures);
+  RawPollenData withMeasures(List<StationCsv> measures, {DateTime? at}) => RawPollenData(
+    place: place,
+    fetchedAt: fetchedAt,
+    openMeteo: openMeteo,
+    weather: weather,
+    measures: measures,
+    measuresAt: at,
+  );
 
   String encode() => jsonEncode(toJson());
 
@@ -80,11 +90,10 @@ class PollenRepository {
 
   static const maxMeasureAgeDays = 14;
   static const historyDays = 30;
+  static const measuresFreshFor = Duration(hours: 6);
+  static const ispraPause = Duration(minutes: 30);
 
-  Future<RawPollenData> fetch(Place place) async {
-    final forecast = await fetchForecast(place);
-    return forecast.withMeasures(await fetchMeasures(place, forecast.fetchedAt));
-  }
+  DateTime? _ispraPausedUntil;
 
   Future<RawPollenData> fetchForecast(Place place) async {
     final now = _now();
@@ -100,24 +109,45 @@ class PollenRepository {
     }
   }
 
-  Future<List<StationCsv>> fetchMeasures(Place place, DateTime now, {List<StationCsv> fallback = const []}) async {
+  Future<({List<StationCsv> measures, DateTime? at})> fetchMeasures(
+    Place place,
+    DateTime now, {
+    RawPollenData? cached,
+    bool force = false,
+  }) async {
+    final kept = cached?.measures ?? const <StationCsv>[];
+    final keptAt = cached?.measuresAt;
+    if (!force && keptAt != null && now.difference(keptAt).abs() < measuresFreshFor) {
+      return (measures: kept, at: keptAt);
+    }
+    final near = stations.near(place).take(3).toList();
+    if (near.isEmpty) return (measures: const <StationCsv>[], at: now);
+    if (_ispraPausedUntil case final until? when !force && now.isBefore(until)) return (measures: kept, at: keptAt);
     final ids = Allergens.measuredOnly.map((a) => a.pollnetId);
+    var answered = 0;
     Future<StationCsv?> recent(NearStation near) async {
       try {
         final body = await pollnet.fetchCsv(near.station.id, ids, now.plusDays(-historyDays), now);
+        answered++;
         final ok = PollnetClient.parseCsv(body)
             .any((m) => m.value != null && now.daysSince(m.date) <= maxMeasureAgeDays);
         return ok ? StationCsv(near.station.id, near.km, body) : null;
       } on Exception {
-        return fallback.where((m) => m.stationId == near.station.id).firstOrNull;
+        return kept.where((m) => m.stationId == near.station.id).firstOrNull;
       }
     }
 
-    final found = await Future.wait(stations.near(place).take(3).map(recent));
-    return found.nonNulls.toList();
+    final found = await Future.wait(near.map(recent));
+    _ispraPausedUntil = answered == 0 ? now.add(ispraPause) : null;
+    return (measures: found.nonNulls.toList(), at: answered == near.length ? now : keptAt);
   }
 
-  PollenSnapshot build(RawPollenData raw) {
+  PollenSnapshot estimates(Place place) =>
+      build(RawPollenData(place: place, fetchedAt: _now(), openMeteo: _noForecast), estimated: true);
+
+  static const _noForecast = '{"hourly":{"time":[]}}';
+
+  PollenSnapshot build(RawPollenData raw, {bool estimated = false}) {
     final now = _now();
     final today = now.dateOnly;
     final om = OpenMeteoData.parse(raw.openMeteo);
@@ -147,6 +177,7 @@ class PollenRepository {
       area: area,
       measuringStation: used.firstOrNull,
       nearestStation: stations.near(raw.place).firstOrNull,
+      estimated: estimated,
     );
   }
 

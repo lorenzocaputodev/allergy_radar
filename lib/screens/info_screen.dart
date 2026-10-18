@@ -55,7 +55,8 @@ class InfoScreen extends StatelessWidget {
                 title: 'Posizione',
                 text:
                     'Il nome del comune lo trova il servizio di localizzazione di Android, che può inviare le coordinate a '
-                    'Google. A Open-Meteo va solo la posizione arrotondata a 1 km.',
+                    'Google; se tarda, l’elenco dei comuni incluso nell’app. A Open-Meteo va solo la posizione '
+                    'arrotondata a 1 km.',
               ),
               _Item(
                 icon: Icons.system_update_alt,
@@ -69,7 +70,7 @@ class InfoScreen extends StatelessWidget {
           const SizedBox(height: 16),
           Text(
             'L’app informa, non sostituisce il medico.\n'
-            'Dati © Copernicus/CAMS via Open-Meteo e POLLnet-SNPA/ISPRA, licenza CC BY 4.0.',
+            'Dati © Copernicus/CAMS via Open-Meteo, POLLnet-SNPA/ISPRA e comuni da GeoNames, licenza CC BY 4.0.',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 12, height: 1.5, color: p.ink3),
           ),

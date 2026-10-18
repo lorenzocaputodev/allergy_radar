@@ -53,7 +53,8 @@ void main() {
     await tester.pumpWidget(
       MultiProvider(
         providers: [
-          Provider.value(value: OpenMeteoClient(fakeHttp())),
+          Provider.value(value: OpenMeteoClient(offline ? down : fakeHttp())),
+          Provider.value(value: placeIndex()),
           ChangeNotifierProvider.value(value: state),
           ChangeNotifierProvider(create: (_) => DiaryState(prefs)),
           ChangeNotifierProvider(
@@ -77,11 +78,32 @@ void main() {
     expect(find.text('Altri pollini in zona'), findsOneWidget);
   });
 
-  testWidgets('Oggi senza dati: errore e Riprova, niente attesa infinita', (tester) async {
+  testWidgets('Oggi senza previsioni: stime dichiarate e Riprova, mai una pagina vuota', (tester) async {
     await pumpApp(tester, offline: true);
     expect(find.byType(CircularProgressIndicator), findsNothing);
-    expect(find.textContaining('Dati non disponibili'), findsOneWidget);
+    expect(find.textContaining('Previsioni non raggiungibili'), findsOneWidget);
     expect(find.text('Riprova'), findsOneWidget);
+    expect(find.text('OGGI PER TE'), findsOneWidget);
+    expect(find.textContaining('Stima'), findsWidgets);
+    expect(find.text('Previsione'), findsNothing);
+  });
+
+  testWidgets('ricerca del luogo: comuni trovati subito, anche senza rete', (tester) async {
+    await pumpApp(tester, offline: true);
+    await tester.tap(find.byIcon(Icons.place_outlined).first);
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'forli');
+    await tester.pump();
+    expect(find.text('Forlì'), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+    expect(find.text('Forlì'), findsOneWidget);
+    expect(find.textContaining('Ricerca non riuscita'), findsNothing);
+
+    await tester.enterText(find.byType(TextField), 'zzzxq');
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Nessun luogo trovato'), findsOneWidget);
   });
 
   testWidgets('tutte le schede e il dettaglio si aprono senza errori', (tester) async {

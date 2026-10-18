@@ -42,6 +42,7 @@ class AppState extends ChangeNotifier {
 
   static const maxSaved = 5;
   static const followKm = 5.0;
+  static const followTimeout = Duration(seconds: 20);
 
   static const freshFor = Duration(hours: 1);
 
@@ -59,8 +60,15 @@ class AppState extends ChangeNotifier {
   bool onboarded = false;
 
   PollenSnapshot? snapshot;
-  bool loading = false;
   String? error;
+  final _inflight = <String, Future<void>>{};
+  int _running = 0;
+
+  Future<void>? _following;
+
+  bool get loading => _running > 0;
+  bool get hasData => snapshot != null && !estimatesOnly;
+  bool get estimatesOnly => snapshot?.estimated ?? false;
 
   Area get area => snapshot?.area ?? _repo.stations.areaOf(place);
 
@@ -91,7 +99,7 @@ class AppState extends ChangeNotifier {
       followedStatuses.where((s) => s.level != Level.none && s.level >= thresholdOf(s.allergen)).toList();
 
   bool get isStale {
-    if (snapshot == null) return true;
+    if (snapshot == null || estimatesOnly) return true;
     final now = DateTime.now();
     final at = snapshot!.fetchedAt;
     return now.difference(at) > freshFor || !now.isSameDay(at);
@@ -149,11 +157,9 @@ class AppState extends ChangeNotifier {
   }
 
   Future<PollenSnapshot?> _fromCache() async {
-    final cached = _prefs.getString(_kCache);
-    if (cached == null) return null;
     try {
-      final raw = RawPollenData.decode(cached);
-      return raw.place.cacheKey == place.cacheKey ? _repo.build(raw) : null;
+      final raw = _cachedRaw();
+      return raw == null ? null : _repo.build(raw);
     } on Object {
       await _prefs.remove(_kCache);
       return null;
@@ -162,14 +168,11 @@ class AppState extends ChangeNotifier {
 
   Future<void> syncCache() async {
     final cached = await _fromCache();
-    if (cached == null || (snapshot != null && !cached.fetchedAt.isAfter(snapshot!.fetchedAt))) return;
+    if (cached == null || (snapshot != null && !estimatesOnly && !cached.fetchedAt.isAfter(snapshot!.fetchedAt))) {
+      return;
+    }
     snapshot = cached;
     notifyListeners();
-  }
-
-  Future<void> init() async {
-    await load();
-    if (onboarded && isStale) await refresh();
   }
 
   Future<void> completeOnboarding(Place p, Set<String> allergens, AlertSettings alertSettings) async {
@@ -181,9 +184,15 @@ class AppState extends ChangeNotifier {
     await setPlace(p);
   }
 
-  Future<void> refresh() async {
-    if (loading) return;
-    loading = true;
+  Future<void> refresh({bool manual = false}) {
+    final key = place.cacheKey;
+    return _inflight[key] ??= _refresh(manual: manual).whenComplete(() {
+      _inflight.remove(key);
+    });
+  }
+
+  Future<void> _refresh({required bool manual}) async {
+    _running++;
     error = null;
     notifyListeners();
     final asked = place;
@@ -202,23 +211,26 @@ class AppState extends ChangeNotifier {
     try {
       final forecast = await _repo.fetchForecast(asked);
       if (await stillAsked()) {
-        final kept = _cachedRaw()?.measures ?? const <StationCsv>[];
-        await show(forecast.withMeasures(kept));
-        final measures = await _repo.fetchMeasures(asked, forecast.fetchedAt, fallback: kept);
-        if (await stillAsked()) await show(forecast.withMeasures(measures));
+        final cached = _cachedRaw();
+        await show(forecast.withMeasures(cached?.measures ?? const [], at: cached?.measuresAt));
+        final m = await _repo.fetchMeasures(asked, forecast.fetchedAt, cached: cached, force: manual);
+        if (m.at != cached?.measuresAt && await stillAsked()) await show(forecast.withMeasures(m.measures, at: m.at));
       }
     } on Object {
       if (place.cacheKey == asked.cacheKey) {
-        snapshot = await _fromCache() ?? snapshot;
-        error = snapshot == null
-            ? 'Dati non disponibili. Controlla la connessione e riprova.'
-            : 'Sei offline o le fonti non rispondono: mostro gli ultimi dati.';
+        final cached = await _fromCache();
+        if (cached == null && (snapshot == null || estimatesOnly)) {
+          snapshot = _repo.estimates(asked);
+          error = 'Previsioni non raggiungibili: per ora vedi le stime del calendario.';
+        } else {
+          snapshot = cached ?? snapshot;
+          error = 'Sei offline o le fonti non rispondono: mostro gli ultimi dati.';
+        }
       }
     } finally {
-      loading = false;
+      _running--;
       notifyListeners();
     }
-    if (place.cacheKey != asked.cacheKey) await refresh();
   }
 
   String? get storedPlaceKey {
@@ -232,7 +244,7 @@ class AppState extends ChangeNotifier {
 
   // --- Impostazioni ---
   Future<void> setPlace(Place p, {bool following = false}) async {
-    final same = p.cacheKey == place.cacheKey && snapshot != null;
+    final same = p.cacheKey == place.cacheKey && hasData;
     place = p;
     if (!following) {
       followLocation = false;
@@ -246,6 +258,15 @@ class AppState extends ChangeNotifier {
     await _prefs.remove(_kCache);
     notifyListeners();
     await refresh();
+  }
+
+  Future<void> rename(Place p) async {
+    if (p.cacheKey != place.cacheKey || p.name == place.name) return;
+    place = p;
+    saved = [for (final s in saved) s.cacheKey == p.cacheKey ? p : s];
+    notifyListeners();
+    await _prefs.setString(kPlace, jsonEncode(p.toJson()));
+    await _savePlaces();
   }
 
   Future<void> forget(Place p) async {
@@ -271,13 +292,20 @@ class AppState extends ChangeNotifier {
   Future<void> follow(
     Future<({double lat, double lon})> Function() position,
     Future<Place> Function(double lat, double lon) describe,
+  ) => _following ??= _follow(position, describe).whenComplete(() {
+    _following = null;
+  });
+
+  Future<void> _follow(
+    Future<({double lat, double lon})> Function() position,
+    Future<Place> Function(double lat, double lon) describe,
   ) async {
     if (!followLocation) return;
     final Place here;
     try {
-      final pos = await position();
+      final pos = await position().timeout(followTimeout);
       if (distanceKm(place.lat, place.lon, pos.lat, pos.lon) < followKm) return;
-      here = await describe(pos.lat, pos.lon);
+      here = await describe(pos.lat, pos.lon).timeout(followTimeout);
     } on Object {
       return;
     }

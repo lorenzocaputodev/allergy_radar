@@ -4,30 +4,47 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../models/place.dart';
+import '../models/place_index.dart';
 import '../services/location_service.dart';
 import '../services/open_meteo_client.dart';
 import '../theme/palette.dart';
 
 class PlaceSearch extends StatefulWidget {
-  const PlaceSearch({super.key, required this.onSelected, this.selected, this.showLocate = true});
+  const PlaceSearch({super.key, required this.onSelected, this.selected, this.showLocate = true, this.forward});
 
   final void Function(Place) onSelected;
   final Place? selected;
   final bool showLocate;
+  final ForwardGeocoder? forward;
 
   @override
   State<PlaceSearch> createState() => _PlaceSearchState();
 }
 
 class _PlaceSearchState extends State<PlaceSearch> {
+  static const _maxResults = 10;
+
   Timer? _debounce;
-  List<Place> _results = const [];
+  List<Place> _local = const [];
+  List<Place> _online = const [];
   String? _error;
   bool _loading = false;
+  bool _searched = false;
   bool _locating = false;
   int _query = 0;
 
   Place? _found;
+
+  PlaceIndex get _index => context.read<PlaceIndex>();
+
+  List<Place> get _results {
+    final seen = <String>{};
+    return [
+      for (final p in [..._local, ..._online])
+        if (seen.add('${PlaceIndex.normalize(p.name)}|${PlaceIndex.normalize(p.region ?? '')}') && seen.add(p.cacheKey))
+          p,
+    ].take(_maxResults).toList();
+  }
 
   @override
   void dispose() {
@@ -35,38 +52,42 @@ class _PlaceSearchState extends State<PlaceSearch> {
     super.dispose();
   }
 
-  void _onChanged(String q) {
+  void _onChanged(String text) {
+    final query = ++_query;
+    final q = text.trim();
     _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 400), () => _search(q.trim()));
+    setState(() {
+      _local = _index.search(q);
+      _online = const [];
+      _error = null;
+      _searched = false;
+      _loading = q.length >= 2;
+    });
+    if (q.length >= 2) _debounce = Timer(const Duration(milliseconds: 300), () => _search(q, query));
   }
 
-  Future<void> _search(String q) async {
-    final query = ++_query;
-    if (q.length < 2) {
-      setState(() {
-        _results = const [];
-        _loading = false;
-      });
-      return;
-    }
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+  Future<void> _search(String q, int query) async {
     bool current() => mounted && query == _query;
+    var online = const <Place>[];
+    var failed = false;
     try {
-      final r = await context.read<OpenMeteoClient>().searchPlaces(q);
-      final seen = <String>{};
-      final unique = [
-        for (final p in r)
-          if (seen.add('${p.name}|${p.region}')) p,
-      ];
-      if (current()) setState(() => _results = unique);
+      online = await context.read<OpenMeteoClient>().searchPlaces(q);
     } on Object {
-      if (current()) setState(() => _error = 'Ricerca non riuscita. Controlla la connessione.');
-    } finally {
-      if (current()) setState(() => _loading = false);
+      if (current() && _local.isEmpty) {
+        try {
+          online = await LocationService.searchByGeocoder(q, _index, forward: widget.forward);
+        } on Object {
+          failed = true;
+        }
+      }
     }
+    if (!current()) return;
+    setState(() {
+      _online = online;
+      _loading = false;
+      _searched = true;
+      _error = failed && _local.isEmpty ? 'Ricerca non riuscita. Controlla la connessione.' : null;
+    });
   }
 
   Future<void> _useLocation() async {
@@ -76,7 +97,14 @@ class _PlaceSearchState extends State<PlaceSearch> {
       _found = null;
     });
     try {
-      final place = await LocationService.current();
+      final place = await LocationService.current(
+        index: _index,
+        renamed: (p) {
+          if (!mounted || _found?.cacheKey != p.cacheKey) return;
+          setState(() => _found = p);
+          widget.onSelected(p);
+        },
+      );
       if (!mounted) return;
       setState(() => _found = place);
       widget.onSelected(place);
@@ -92,6 +120,7 @@ class _PlaceSearchState extends State<PlaceSearch> {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final results = _results;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -134,13 +163,21 @@ class _PlaceSearchState extends State<PlaceSearch> {
             padding: const EdgeInsets.all(8),
             child: Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
           ),
-        for (final r in _results)
+        if (_searched && !_loading && _error == null && results.isEmpty)
+          Padding(
+            padding: const EdgeInsets.all(8),
+            child: Text('Nessun luogo trovato. Prova con il nome del comune.', style: TextStyle(color: p.ink2)),
+          ),
+        for (final r in results)
           ListTile(
             leading: const Icon(Icons.place_outlined),
             title: Text(r.name, style: const TextStyle(fontWeight: FontWeight.w600)),
             subtitle: r.region == null ? null : Text(r.region!),
             trailing: r.cacheKey == widget.selected?.cacheKey ? Icon(Icons.check, color: p.pineText) : null,
-            onTap: () => widget.onSelected(r),
+            onTap: () {
+              setState(() => _found = null);
+              widget.onSelected(r);
+            },
           ),
       ],
     );
@@ -202,7 +239,8 @@ class PlacePrivacyNote extends StatelessWidget {
           Expanded(
             child: Text(
               'Per i pollini usiamo solo la zona, arrotondata a circa 1 km. Se usi la tua posizione, il nome del comune lo '
-              'trova il servizio di localizzazione di Android, che può inviare le coordinate a Google.',
+              'trova il servizio di localizzazione di Android, che può inviare le coordinate a Google; se tarda, l’elenco dei '
+              'comuni incluso nell’app.',
               style: TextStyle(fontSize: 13, height: 1.45, color: p.ink2),
             ),
           ),
