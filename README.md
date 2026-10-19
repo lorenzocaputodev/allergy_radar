@@ -34,11 +34,12 @@ Serve Android 7.0 o successivo.
 - 🌦️ Una riga sola quando serve: pioggia, vento o temporale in arrivo, e l’ora migliore per uscire con il dettaglio ora per ora
 - 🌫️ Aria: ozono, polveri fini e sabbia del deserto, con cosa sono e cosa fare toccando ogni riquadro
 - 🏷️ Ogni valore dice se è una **previsione**, una **misura** o una **stima**
+- ⚡ Le previsioni arrivano in un secondo, senza aspettare le misure; se una fonte non risponde restano gli ultimi dati o le stime, sempre dichiarati
 - 🔎 Dettaglio di ogni allergene: ora per ora, prossimi giorni, stagione, la tua soglia e una tavola botanica d’epoca con dove cresce e le reazioni crociate
 - 📓 Diario dei sintomi da 10 secondi, con i farmaci più usati già in lista, sonno e ore all’aperto
 - 📈 Andamento su 30 giorni, 3 mesi o 1 anno (giorno, settimana o mese): per ogni allergene, se stai peggio nei giorni sopra la tua soglia, con un punteggio sintomi + farmaci adattato dal CSMS dell’EAACI; le misure ISPRA completano da sole i giorni passati
 - 🗓️ Calendario stagionale per **Nord**, **Centro** e **Sud e Isole**
-- 📍 Luogo da ricerca città o dalla posizione approssimativa, con il nome del comune; i luoghi scelti restano a portata di tocco, e con «Segui la mia posizione» il luogo si aggiorna quando apri l’app
+- 📍 Luogo dalla posizione approssimativa o dalla ricerca: tutti i comuni italiani sono inclusi nell’app, quindi i risultati compaiono mentre scrivi, anche senza rete; i luoghi scelti restano a portata di tocco, e con «Segui la mia posizione» il luogo si aggiorna quando apri l’app
 - 📲 Widget Android per la schermata Home, con le pagine degli allergeni e il tasto per aggiornare
 - 🔔 Avvisi, proposti già al primo avvio, e l’elenco di quelli ricevuti, che cancelli con uno swipe o tutti insieme
 - 📄 PDF per l’allergologo, diario in CSV, backup e ripristino
@@ -140,11 +141,11 @@ flutter run
 
 - Nessun account richiesto
 - Nessun backend: l’app usa solo i dati aperti di Open-Meteo e ISPRA, e chiede a GitHub il numero dell’ultima versione (si spegne dal Profilo)
-- Posizione solo approssimativa, e solo se la chiedi tu (una volta, o a ogni apertura con «Segui la mia posizione»); il nome del comune lo ricava il telefono
+- Posizione solo approssimativa, e solo se la chiedi tu (una volta, o a ogni apertura con «Segui la mia posizione»); il nome del comune lo ricava il telefono, o l’elenco dei comuni incluso nell’app se il telefono tarda
 - Le misure ISPRA arrivano una volta a settimana: quando sono più vecchie di due settimane, o non c’è una stazione vicina, l’app usa il valore tipico del mese e lo dichiara come **stima**
 - Dati salvati localmente sul dispositivo
 
-Previsioni © Copernicus/CAMS e meteo tramite Open-Meteo e misure della rete POLLnet-SNPA di ISPRA, con licenza CC BY 4.0.
+Previsioni © Copernicus/CAMS e meteo tramite Open-Meteo, misure della rete POLLnet-SNPA di ISPRA ed elenco dei comuni da GeoNames, con licenza CC BY 4.0.
 Le tavole botaniche sono di pubblico dominio (Thomé, Köhler, Lindman, Duhamel du Monceau, Flora Batava, Elliott), da Wikimedia Commons.
 L’app informa, non sostituisce il medico.
 
