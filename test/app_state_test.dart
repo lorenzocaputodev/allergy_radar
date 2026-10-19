@@ -4,6 +4,7 @@ import 'package:allergy_radar/data/pollen_repository.dart';
 import 'package:allergy_radar/models/allergen.dart';
 import 'package:allergy_radar/models/level.dart';
 import 'package:allergy_radar/models/place.dart';
+import 'package:allergy_radar/services/alerts_service.dart';
 import 'package:allergy_radar/services/open_meteo_client.dart';
 import 'package:allergy_radar/services/pollnet_client.dart';
 import 'package:allergy_radar/services/widget_bridge.dart';
@@ -245,6 +246,27 @@ void main() {
     await state.load();
     await state.refresh();
     expect(WidgetBridge.encode(state), contains('"updated":""'));
+  });
+
+  test('widget aggiornato dal background appena arriva la previsione, senza aspettare ISPRA', () async {
+    SharedPreferences.setMockInitialValues({
+      'onboarded': true,
+      'place': '{"name":"Bologna","region":null,"lat":44.49,"lon":11.34}',
+    });
+    final prefs = await SharedPreferences.getInstance();
+    final repo = _StuckIspraRepository(DateTime(2026, 9, 25, 10));
+    final app = AppState(repo, prefs);
+    await app.load();
+
+    final done = AlertsService.refreshWidget(prefs, app, manual: true);
+    await pumpEventQueue();
+    expect(app.loading, isTrue, reason: 'ISPRA non ha ancora risposto');
+    expect(prefs.getString('widget_data'), contains('Bologna'));
+    expect(prefs.getString('widget_data'), contains('2026-09-25T10:00'));
+
+    repo.gate.complete();
+    await done;
+    expect(app.loading, isFalse);
   });
 
   test('cambiare luogo non aspetta l’aggiornamento del luogo vecchio', () async {

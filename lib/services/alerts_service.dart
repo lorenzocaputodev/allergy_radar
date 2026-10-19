@@ -15,6 +15,7 @@ import 'package:workmanager/workmanager.dart';
 import '../data/pollen_repository.dart';
 import '../models/alert_log.dart';
 import '../models/diary_entry.dart';
+import '../models/pollen_snapshot.dart';
 import '../models/station.dart';
 import '../state/app_state.dart';
 import '../state/diary_state.dart';
@@ -270,7 +271,7 @@ class AlertsService {
       final app = await _backgroundState(prefs, client);
       if (!app.onboarded) return;
       final asked = app.place.cacheKey;
-      if (force || app.isStale) await app.refresh();
+      if (force || app.isStale) await refreshWidget(prefs, app, manual: force);
       await prefs.reload();
       await app.load();
       if (app.place.cacheKey != asked || !app.onboarded) return;
@@ -278,6 +279,24 @@ class AlertsService {
       await reschedule(prefs, app, DiaryState(prefs));
     } finally {
       client.close();
+    }
+  }
+
+  static Future<void> refreshWidget(SharedPreferences prefs, AppState app, {bool manual = false}) async {
+    final asked = app.place.cacheKey;
+    PollenSnapshot? shown = app.snapshot;
+    void showEarly() {
+      if (app.snapshot case final snap? when !identical(snap, shown) && snap.place.cacheKey == asked) {
+        shown = snap;
+        unawaited(WidgetBridge.save(prefs, app));
+      }
+    }
+
+    app.addListener(showEarly);
+    try {
+      await app.refresh(manual: manual);
+    } finally {
+      app.removeListener(showEarly);
     }
   }
 
