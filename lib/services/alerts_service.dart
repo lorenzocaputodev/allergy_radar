@@ -151,7 +151,7 @@ class AlertsService {
       await Workmanager().registerPeriodicTask(
         _work,
         _task,
-        frequency: const Duration(hours: 1),
+        frequency: const Duration(hours: 3),
         existingWorkPolicy: ExistingPeriodicWorkPolicy.update,
       );
     } on Object catch (e) {

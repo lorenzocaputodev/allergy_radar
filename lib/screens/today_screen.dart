@@ -432,7 +432,7 @@ class _Forecast extends StatelessWidget {
         ? forecast.series.take(5).map((d) => d.date).toList()
         : [for (var i = 0; i < 4; i++) today.plusDays(i)];
 
-    String source(AllergenStatus s) => Fmt.sourceOf(s);
+    String source(AllergenStatus s) => Fmt.sourceOf(s, now: today);
 
     _DayCell cell(AllergenStatus s, DateTime d) {
       switch (s.kind) {
@@ -738,7 +738,7 @@ class _OthersState extends State<_Others> {
 }
 
 String _othersNote(AllergenStatus s, Area area, DateTime today) {
-  final source = Fmt.capital(Fmt.sourceOf(s));
+  final source = Fmt.capital(Fmt.sourceOf(s, now: today));
   if (s.kind == DataKind.estimate) {
     return s.allergen.calendarFor(area)[today.month - 1] == 0 ? '$source: fuori stagione' : '$source (valore tipico)';
   }

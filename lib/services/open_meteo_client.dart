@@ -18,6 +18,7 @@ class OpenMeteoClient {
     'latitude': p.roundedLat.toStringAsFixed(2),
     'longitude': p.roundedLon.toStringAsFixed(2),
     'hourly': [...Allergens.openMeteoKeys, ...airKeys].join(','),
+    'domains': 'cams_europe',
     'timezone': 'Europe/Rome',
     'forecast_days': '5',
   });

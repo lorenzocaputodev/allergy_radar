@@ -44,7 +44,7 @@ class AppState extends ChangeNotifier {
   static const followKm = 5.0;
   static const followTimeout = Duration(seconds: 20);
 
-  static const freshFor = Duration(hours: 1);
+  static const freshFor = Duration(hours: 6);
 
   Place place = Place.lecce;
   List<Place> saved = const [];

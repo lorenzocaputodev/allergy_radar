@@ -32,9 +32,9 @@ abstract final class Fmt {
   static String time(DateTime d) => '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
 
   static String updated(DateTime at, DateTime now) {
-    if (at.isSameDay(now)) return 'aggiornato alle ${time(at)}';
-    if (at.isSameDay(now.plusDays(-1))) return 'aggiornato ieri alle ${time(at)}';
-    return 'aggiornato il ${shortDate(at)} alle ${time(at)}';
+    if (at.isSameDay(now)) return 'dati controllati alle ${time(at)}';
+    if (at.isSameDay(now.plusDays(-1))) return 'dati controllati ieri alle ${time(at)}';
+    return 'dati controllati il ${shortDate(at)} alle ${time(at)}';
   }
 
   static String number(double v) {
@@ -54,9 +54,14 @@ abstract final class Fmt {
 
   static String initial(int m) => _months[m - 1][0].toUpperCase();
 
-  static String sourceOf(AllergenStatus s) => s.kind == DataKind.measured && s.date != null
-      ? '${s.kind.label.toLowerCase()} del ${shortDate(s.date!)}'
-      : s.kind.label.toLowerCase();
+  static const oldMeasureDays = 7;
+
+  static String sourceOf(AllergenStatus s, {DateTime? now}) {
+    if (s.kind != DataKind.measured || s.date == null) return s.kind.label.toLowerCase();
+    final base = '${s.kind.label.toLowerCase()} del ${shortDate(s.date!)}';
+    final age = now?.daysSince(s.date!) ?? 0;
+    return age > oldMeasureDays ? '$base, $age giorni fa' : base;
+  }
 
   static String capital(String s) => s.isEmpty ? s : '${s[0].toUpperCase()}${s.substring(1)}';
 

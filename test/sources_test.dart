@@ -54,6 +54,7 @@ void main() {
       final uri = OpenMeteoClient(fakeHttp()).forecastUri(const Place(name: 'x', lat: 40.35158, lon: 18.17497));
       expect(uri.queryParameters['latitude'], '40.35');
       expect(uri.queryParameters['longitude'], '18.17');
+      expect(uri.queryParameters['domains'], 'cams_europe');
     });
   });
 
