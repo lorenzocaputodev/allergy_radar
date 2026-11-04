@@ -74,7 +74,7 @@ void main() {
     await withClock(Clock.fixed(now.add(const Duration(hours: 25))), u.checkIfDue);
     expect(log, hasLength(2));
     expect(u.available, isNull);
-    await u.setFrequency(UpdateFrequency.week);
+    await withClock(Clock.fixed(now.add(const Duration(hours: 26))), () => u.setFrequency(UpdateFrequency.week));
     await withClock(Clock.fixed(now.add(const Duration(days: 7))), u.checkIfDue);
     expect(log, hasLength(2));
     await withClock(Clock.fixed(now.add(const Duration(days: 9))), u.checkIfDue);
