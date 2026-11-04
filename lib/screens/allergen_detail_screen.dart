@@ -61,7 +61,9 @@ class AllergenDetailScreen extends StatelessWidget {
                         children: [
                           Text(switch (s.kind) {
                             DataKind.forecast => 'Oggi, media del giorno',
-                            DataKind.measured => 'Ultima misura, ${Fmt.shortDate(s.date!)}',
+                            DataKind.measured =>
+                              'Ultima misura, ${Fmt.shortDate(s.date!)}'
+                                  '${s.isCurrent(now) ? '' : ' (${s.ageOn(now)} giorni fa)'}',
                             DataKind.estimate => 'Stima per ${Fmt.month(now.month)}',
                           }, style: TextStyle(fontSize: 13, color: p.ink3)),
                           const SizedBox(height: 4),
@@ -118,7 +120,7 @@ class AllergenDetailScreen extends StatelessWidget {
                 ),
                 Align(
                   alignment: Alignment.centerLeft,
-                  child: SourceChip(s.kind, detail: Fmt.sourceDetail(s)),
+                  child: SourceChip(s.kind, detail: Fmt.sourceDetail(s, now)),
                 ),
               ],
             ),

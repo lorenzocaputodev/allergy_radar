@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Allergy Radar</string>
-    <string name="widget_estimate">stima</string>
     <string name="widget_refresh">Aggiorna</string>
     <string name="widget_updating">Aggiorno…</string>
     <string name="widget_yesterday">ieri %1$s</string>

@@ -1,3 +1,4 @@
+import '../utils/days.dart';
 import 'allergen.dart';
 import 'level.dart';
 import 'place.dart';
@@ -37,6 +38,12 @@ class AllergenStatus {
   final List<DayValue> hourly;
 
   final NearStation? station;
+
+  static const currentDays = 7;
+
+  int? ageOn(DateTime today) => kind == DataKind.measured && date != null ? today.daysSince(date!) : null;
+
+  bool isCurrent(DateTime today) => (ageOn(today) ?? 0) <= currentDays;
 
   Level? levelOn(DateTime day) => switch (kind) {
     DataKind.forecast || DataKind.measured => series.where((d) => d.date == day).firstOrNull?.level,

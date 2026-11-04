@@ -93,7 +93,7 @@ class PollenRepository {
   static const measuresFreshFor = Duration(hours: 6);
   static const ispraPause = Duration(minutes: 30);
 
-  DateTime? _ispraPausedUntil;
+  DateTime? ispraPausedUntil;
 
   Future<RawPollenData> fetchForecast(Place place) async {
     final now = _now();
@@ -122,15 +122,15 @@ class PollenRepository {
     }
     final near = stations.near(place).take(3).toList();
     if (near.isEmpty) return (measures: const <StationCsv>[], at: now);
-    if (_ispraPausedUntil case final until? when !force && now.isBefore(until)) return (measures: kept, at: keptAt);
+    if (ispraPausedUntil case final until? when !force && now.isBefore(until)) return (measures: kept, at: keptAt);
     final ids = Allergens.measuredOnly.map((a) => a.pollnetId);
     var answered = 0;
     Future<StationCsv?> recent(NearStation near) async {
       try {
         final body = await pollnet.fetchCsv(near.station.id, ids, now.plusDays(-historyDays), now);
-        answered++;
         final ok = PollnetClient.parseCsv(body)
             .any((m) => m.value != null && now.daysSince(m.date) <= maxMeasureAgeDays);
+        answered++;
         return ok ? StationCsv(near.station.id, near.km, body) : null;
       } on Exception {
         return kept.where((m) => m.stationId == near.station.id).firstOrNull;
@@ -138,7 +138,7 @@ class PollenRepository {
     }
 
     final found = await Future.wait(near.map(recent));
-    _ispraPausedUntil = answered == 0 ? now.add(ispraPause) : null;
+    ispraPausedUntil = answered == 0 ? now.add(ispraPause) : null;
     return (measures: found.nonNulls.toList(), at: answered == near.length ? now : keptAt);
   }
 

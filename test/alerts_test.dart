@@ -35,6 +35,32 @@ void main() {
 
   AlertMessage? of(List<AlertMessage> list, AlertKind k) => list.where((m) => m.kind == k).firstOrNull;
 
+  test('briefing: una misura vecchia non fa scattare la soglia e dice la sua età', () {
+    final old = AllergenStatus(
+      allergen: Allergens.parietaria,
+      kind: DataKind.measured,
+      level: Level.high,
+      value: 40,
+      date: DateTime(2026, 9, 18),
+    );
+    final recent = AllergenStatus(
+      allergen: Allergens.parietaria,
+      kind: DataKind.measured,
+      level: Level.high,
+      value: 40,
+      date: DateTime(2026, 9, 26),
+    );
+    final now = DateTime(2026, 9, 30, 7);
+    expect(
+      of(schedule(now, followed: [grass(Level.low, Level.low, 1), old]), AlertKind.briefing)!.body,
+      'Oggi i tuoi allergeni con dati recenti restano sotto la soglia.',
+    );
+    expect(
+      of(schedule(now, followed: [grass(Level.low, Level.low, 1), recent]), AlertKind.briefing)!.body,
+      'Sopra la tua soglia: Parietaria (misura del 26 set). Gli altri restano sotto.',
+    );
+  });
+
   test('ogni tipo attivo ha la sua prossima occorrenza', () {
     final list = schedule(DateTime(2026, 9, 30, 7));
     expect(of(list, AlertKind.briefing)!.at, DateTime(2026, 9, 30, 7, 30));

@@ -165,6 +165,23 @@ void main() {
     expect(m.at, isNull);
   });
 
+  test('CSV non valido con risposta 200: la stazione non conta come risposta', () async {
+    final client = MockClient((req) async {
+      if (req.url.host != 'sdi.isprambiente.it') return utf8Response(fixture('open_meteo_lecce.json'));
+      return utf8Response('<ows:ExceptionReport/>');
+    });
+    final now = DateTime(2026, 9, 25, 10);
+    final repo = PollenRepository(
+      openMeteo: OpenMeteoClient(client),
+      pollnet: PollnetClient(client),
+      stations: stationDirectory(),
+      clock: () => now,
+    );
+    final m = await repo.fetchMeasures(bologna, now);
+    expect(m.at, isNull, reason: 'le misure non diventano «fresche»');
+    expect(repo.ispraPausedUntil, now.add(PollenRepository.ispraPause));
+  });
+
   test('aggiornamento a mano: ISPRA anche in pausa e con misure recenti', () async {
     var now = DateTime(2026, 9, 26, 10);
     final log = <Uri>[];

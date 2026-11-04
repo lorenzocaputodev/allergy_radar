@@ -440,7 +440,8 @@ class _Forecast extends StatelessWidget {
           final v = s.series.where((x) => x.date == d).firstOrNull;
           return _DayCell(level: v?.level, label: v == null ? '–' : Fmt.number(v.value));
         case DataKind.measured:
-          return d == days.first ? _DayCell(level: s.level, label: Fmt.number(s.value!)) : const _DayCell(label: '–');
+          if (d != days.first) return const _DayCell(label: '–');
+          return _DayCell(level: s.isCurrent(today) ? s.level : null, label: Fmt.number(s.value!));
         case DataKind.estimate:
           return _DayCell(level: s.level);
       }

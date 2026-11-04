@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:clock/clock.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -27,6 +28,7 @@ class AppState extends ChangeNotifier {
   static const kPlaces = 'places';
   static const kFollowLocation = 'follow_location';
   static const _kCache = 'cache';
+  static const _kIspraPause = 'ispra_paused_until';
 
   static const backupKeys = [
     kPlace,
@@ -86,12 +88,18 @@ class AppState extends ChangeNotifier {
       if (!followed.contains(a.id) && snapshot?[a.id] != null) snapshot![a.id]!,
   ];
 
-  Level get dayLevel => followedStatuses.fold(Level.none, (l, s) => l.max(s.level));
+  List<AllergenStatus> get _dayStatuses {
+    final today = clock.now();
+    final current = followedStatuses.where((s) => s.isCurrent(today)).toList();
+    return current.isEmpty ? followedStatuses : current;
+  }
+
+  Level get dayLevel => _dayStatuses.fold(Level.none, (l, s) => l.max(s.level));
 
   DataKind? get dayLevelSource {
     final level = dayLevel;
     if (level == Level.none) return null;
-    final kinds = {for (final s in followedStatuses.where((s) => s.level == level)) s.kind};
+    final kinds = {for (final s in _dayStatuses.where((s) => s.level == level)) s.kind};
     return DataKind.values.firstWhere(kinds.contains);
   }
 
@@ -213,8 +221,13 @@ class AppState extends ChangeNotifier {
       if (await stillAsked()) {
         final cached = _cachedRaw();
         await show(forecast.withMeasures(cached?.measures ?? const [], at: cached?.measuresAt));
+        final paused = _prefs.getInt(_kIspraPause);
+        _repo.ispraPausedUntil ??= paused == null ? null : DateTime.fromMillisecondsSinceEpoch(paused);
         final m = await _repo.fetchMeasures(asked, forecast.fetchedAt, cached: cached, force: manual);
-        if (m.at != cached?.measuresAt && await stillAsked()) await show(forecast.withMeasures(m.measures, at: m.at));
+        final until = _repo.ispraPausedUntil;
+        await (until == null ? _prefs.remove(_kIspraPause) : _prefs.setInt(_kIspraPause, until.millisecondsSinceEpoch));
+        final changed = m.at != cached?.measuresAt || !identical(m.measures, cached?.measures ?? const <StationCsv>[]);
+        if (changed && await stillAsked()) await show(forecast.withMeasures(m.measures, at: m.at));
       }
     } on Object {
       if (place.cacheKey == asked.cacheKey) {

@@ -54,20 +54,19 @@ abstract final class Fmt {
 
   static String initial(int m) => _months[m - 1][0].toUpperCase();
 
-  static const oldMeasureDays = 7;
+  static String measureDate(AllergenStatus s, DateTime now) =>
+      s.isCurrent(now) ? 'del ${shortDate(s.date!)}' : 'di ${s.ageOn(now)} giorni fa';
 
-  static String sourceOf(AllergenStatus s, {DateTime? now}) {
-    if (s.kind != DataKind.measured || s.date == null) return s.kind.label.toLowerCase();
-    final base = '${s.kind.label.toLowerCase()} del ${shortDate(s.date!)}';
-    final age = now?.daysSince(s.date!) ?? 0;
-    return age > oldMeasureDays ? '$base, $age giorni fa' : base;
-  }
+  static String sourceOf(AllergenStatus s, {required DateTime now}) => s.kind == DataKind.measured && s.date != null
+      ? '${s.kind.label.toLowerCase()} ${measureDate(s, now)}'
+      : s.kind.label.toLowerCase();
 
   static String capital(String s) => s.isEmpty ? s : '${s[0].toUpperCase()}${s.substring(1)}';
 
   static String monthTitle(DateTime d) => '${capital(month(d.month))} ${d.year}';
 
-  static String? sourceDetail(AllergenStatus s) => s.kind == DataKind.measured
-      ? '${s.station!.station.name}, ${s.station!.km.round()} km · ${s.date == null ? '' : shortDate(s.date!)}'
+  static String? sourceDetail(AllergenStatus s, DateTime now) => s.kind == DataKind.measured
+      ? '${s.station!.station.name}, ${s.station!.km.round()} km'
+            '${s.date == null ? '' : ' · ${s.isCurrent(now) ? shortDate(s.date!) : '${s.ageOn(now)} giorni fa'}'}'
       : null;
 }

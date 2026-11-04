@@ -43,12 +43,15 @@ class AlertPlanner {
     if (settings.briefing && followed.isNotEmpty) {
       final when = next(settings.briefingAt);
       final levels = {for (final s in followed) s.allergen: _levelOn(s, when.dateOnly)};
-      final over = followed.where((s) => above(s.allergen, levels[s.allergen]!)).toList();
+      final current = followed.where((s) => s.isCurrent(when)).toList();
+      final over = current.where((s) => above(s.allergen, levels[s.allergen]!)).toList();
       if (!settings.briefingOnlyAbove || over.isNotEmpty) {
-        final others = over.length < followed.length ? ' Gli altri restano sotto.' : '';
+        final others = over.length < current.length ? ' Gli altri restano sotto.' : '';
         final body = over.isEmpty
-            ? 'Oggi i tuoi allergeni restano sotto la soglia.'
-            : 'Sopra la tua soglia: ${Fmt.list([for (final s in over) _named(s)])}.$others';
+            ? current.length < followed.length
+                  ? 'Oggi i tuoi allergeni con dati recenti restano sotto la soglia.'
+                  : 'Oggi i tuoi allergeni restano sotto la soglia.'
+            : 'Sopra la tua soglia: ${Fmt.list([for (final s in over) _named(s, when)])}.$others';
         out.add(AlertMessage(AlertKind.briefing, when, 'Pollini di oggi a $placeName', body));
       }
     }
@@ -84,9 +87,9 @@ class AlertPlanner {
     return out;
   }
 
-  static String _named(AllergenStatus s) {
+  static String _named(AllergenStatus s, DateTime now) {
     if (s.kind == DataKind.forecast) return s.allergen.name;
-    return '${s.allergen.name} (${Fmt.sourceOf(s)})';
+    return '${s.allergen.name} (${Fmt.sourceOf(s, now: now)})';
   }
 
   static DayValue? _dayValue(AllergenStatus s, DateTime day) => s.series.where((d) => d.date == day).firstOrNull;

@@ -1,3 +1,4 @@
+import 'package:clock/clock.dart';
 import 'package:flutter/material.dart';
 
 import '../models/pollen_snapshot.dart';
@@ -76,7 +77,7 @@ class AllergenCard extends StatelessWidget {
                 runSpacing: 6,
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
-                  SourceChip(status.kind, detail: Fmt.sourceDetail(status)),
+                  SourceChip(status.kind, detail: Fmt.sourceDetail(status, clock.now())),
                   if (aboveThreshold)
                     Text(
                       'Sopra la tua soglia',

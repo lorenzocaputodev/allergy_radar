@@ -28,9 +28,10 @@ void main() {
     final now = DateTime(2026, 11, 4, 9);
     AllergenStatus measured(DateTime d) =>
         AllergenStatus(allergen: Allergens.parietaria, kind: DataKind.measured, level: Level.low, date: d);
-    expect(Fmt.sourceOf(measured(DateTime(2026, 10, 30)), now: now), 'misura del 30 ott');
-    expect(Fmt.sourceOf(measured(DateTime(2026, 10, 25)), now: now), 'misura del 25 ott, 10 giorni fa');
-    expect(Fmt.sourceOf(measured(DateTime(2026, 10, 25))), 'misura del 25 ott');
+    expect(Fmt.sourceOf(measured(DateTime(2026, 10, 28)), now: now), 'misura del 28 ott');
+    expect(Fmt.sourceOf(measured(DateTime(2026, 10, 25)), now: now), 'misura di 10 giorni fa');
+    expect(measured(DateTime(2026, 10, 28)).isCurrent(now), isTrue);
+    expect(measured(DateTime(2026, 10, 27)).isCurrent(now), isFalse);
   });
 
   test('le medie si arrotondano', () {

@@ -85,7 +85,7 @@ class AllergyWidgetProvider : AppWidgetProvider() {
         private fun update(context: Context, manager: AppWidgetManager, id: Int) {
             val views = RemoteViews(context.packageName, R.layout.allergy_widget)
             val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            val data = prefs.getString(KEY, null)?.let { JSONObject(it) }
+            val data = prefs.getString(KEY, null)?.let { runCatching { JSONObject(it) }.getOrNull() }
             val palette = if (prefs.getString(THEME_KEY, null) == "light") LIGHT else DARK
             val text = palette.text
             val fill = palette.fill
@@ -103,7 +103,7 @@ class AllergyWidgetProvider : AppWidgetProvider() {
                 val level = data.optInt("level").coerceIn(0, 4)
                 views.setTextViewText(R.id.widget_place, data.optString("place"))
                 views.setTextViewText(R.id.widget_updated, updatedAt(context, data.optString("updated")))
-                views.setTextViewText(R.id.widget_level, headline(context, data, muted))
+                views.setTextViewText(R.id.widget_level, headline(data, muted))
                 views.setTextColor(R.id.widget_level, text[level])
                 views.setViewVisibility(R.id.widget_bar, View.VISIBLE)
                 SEGMENTS.forEachIndexed { i, segId ->
@@ -125,7 +125,7 @@ class AllergyWidgetProvider : AppWidgetProvider() {
                         views.setViewVisibility(rowId, View.VISIBLE)
                         views.setTextViewText(NAMES[i], item.optString("name"))
                         views.setTextColor(NAMES[i], palette.ink)
-                        views.setTextViewText(LEVELS[i], levelText(context, item, text, muted))
+                        views.setTextViewText(LEVELS[i], levelText(item, text, muted))
                     }
                 }
                 views.setViewVisibility(R.id.widget_pager, if (pageCount > 1) View.VISIBLE else View.GONE)
@@ -183,7 +183,7 @@ class AllergyWidgetProvider : AppWidgetProvider() {
                 .setInitialDelay(2, TimeUnit.MINUTES)
                 .build()
             val work = WorkManager.getInstance(context)
-            work.beginUniqueWork(REFRESH_TASK, ExistingWorkPolicy.REPLACE, fetch).then(redraw).enqueue()
+            work.beginUniqueWork(REFRESH_TASK, ExistingWorkPolicy.KEEP, fetch).then(redraw).enqueue()
             work.enqueueUniqueWork(REDRAW_TASK, ExistingWorkPolicy.REPLACE, fallback)
         }
 
@@ -206,11 +206,9 @@ class AllergyWidgetProvider : AppWidgetProvider() {
             )
         }
 
-        private fun headline(context: Context, data: JSONObject, muted: Int): CharSequence {
+        private fun headline(data: JSONObject, muted: Int): CharSequence {
             val out = SpannableStringBuilder(data.optString("levelLabel"))
-            val source = data.optString("source").ifEmpty {
-                if (data.optBoolean("estimate")) context.getString(R.string.widget_estimate) else ""
-            }
+            val source = data.optString("source")
             if (source.isNotEmpty()) {
                 val start = out.length
                 out.append("  $source")
@@ -220,11 +218,9 @@ class AllergyWidgetProvider : AppWidgetProvider() {
             return out
         }
 
-        private fun levelText(context: Context, item: JSONObject, colors: IntArray, muted: Int): CharSequence {
+        private fun levelText(item: JSONObject, colors: IntArray, muted: Int): CharSequence {
             val out = SpannableStringBuilder()
-            val note = item.optString("note").ifEmpty {
-                if (item.optBoolean("estimate")) context.getString(R.string.widget_estimate) else ""
-            }
+            val note = item.optString("note")
             if (note.isNotEmpty()) {
                 out.append("$note  ")
                 out.setSpan(ForegroundColorSpan(muted), 0, out.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)

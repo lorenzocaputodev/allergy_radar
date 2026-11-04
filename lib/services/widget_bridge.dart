@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:clock/clock.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/allergen.dart';
@@ -21,6 +22,7 @@ class WidgetBridge {
   static String? encode(AppState app) {
     final snap = app.snapshot;
     if (snap == null) return null;
+    final now = clock.now();
     return jsonEncode({
       'place': app.place.name,
       'updated': snap.estimated ? '' : snap.fetchedAt.toIso8601String(),
@@ -34,7 +36,9 @@ class WidgetBridge {
             'level': s.level.index,
             'levelLabel': s.level.label,
             'note': s.kind == DataKind.measured && s.date != null
-                ? '${_source(s.kind)} ${Fmt.shortDate(s.date!)}'
+                ? s.isCurrent(now)
+                      ? '${_source(s.kind)} ${Fmt.shortDate(s.date!)}'
+                      : '${_source(s.kind)} di ${s.ageOn(now)} gg fa'
                 : _source(s.kind),
           },
       ],

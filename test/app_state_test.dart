@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:allergy_radar/data/pollen_repository.dart';
 import 'package:allergy_radar/models/allergen.dart';
@@ -10,6 +11,8 @@ import 'package:allergy_radar/services/pollnet_client.dart';
 import 'package:allergy_radar/services/widget_bridge.dart';
 import 'package:allergy_radar/state/app_state.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'helpers.dart';
@@ -60,6 +63,44 @@ class _StuckIspraRepository extends PollenRepository {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   const bologna = Place(name: 'Bologna', lat: 44.49, lon: 11.34);
+
+  test('stazioni in parte giù: le misure arrivate si mostrano e si salvano', () async {
+    SharedPreferences.setMockInitialValues({'onboarded': true, 'place': jsonEncode(bologna.toJson())});
+    final client = MockClient((req) async {
+      if (req.url.host == 'api.open-meteo.com') return utf8Response(fixture('weather_lecce.json'));
+      if (req.url.host != 'sdi.isprambiente.it') return utf8Response(fixture('open_meteo_lecce.json'));
+      return req.url.queryParameters['cql_filter']!.startsWith('STAT_ID=118 ')
+          ? utf8Response(fixture('pollnet_bologna.csv'))
+          : http.Response('errore', 500);
+    });
+    final repo = PollenRepository(
+      openMeteo: OpenMeteoClient(client),
+      pollnet: PollnetClient(client),
+      stations: stationDirectory(),
+      clock: () => DateTime(2026, 9, 25, 10),
+    );
+    final prefs = await SharedPreferences.getInstance();
+    final state = AppState(repo, prefs);
+    await state.load();
+    await state.refresh();
+    expect(state.snapshot!.statuses.values.any((s) => s.kind == DataKind.measured), isTrue);
+    expect(RawPollenData.decode(prefs.getString('cache')!).measures, isNotEmpty);
+  });
+
+  test('la pausa di ISPRA resta salvata per il lavoro in background', () async {
+    SharedPreferences.setMockInitialValues({'onboarded': true, 'place': jsonEncode(bologna.toJson())});
+    final prefs = await SharedPreferences.getInstance();
+    final state = AppState(repository(DateTime(2026, 9, 25, 10), ispraDown: true), prefs);
+    await state.load();
+    await state.refresh();
+    expect(prefs.getInt('ispra_paused_until'), isNotNull);
+
+    final log = <Uri>[];
+    final later = AppState(repository(DateTime(2026, 9, 25, 10, 10), log: log), prefs);
+    await later.load();
+    await later.refresh();
+    expect(log.where((u) => u.host == 'sdi.isprambiente.it'), isEmpty);
+  });
 
   test('il tema del widget è scuro di base, e si salva', () async {
     SharedPreferences.setMockInitialValues({'onboarded': true});

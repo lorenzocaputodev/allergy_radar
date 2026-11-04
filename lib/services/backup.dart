@@ -55,9 +55,6 @@ class Backup {
     }
     final diaryRaw = values[DiaryState.kEntries];
     final entries = diaryRaw is String ? (jsonDecode(diaryRaw) as List).length : 0;
-    for (final k in _keys) {
-      await prefs.remove(k);
-    }
     for (final MapEntry(:key, :value) in values.entries) {
       switch (value) {
         case final String s:
@@ -67,6 +64,9 @@ class Backup {
         case final List<String> l:
           await prefs.setStringList(key, l);
       }
+    }
+    for (final k in _keys.where((k) => !values.containsKey(k))) {
+      await prefs.remove(k);
     }
     return entries;
   }
