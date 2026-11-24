@@ -1,6 +1,7 @@
 import '../models/alert_settings.dart';
 import '../models/allergen.dart';
 import '../models/level.dart';
+import '../models/place.dart';
 import '../models/pollen_snapshot.dart';
 import '../models/weather.dart';
 import '../utils/days.dart';
@@ -19,8 +20,6 @@ class AlertMessage {
 
 class AlertPlanner {
   const AlertPlanner();
-
-  static const placeOldAfter = Duration(hours: 12);
 
   static DateTime nextAt(DateTime now, int minutes) {
     final at = DateTime(now.year, now.month, now.day, minutes ~/ 60, minutes % 60);
@@ -45,9 +44,9 @@ class AlertPlanner {
     bool above(Allergen a, Level l) => l != Level.none && l >= thresholdOf(a);
     String where(DateTime when) {
       if (!followingPlace) return '';
-      if (placeFixedAt == null) return ' Luogo dell’ultima posizione nota: apri l’app per aggiornarlo.';
-      if (when.difference(placeFixedAt) <= placeOldAfter) return '';
-      return ' Luogo della posizione letta ${Fmt.moment(placeFixedAt, when)}: apri l’app per aggiornarlo.';
+      if (placeFixedAt == null) return ' Luogo dell’ultima posizione nota.';
+      if (when.difference(placeFixedAt) <= Place.followOldAfter) return '';
+      return ' Luogo dell’ultima posizione letta, ${Fmt.moment(placeFixedAt, when)}.';
     }
 
     final out = <AlertMessage>[];
@@ -58,14 +57,26 @@ class AlertPlanner {
       final current = followed.where((s) => s.isCurrent(when)).toList();
       final over = current.where((s) => above(s.allergen, levels[s.allergen]!)).toList();
       if (!settings.briefingOnlyAbove || over.isNotEmpty) {
-        final others = over.length < current.length ? ' Gli altri sono più bassi.' : '';
+        final rest = [
+          for (final s in current)
+            if (!over.contains(s)) levels[s.allergen]!,
+        ];
+        final lowest = over.fold(
+          Level.veryHigh,
+          (l, s) => levels[s.allergen]!.index < l.index ? levels[s.allergen]! : l,
+        );
+        final others = rest.isEmpty
+            ? ''
+            : rest.every((l) => l.index < lowest.index)
+            ? ' Gli altri sono più bassi.'
+            : ' Gli altri non sono da tenere d’occhio.';
         final body = over.isEmpty
             ? current.length < followed.length
                   ? 'Nessun allergene da tenere d’occhio tra quelli con dati recenti.'
                   : 'Nessun allergene da tenere d’occhio.'
             : '${Fmt.list([for (final s in over) _named(s, levels[s.allergen]!, when)])}.$others';
         final pollen = current.any((s) => levels[s.allergen] != Level.none);
-        final sky = pollen ? weather?.hintAt(when) : null;
+        final sky = pollen ? weather?.hintAt(when, ahead: true) : null;
         out.add(
           AlertMessage(
             AlertKind.briefing,

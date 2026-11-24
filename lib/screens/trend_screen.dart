@@ -156,6 +156,7 @@ class _Answer extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = context.palette;
     final a = insight.allergen;
+    final threshold = context.watch<AppState>().thresholdOf(a).label.toLowerCase();
     final headline = !insight.clear
         ? 'Nessuna differenza netta con ${a.name}'
         : insight.highMean > insight.lowMean
@@ -212,7 +213,7 @@ class _Answer extends StatelessWidget {
           const SizedBox(height: 16),
           bar('Giorni con ${a.name} da tenere d’occhio', insight.highMean, insight.highDays, p.fill(Level.high)),
           const SizedBox(height: 14),
-          bar('Altri giorni', insight.lowMean, insight.lowDays, p.fill(Level.low)),
+          bar('Giorni con ${a.name} sotto $threshold', insight.lowMean, insight.lowDays, p.fill(Level.low)),
         ],
       ),
     );

@@ -2,16 +2,19 @@ package dev.lorenzocaputo.allergyradar
 
 import android.Manifest
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.CancellationSignal
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
+import android.provider.Settings
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -28,6 +31,12 @@ class MainActivity : FlutterActivity() {
                 "permission" -> permission(call.argument<Boolean>("ask") == true, result)
                 "current" -> current(result)
                 "lastKnown" -> lastKnownNow(call.argument<Number>("maxAgeMs")?.toLong() ?: 0L, result)
+                "openSettings" -> {
+                    startActivity(
+                        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", packageName, null)),
+                    )
+                    result.success(null)
+                }
                 else -> result.notImplemented()
             }
         }

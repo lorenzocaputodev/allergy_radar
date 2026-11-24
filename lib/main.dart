@@ -39,10 +39,16 @@ Future<void> main() async {
   final client = http.Client();
   final openMeteo = OpenMeteoClient(client);
   final repo = PollenRepository(openMeteo: openMeteo, pollnet: PollnetClient(client), stations: stations);
-  final state = AppState(repo, prefs);
-  final diary = DiaryState(prefs);
   final info = await PackageInfo.fromPlatform();
   final places = await placesLoad;
+  final state = AppState(
+    repo,
+    prefs,
+    locate: ({bool ask = false}) => LocationService.position(ask: ask),
+    describe: (lat, lon, renamed) =>
+        LocationService.placeAt(lat, lon, reverse: LocationService.androidGeocoder, index: places, renamed: renamed),
+  );
+  final diary = DiaryState(prefs);
   final updates = UpdateState(prefs, UpdateChecker(client), current: info.version)..load();
 
   PollenSnapshot? filled;
@@ -74,16 +80,6 @@ Future<void> main() async {
     await prefs.reload();
     diary.reload();
   }
-
-  state
-    ..locate = (({bool ask = false}) => LocationService.position(ask: ask))
-    ..describe = (lat, lon) => LocationService.placeAt(
-      lat,
-      lon,
-      reverse: LocationService.androidGeocoder,
-      index: places,
-      renamed: (p) => unawaited(state.rename(p)),
-    );
 
   Future<void> freshenData() async {
     final followFirst = state.followLocation && state.hasData;

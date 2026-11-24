@@ -50,16 +50,16 @@ void main() {
     expect(briefing(fixedAt: DateTime(2026, 9, 29, 21)), isNot(contains('posizione')));
     expect(
       briefing(fixedAt: DateTime(2026, 9, 29, 14, 30)),
-      endsWith(' Luogo della posizione letta ieri alle 14:30: apri l’app per aggiornarlo.'),
+      endsWith(' Luogo dell’ultima posizione letta, ieri alle 14:30.'),
     );
-    expect(briefing(), endsWith(' Luogo dell’ultima posizione nota: apri l’app per aggiornarlo.'));
+    expect(briefing(), endsWith(' Luogo dell’ultima posizione nota.'));
     expect(briefing(following: false, fixedAt: DateTime(2026, 9, 20)), isNot(contains('posizione')));
     expect(
       of(
         schedule(DateTime(2026, 9, 30, 12), following: true, fixedAt: DateTime(2026, 9, 29, 14, 30)),
         AlertKind.tomorrow,
       )!.body,
-      contains('Luogo della posizione letta ieri alle 14:30'),
+      contains('Luogo dell’ultima posizione letta, ieri alle 14:30'),
     );
   });
 
@@ -192,5 +192,38 @@ void main() {
     expect(Allergens.olive.at(Level.veryHigh), 'Olivo molto alto');
     expect(Allergens.birch.at(Level.low), 'Betulla e ontano bassi');
     expect(Allergens.alternaria.at(Level.none), 'Alternaria assente');
+  });
+
+  test('altri allergeni allo stesso livello ma sotto il loro «Segnala da»: non si dice «più bassi»', () {
+    final olive = AllergenStatus(
+      allergen: Allergens.olive,
+      kind: DataKind.forecast,
+      level: Level.moderate,
+      value: 30,
+      series: [DayValue(day, 30, Level.moderate)],
+    );
+    final body = planner
+        .schedule(
+          now: DateTime(2026, 9, 30, 7),
+          settings: const AlertSettings(),
+          placeName: 'Lecce',
+          followed: [grass(Level.moderate, Level.moderate, 14), olive],
+          thresholdOf: (a) => a == Allergens.olive ? Level.high : Level.moderate,
+          diaryDoneToday: false,
+        )
+        .firstWhere((m) => m.kind == AlertKind.briefing)
+        .body;
+    expect(body, 'Graminacee moderate. Gli altri non sono da tenere d’occhio.');
+  });
+
+  test('meteo nell’avviso del mattino: un evento all’ora dell’avviso resta una previsione', () {
+    final times = [for (var h = 0; h < 24; h++) day.add(Duration(hours: h))];
+    final weather = HourlyWeather(times, {
+      'precipitation': [for (var h = 0; h < 24; h++) h == 8 ? 3.0 : 0.0],
+    });
+    expect(
+      of(schedule(DateTime(2026, 9, 30, 6), weather: weather), AlertKind.briefing)!.body,
+      contains('Pioggia dalle 7: pollini in calo.'),
+    );
   });
 }

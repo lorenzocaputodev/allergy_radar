@@ -51,9 +51,15 @@ class StationDirectory {
 
   Area areaOf(Place p) => near(p, maxKm: double.infinity).firstOrNull?.station.area ?? Area.south;
 
+  (double, double)? _sortedFor;
+  List<NearStation> _sorted = const [];
+
   List<NearStation> near(Place p, {double maxKm = maxKm}) {
-    final list = [for (final s in stations) NearStation(s, distanceKm(p.lat, p.lon, s.lat, s.lon))]
-      ..sort((a, b) => a.km.compareTo(b.km));
-    return list.where((n) => n.km <= maxKm).toList();
+    if (_sortedFor != (p.lat, p.lon)) {
+      _sorted = [for (final s in stations) NearStation(s, distanceKm(p.lat, p.lon, s.lat, s.lon))]
+        ..sort((a, b) => a.km.compareTo(b.km));
+      _sortedFor = (p.lat, p.lon);
+    }
+    return _sorted.where((n) => n.km <= maxKm).toList();
   }
 }

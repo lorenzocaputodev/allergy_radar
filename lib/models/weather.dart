@@ -6,7 +6,7 @@ class HourlyWeather {
   final List<DateTime> times;
   final Map<String, List<double?>> series;
 
-  WeatherHint? hintAt(DateTime now) => WeatherHint.of(times, series, now);
+  WeatherHint? hintAt(DateTime now, {bool ahead = false}) => WeatherHint.of(times, series, now, ahead: ahead);
 
   WeatherHint? hintOn(DateTime day) =>
       WeatherHint.of(times, series, DateTime(day.year, day.month, day.day, WeatherHint.firstHour), ahead: true);

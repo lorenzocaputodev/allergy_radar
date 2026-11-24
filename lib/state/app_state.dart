@@ -11,12 +11,11 @@ import '../models/allergen.dart';
 import '../models/level.dart';
 import '../models/place.dart';
 import '../models/pollen_snapshot.dart';
-import '../services/alert_planner.dart';
 import '../services/location_service.dart';
 import '../utils/days.dart';
 
 class AppState extends ChangeNotifier {
-  AppState(this._repo, this._prefs);
+  AppState(this._repo, this._prefs, {this.locate, this.describe});
 
   final PollenRepository _repo;
   final SharedPreferences _prefs;
@@ -49,7 +48,6 @@ class AppState extends ChangeNotifier {
   static const maxSaved = 5;
   static const followKm = 5.0;
   static const followTimeout = Duration(seconds: 20);
-  static const followOldAfter = AlertPlanner.placeOldAfter;
 
   static const freshFor = Duration(hours: 6);
 
@@ -58,9 +56,10 @@ class AppState extends ChangeNotifier {
   bool followLocation = false;
   DateTime? followFixAt;
   String? followError;
+  bool followNeedsSettings = false;
   bool locating = false;
-  Future<({double lat, double lon})> Function({bool ask})? locate;
-  Future<Place> Function(double lat, double lon)? describe;
+  final Future<({double lat, double lon})> Function({bool ask})? locate;
+  final Future<Place> Function(double lat, double lon, void Function(Place) renamed)? describe;
   static final _defaultFollowed = {Allergens.grass.id, Allergens.parietaria.id};
 
   Set<String> followed = {..._defaultFollowed};
@@ -117,7 +116,7 @@ class AppState extends ChangeNotifier {
       followedStatuses.where((s) => s.level != Level.none && s.level >= thresholdOf(s.allergen)).toList();
 
   bool get followOld =>
-      followLocation && (followFixAt == null || clock.now().difference(followFixAt!) > followOldAfter);
+      followLocation && (followFixAt == null || clock.now().difference(followFixAt!) > Place.followOldAfter);
 
   bool get isStale {
     if (snapshot == null || estimatesOnly) return true;
@@ -277,6 +276,7 @@ class AppState extends ChangeNotifier {
     if (!following) {
       followLocation = false;
       followError = null;
+      followNeedsSettings = false;
       saved = [p, ...saved.where((s) => s.cacheKey != p.cacheKey)].take(maxSaved).toList();
       await _prefs.setBool(kFollowLocation, false);
       await _savePlaces();
@@ -309,6 +309,7 @@ class AppState extends ChangeNotifier {
   Future<void> startFollowing(Place here) async {
     followLocation = true;
     followError = null;
+    followNeedsSettings = false;
     await _prefs.setBool(kFollowLocation, true);
     await _fixed();
     await setPlace(here, following: true);
@@ -317,6 +318,7 @@ class AppState extends ChangeNotifier {
   Future<void> stopFollowing() async {
     followLocation = false;
     followError = null;
+    followNeedsSettings = false;
     notifyListeners();
     await _prefs.setBool(kFollowLocation, false);
   }
@@ -342,6 +344,7 @@ class AppState extends ChangeNotifier {
         here = await describe(pos.lat, pos.lon).timeout(followTimeout);
       }
       followError = null;
+      followNeedsSettings = false;
       await _fixed();
     } on Object catch (e) {
       followError = switch (e) {
@@ -352,6 +355,7 @@ class AppState extends ChangeNotifier {
         TimeoutException() => 'Il telefono non l’ha data in tempo.',
         _ => 'Riprova tra poco.',
       };
+      followNeedsSettings = e is LocationException && e.settings;
     } finally {
       locating = false;
       notifyListeners();
@@ -361,7 +365,9 @@ class AppState extends ChangeNotifier {
 
   Future<void> relocate({bool ask = false}) async {
     final (l, d) = (locate, describe);
-    if (l != null && d != null) await follow(() => l(ask: ask), d);
+    if (l == null || d == null) return;
+    if (ask) await _following;
+    await follow(() => l(ask: ask), (lat, lon) => d(lat, lon, (p) => unawaited(rename(p))));
   }
 
   Future<void> _fixed() async {

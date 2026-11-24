@@ -467,32 +467,53 @@ void main() {
     test('seguire la posizione: salva l’ora dell’ultima lettura e dice perché non si aggiorna', () async {
       var now = DateTime(2026, 11, 23, 14, 30);
       await withClock(Clock(() => now), () async {
-        final state = await fresh();
+        SharedPreferences.setMockInitialValues({'onboarded': true});
+        Future<({double lat, double lon})> Function(bool ask) where = (_) async => (lat: 40.35, lon: 18.17);
+        final asked = <bool>[];
+        final state = AppState(
+          repository(DateTime(2026, 9, 30, 10)),
+          await SharedPreferences.getInstance(),
+          locate: ({bool ask = false}) {
+            asked.add(ask);
+            return where(ask);
+          },
+          describe: (la, lo, renamed) async => at('Ugento', la),
+        );
+        await state.load();
         await state.startFollowing(at('Lecce', 40.35));
         expect(state.followFixAt, now);
         expect(state.followOld, isFalse);
 
         now = DateTime(2026, 11, 24, 8);
         expect(state.followOld, isTrue);
-        state
-          ..locate = (({bool ask = false}) async =>
-              throw const LocationException('La localizzazione del telefono è spenta.'))
-          ..describe = (la, lo) async => at('Mai', la);
+        where = (_) async => throw const LocationException('La localizzazione del telefono è spenta.');
         await state.relocate();
         expect(state.followError, 'La localizzazione del telefono è spenta.');
+        expect(state.followNeedsSettings, isFalse);
         expect(state.followFixAt, DateTime(2026, 11, 23, 14, 30));
         expect(state.locating, isFalse);
 
-        await state.follow(
-          () async => throw const LocationException('Posizione non disponibile. Cerca una città.'),
-          state.describe!,
-        );
+        where = (_) async => throw const LocationException('Posizione non disponibile. Cerca una città.');
+        await state.relocate();
         expect(state.followError, 'Posizione non disponibile.');
 
-        state
-          ..locate = (({bool ask = false}) async => (lat: 39.93, lon: 18.17))
-          ..describe = (la, lo) async => at('Ugento', la);
+        final gate = Completer<void>();
+        where = (ask) async {
+          if (!ask) await gate.future;
+          throw LocationException('negato', settings: ask);
+        };
+        asked.clear();
+        final running = state.relocate();
+        final retry = state.relocate(ask: true);
+        gate.complete();
+        await running;
+        await retry;
+        expect(asked, [false, true], reason: '«Riprova» chiede il permesso anche con una ricerca in corso');
+        expect(state.followNeedsSettings, isTrue);
+
+        where = (_) async => (lat: 39.93, lon: 18.17);
         await state.relocate();
+        expect(state.followNeedsSettings, isFalse);
         expect(state.place.name, 'Ugento');
         expect(state.followError, isNull);
         expect(state.followFixAt, now);

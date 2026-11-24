@@ -9,6 +9,7 @@ class Place {
   final double lon;
 
   static const lecce = Place(name: 'Lecce', region: 'Puglia', lat: 40.3515, lon: 18.1750);
+  static const followOldAfter = Duration(hours: 12);
 
   double get roundedLat => (lat * 100).round() / 100;
   double get roundedLon => (lon * 100).round() / 100;

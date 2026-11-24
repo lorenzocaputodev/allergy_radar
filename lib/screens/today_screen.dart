@@ -10,6 +10,7 @@ import '../models/level.dart';
 import '../models/outdoor_plan.dart';
 import '../models/pollen_snapshot.dart';
 import '../models/weather.dart';
+import '../services/location_service.dart';
 import '../state/app_state.dart';
 import '../state/diary_state.dart';
 import '../state/update_state.dart';
@@ -110,7 +111,8 @@ class TodayScreen extends StatelessWidget {
                 if (s.followFixAt case final at?) ', ultima letta ${Fmt.moment(at, now)}',
                 '. ${s.followError}',
               ].join(),
-              onRetry: () => s.relocate(ask: true),
+              action: s.followNeedsSettings ? 'Impostazioni' : 'Riprova',
+              onRetry: s.followNeedsSettings ? LocationService.openSettings : () => s.relocate(ask: true),
             )
           else if (s.locating && s.followOld)
             Padding(
@@ -221,10 +223,11 @@ class _Skeleton extends StatelessWidget {
 }
 
 class _Banner extends StatelessWidget {
-  const _Banner({required this.message, required this.onRetry, this.icon = Icons.wifi_off});
+  const _Banner({required this.message, required this.onRetry, this.icon = Icons.wifi_off, this.action = 'Riprova'});
 
   final String message;
   final IconData icon;
+  final String action;
   final Future<void> Function() onRetry;
 
   @override
@@ -245,7 +248,7 @@ class _Banner extends StatelessWidget {
             TextButton(
               onPressed: onRetry,
               style: TextButton.styleFrom(foregroundColor: p.bg),
-              child: const Text('Riprova'),
+              child: Text(action),
             ),
           ],
         ),

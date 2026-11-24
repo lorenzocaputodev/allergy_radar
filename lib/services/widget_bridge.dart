@@ -24,7 +24,7 @@ class WidgetBridge {
     if (snap == null) return null;
     final now = clock.now();
     return jsonEncode({
-      'place': app.place.name,
+      'place': app.followOld ? '${app.place.name} · posizione vecchia' : app.place.name,
       'updated': snap.estimated ? '' : snap.fetchedAt.toIso8601String(),
       'level': app.dayLevel.index,
       'levelLabel': app.dayLevel.label,

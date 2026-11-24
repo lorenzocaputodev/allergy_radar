@@ -10,9 +10,10 @@ import '../models/place.dart';
 import '../models/place_index.dart';
 
 class LocationException implements Exception {
-  const LocationException(this.message);
+  const LocationException(this.message, {this.settings = false});
 
   final String message;
+  final bool settings;
 
   @override
   String toString() => message;
@@ -41,6 +42,15 @@ class LocationService {
 
   static const _channel = MethodChannel('dev.lorenzocaputo.allergyradar/location');
 
+  static Future<void> openSettings() async {
+    if (kIsWeb || !Platform.isAndroid) return;
+    try {
+      await _channel.invokeMethod<void>('openSettings');
+    } on PlatformException {
+      return;
+    }
+  }
+
   static Future<({double lat, double lon})> position({bool ask = true, Duration? recent}) async {
     if (kIsWeb || !Platform.isAndroid) {
       throw const LocationException('Posizione non disponibile. Cerca una città.');
@@ -50,7 +60,7 @@ class LocationService {
     }
     final permission = await _channel.invokeMethod<String>('permission', {'ask': ask});
     if (permission == 'deniedForever') {
-      throw const LocationException('Permesso negato: si riattiva dalle impostazioni di Android.');
+      throw const LocationException('Permesso negato: si riattiva dalle impostazioni di Android.', settings: true);
     }
     if (permission != 'granted') {
       throw const LocationException('Permesso negato. Puoi sempre cercare una città.');

@@ -217,6 +217,11 @@ class AlertsService {
           scheduled.add(m);
         } on Object catch (e) {
           debugPrint('Avviso ${m.kind.name} non programmato: $e');
+          try {
+            await _plugin.cancel(_id(m.kind));
+          } on Object {
+            debugPrint('Avviso ${m.kind.name} vecchio non cancellato');
+          }
         }
       }
       await AlertLog.update(prefs, pending: [...kept, ...split.late, ...scheduled], arrived: split.arrived);
@@ -274,10 +279,12 @@ class AlertsService {
       final app = await _backgroundState(prefs, client);
       if (!app.onboarded) return;
       final asked = app.place.cacheKey;
-      if (force || app.isStale) await refreshWidget(prefs, app, manual: force);
-      await prefs.reload();
-      await app.load();
-      if (app.place.cacheKey != asked || !app.onboarded) return;
+      if (force || app.isStale) {
+        await refreshWidget(prefs, app, manual: force);
+        await prefs.reload();
+        await app.load();
+        if (app.place.cacheKey != asked || !app.onboarded) return;
+      }
       await WidgetBridge.save(prefs, app);
       await reschedule(prefs, app, DiaryState(prefs));
     } finally {
