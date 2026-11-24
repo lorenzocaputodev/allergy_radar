@@ -56,7 +56,7 @@ void main() {
       for (final w in [400, 500, 600]) 'assets/fonts/Fraunces-$w.ttf',
     ]);
     await _font('MaterialIcons', [
-      'C:/development/flutter/bin/cache/artifacts/material_fonts/materialicons-regular.otf',
+      '${Platform.environment['FLUTTER_ROOT'] ?? 'C:/development/flutter'}/bin/cache/artifacts/material_fonts/materialicons-regular.otf',
     ]);
   });
 
