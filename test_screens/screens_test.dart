@@ -165,6 +165,22 @@ void main() {
     );
   });
 
+  for (final b in Brightness.values) {
+    final t = b == Brightness.light ? 'chiaro' : 'scuro';
+    testWidgets('oggi posizione ferma $t', (tester) async {
+      final s = await state(
+        Place.lecce,
+        lecceNow,
+        extra: {
+          'follow_location': true,
+          'follow_fix_at': lecceNow.subtract(const Duration(hours: 20)).millisecondsSinceEpoch,
+        },
+      );
+      s.followError = 'La localizzazione del telefono è spenta.';
+      await shot(tester, '02_oggi_posizione_ferma_$t', const HomeShell(), s: s, b: b);
+    });
+  }
+
   testWidgets('oggi bologna', (tester) async {
     await shot(tester, '02_oggi_bologna', const HomeShell(), s: await state(bologna, bolognaNow), height: 2300);
   });

@@ -6,10 +6,12 @@ import 'package:allergy_radar/models/allergen.dart';
 import 'package:allergy_radar/models/level.dart';
 import 'package:allergy_radar/models/place.dart';
 import 'package:allergy_radar/services/alerts_service.dart';
+import 'package:allergy_radar/services/location_service.dart';
 import 'package:allergy_radar/services/open_meteo_client.dart';
 import 'package:allergy_radar/services/pollnet_client.dart';
 import 'package:allergy_radar/services/widget_bridge.dart';
 import 'package:allergy_radar/state/app_state.dart';
+import 'package:clock/clock.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -460,6 +462,46 @@ void main() {
       expect(state.followLocation, isFalse);
       await state.follow(() async => (lat: 40.5, lon: 18.17), (la, lo) async => at('Altrove', la));
       expect(state.place.name, 'Roma');
+    });
+
+    test('seguire la posizione: salva l’ora dell’ultima lettura e dice perché non si aggiorna', () async {
+      var now = DateTime(2026, 11, 23, 14, 30);
+      await withClock(Clock(() => now), () async {
+        final state = await fresh();
+        await state.startFollowing(at('Lecce', 40.35));
+        expect(state.followFixAt, now);
+        expect(state.followOld, isFalse);
+
+        now = DateTime(2026, 11, 24, 8);
+        expect(state.followOld, isTrue);
+        state
+          ..locate = (({bool ask = false}) async =>
+              throw const LocationException('La localizzazione del telefono è spenta.'))
+          ..describe = (la, lo) async => at('Mai', la);
+        await state.relocate();
+        expect(state.followError, 'La localizzazione del telefono è spenta.');
+        expect(state.followFixAt, DateTime(2026, 11, 23, 14, 30));
+        expect(state.locating, isFalse);
+
+        await state.follow(
+          () async => throw const LocationException('Posizione non disponibile. Cerca una città.'),
+          state.describe!,
+        );
+        expect(state.followError, 'Posizione non disponibile.');
+
+        state
+          ..locate = (({bool ask = false}) async => (lat: 39.93, lon: 18.17))
+          ..describe = (la, lo) async => at('Ugento', la);
+        await state.relocate();
+        expect(state.place.name, 'Ugento');
+        expect(state.followError, isNull);
+        expect(state.followFixAt, now);
+        expect(state.followOld, isFalse);
+
+        final again = AppState(repository(DateTime(2026, 9, 30, 10)), await SharedPreferences.getInstance());
+        await again.load();
+        expect(again.followFixAt, now);
+      });
     });
   });
 }

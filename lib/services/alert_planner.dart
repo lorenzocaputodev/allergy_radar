@@ -19,6 +19,8 @@ class AlertMessage {
 class AlertPlanner {
   const AlertPlanner();
 
+  static const placeOldAfter = Duration(hours: 12);
+
   static DateTime nextAt(DateTime now, int minutes) {
     final at = DateTime(now.year, now.month, now.day, minutes ~/ 60, minutes % 60);
     return at.isAfter(now) ? at : DateTime(now.year, now.month, now.day + 1, minutes ~/ 60, minutes % 60);
@@ -31,12 +33,20 @@ class AlertPlanner {
     required List<AllergenStatus> followed,
     required Level Function(Allergen) thresholdOf,
     required bool diaryDoneToday,
+    bool followingPlace = false,
+    DateTime? placeFixedAt,
   }) {
     final today = now.dateOnly;
     final tomorrow = today.plusDays(1);
     DateTime at(DateTime day, int minutes) => DateTime(day.year, day.month, day.day, minutes ~/ 60, minutes % 60);
     DateTime next(int minutes) => nextAt(now, minutes);
     bool above(Allergen a, Level l) => l != Level.none && l >= thresholdOf(a);
+    String where(DateTime when) {
+      if (!followingPlace) return '';
+      if (placeFixedAt == null) return ' Luogo dell’ultima posizione nota: apri l’app per aggiornarlo.';
+      if (when.difference(placeFixedAt) <= placeOldAfter) return '';
+      return ' Luogo della posizione letta ${Fmt.moment(placeFixedAt, when)}: apri l’app per aggiornarlo.';
+    }
 
     final out = <AlertMessage>[];
 
@@ -52,7 +62,7 @@ class AlertPlanner {
                   ? 'Oggi i tuoi allergeni con dati recenti restano sotto la soglia.'
                   : 'Oggi i tuoi allergeni restano sotto la soglia.'
             : 'Sopra la tua soglia: ${Fmt.list([for (final s in over) _named(s, when)])}.$others';
-        out.add(AlertMessage(AlertKind.briefing, when, 'Pollini di oggi a $placeName', body));
+        out.add(AlertMessage(AlertKind.briefing, when, 'Pollini di oggi a $placeName', '$body${where(when)}'));
       }
     }
 
@@ -68,7 +78,12 @@ class AlertPlanner {
       }
       if (bothering.isNotEmpty) {
         out.add(
-          AlertMessage(AlertKind.tomorrow, when, 'Domani a $placeName', 'Sopra la tua soglia: ${Fmt.list(bothering)}.'),
+          AlertMessage(
+            AlertKind.tomorrow,
+            when,
+            'Domani a $placeName',
+            'Sopra la tua soglia: ${Fmt.list(bothering)}.${where(when)}',
+          ),
         );
       }
     }

@@ -24,6 +24,8 @@ void main() {
     AlertSettings settings = const AlertSettings(),
     List<AllergenStatus>? followed,
     bool diaryDone = false,
+    bool following = false,
+    DateTime? fixedAt,
   }) => planner.schedule(
     now: now,
     settings: settings,
@@ -31,9 +33,32 @@ void main() {
     followed: followed ?? [grass(Level.low, Level.moderate, 14), parietaria],
     thresholdOf: (_) => Level.moderate,
     diaryDoneToday: diaryDone,
+    followingPlace: following,
+    placeFixedAt: fixedAt,
   );
 
   AlertMessage? of(List<AlertMessage> list, AlertKind k) => list.where((m) => m.kind == k).firstOrNull;
+
+  test('seguendo la posizione, un luogo letto più di 12 ore prima dell’avviso lo dice', () {
+    final evening = DateTime(2026, 9, 29, 22);
+    String briefing({bool following = true, DateTime? fixedAt}) =>
+        of(schedule(evening, following: following, fixedAt: fixedAt), AlertKind.briefing)!.body;
+
+    expect(briefing(fixedAt: DateTime(2026, 9, 29, 21)), isNot(contains('posizione')));
+    expect(
+      briefing(fixedAt: DateTime(2026, 9, 29, 14, 30)),
+      endsWith(' Luogo della posizione letta ieri alle 14:30: apri l’app per aggiornarlo.'),
+    );
+    expect(briefing(), endsWith(' Luogo dell’ultima posizione nota: apri l’app per aggiornarlo.'));
+    expect(briefing(following: false, fixedAt: DateTime(2026, 9, 20)), isNot(contains('posizione')));
+    expect(
+      of(
+        schedule(DateTime(2026, 9, 30, 12), following: true, fixedAt: DateTime(2026, 9, 29, 14, 30)),
+        AlertKind.tomorrow,
+      )!.body,
+      contains('Luogo della posizione letta ieri alle 14:30'),
+    );
+  });
 
   test('briefing: una misura vecchia non fa scattare la soglia e dice la sua età', () {
     final old = AllergenStatus(

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:clock/clock.dart';
@@ -10,6 +11,8 @@ import '../models/allergen.dart';
 import '../models/level.dart';
 import '../models/place.dart';
 import '../models/pollen_snapshot.dart';
+import '../services/alert_planner.dart';
+import '../services/location_service.dart';
 import '../utils/days.dart';
 
 class AppState extends ChangeNotifier {
@@ -27,6 +30,7 @@ class AppState extends ChangeNotifier {
   static const kWidgetTheme = 'widget_theme';
   static const kPlaces = 'places';
   static const kFollowLocation = 'follow_location';
+  static const kFollowFixAt = 'follow_fix_at';
   static const _kCache = 'cache';
   static const _kIspraPause = 'ispra_paused_until';
 
@@ -45,12 +49,18 @@ class AppState extends ChangeNotifier {
   static const maxSaved = 5;
   static const followKm = 5.0;
   static const followTimeout = Duration(seconds: 20);
+  static const followOldAfter = AlertPlanner.placeOldAfter;
 
   static const freshFor = Duration(hours: 6);
 
   Place place = Place.lecce;
   List<Place> saved = const [];
   bool followLocation = false;
+  DateTime? followFixAt;
+  String? followError;
+  bool locating = false;
+  Future<({double lat, double lon})> Function({bool ask})? locate;
+  Future<Place> Function(double lat, double lon)? describe;
   static final _defaultFollowed = {Allergens.grass.id, Allergens.parietaria.id};
 
   Set<String> followed = {..._defaultFollowed};
@@ -106,6 +116,9 @@ class AppState extends ChangeNotifier {
   List<AllergenStatus> get aboveThreshold =>
       followedStatuses.where((s) => s.level != Level.none && s.level >= thresholdOf(s.allergen)).toList();
 
+  bool get followOld =>
+      followLocation && (followFixAt == null || clock.now().difference(followFixAt!) > followOldAfter);
+
   bool get isStale {
     if (snapshot == null || estimatesOnly) return true;
     final now = DateTime.now();
@@ -134,6 +147,8 @@ class AppState extends ChangeNotifier {
             const <Place>[],
           );
     followLocation = read(() => _prefs.getBool(kFollowLocation) ?? false, false);
+    final fix = read(() => _prefs.getInt(kFollowFixAt), null);
+    followFixAt = fix == null ? null : DateTime.fromMillisecondsSinceEpoch(fix);
     final f = read(() => _prefs.getStringList(kFollowed), null);
     followed = f == null ? {..._defaultFollowed} : f.where((id) => Allergens.byId(id) != null).toSet();
     final t = read(() => _prefs.getString(kThresholds), null);
@@ -261,6 +276,7 @@ class AppState extends ChangeNotifier {
     place = p;
     if (!following) {
       followLocation = false;
+      followError = null;
       saved = [p, ...saved.where((s) => s.cacheKey != p.cacheKey)].take(maxSaved).toList();
       await _prefs.setBool(kFollowLocation, false);
       await _savePlaces();
@@ -292,12 +308,15 @@ class AppState extends ChangeNotifier {
 
   Future<void> startFollowing(Place here) async {
     followLocation = true;
+    followError = null;
     await _prefs.setBool(kFollowLocation, true);
+    await _fixed();
     await setPlace(here, following: true);
   }
 
   Future<void> stopFollowing() async {
     followLocation = false;
+    followError = null;
     notifyListeners();
     await _prefs.setBool(kFollowLocation, false);
   }
@@ -314,15 +333,40 @@ class AppState extends ChangeNotifier {
     Future<Place> Function(double lat, double lon) describe,
   ) async {
     if (!followLocation) return;
-    final Place here;
+    locating = true;
+    notifyListeners();
+    Place? here;
     try {
       final pos = await position().timeout(followTimeout);
-      if (distanceKm(place.lat, place.lon, pos.lat, pos.lon) < followKm) return;
-      here = await describe(pos.lat, pos.lon).timeout(followTimeout);
-    } on Object {
-      return;
+      if (distanceKm(place.lat, place.lon, pos.lat, pos.lon) >= followKm) {
+        here = await describe(pos.lat, pos.lon).timeout(followTimeout);
+      }
+      followError = null;
+      await _fixed();
+    } on Object catch (e) {
+      followError = switch (e) {
+        LocationException(:final message) => message.replaceAll(
+          RegExp(r' (Cerca|Puoi sempre cercare) una città\.'),
+          '',
+        ),
+        TimeoutException() => 'Il telefono non l’ha data in tempo.',
+        _ => 'Riprova tra poco.',
+      };
+    } finally {
+      locating = false;
+      notifyListeners();
     }
-    if (followLocation) await setPlace(here, following: true);
+    if (here != null && followLocation) await setPlace(here, following: true);
+  }
+
+  Future<void> relocate({bool ask = false}) async {
+    final (l, d) = (locate, describe);
+    if (l != null && d != null) await follow(() => l(ask: ask), d);
+  }
+
+  Future<void> _fixed() async {
+    followFixAt = clock.now();
+    await _prefs.setInt(kFollowFixAt, followFixAt!.millisecondsSinceEpoch);
   }
 
   Future<void> setFollowed(Allergen a, bool on) async {

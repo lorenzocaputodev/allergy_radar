@@ -11,7 +11,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'data/pollen_repository.dart';
 import 'models/diary_entry.dart';
-import 'models/place.dart';
 import 'models/place_index.dart';
 import 'models/pollen_snapshot.dart';
 import 'models/station.dart';
@@ -76,20 +75,21 @@ Future<void> main() async {
     diary.reload();
   }
 
-  Future<({double lat, double lon})> locate() => LocationService.position(ask: false);
-  Future<Place> describe(double lat, double lon) => LocationService.placeAt(
-    lat,
-    lon,
-    reverse: LocationService.androidGeocoder,
-    index: places,
-    renamed: (p) => unawaited(state.rename(p)),
-  );
+  state
+    ..locate = (({bool ask = false}) => LocationService.position(ask: ask))
+    ..describe = (lat, lon) => LocationService.placeAt(
+      lat,
+      lon,
+      reverse: LocationService.androidGeocoder,
+      index: places,
+      renamed: (p) => unawaited(state.rename(p)),
+    );
 
   Future<void> freshenData() async {
     final followFirst = state.followLocation && state.hasData;
-    if (followFirst) await state.follow(locate, describe);
+    if (followFirst) await state.relocate();
     if (state.isStale) await state.refresh();
-    if (state.followLocation && !followFirst) await state.follow(locate, describe);
+    if (state.followLocation && !followFirst) await state.relocate();
   }
 
   void freshen() {

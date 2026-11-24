@@ -102,6 +102,27 @@ class TodayScreen extends StatelessWidget {
               style: TextStyle(fontSize: 14, color: p.ink3),
             ),
           ),
+          if (s.followLocation && s.followError != null)
+            _Banner(
+              icon: Icons.location_disabled_outlined,
+              message: [
+                'Posizione non aggiornata',
+                if (s.followFixAt case final at?) ', ultima letta ${Fmt.moment(at, now)}',
+                '. ${s.followError}',
+              ].join(),
+              onRetry: () => s.relocate(ask: true),
+            )
+          else if (s.locating && s.followOld)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
+              child: Row(
+                children: [
+                  SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: p.ink3)),
+                  const SizedBox(width: 10),
+                  Text('Cerco la posizione attuale…', style: TextStyle(fontSize: 14, color: p.ink3)),
+                ],
+              ),
+            ),
           if (s.error != null) _Banner(message: s.error!, onRetry: () => s.refresh(manual: true)),
           if (update != null) UpdateCard(version: update),
           if (snap == null && s.loading)
@@ -200,9 +221,10 @@ class _Skeleton extends StatelessWidget {
 }
 
 class _Banner extends StatelessWidget {
-  const _Banner({required this.message, required this.onRetry});
+  const _Banner({required this.message, required this.onRetry, this.icon = Icons.wifi_off});
 
   final String message;
+  final IconData icon;
   final Future<void> Function() onRetry;
 
   @override
@@ -215,7 +237,7 @@ class _Banner extends StatelessWidget {
         decoration: BoxDecoration(color: p.ink, borderRadius: BorderRadius.circular(16)),
         child: Row(
           children: [
-            Icon(Icons.wifi_off, color: p.bg),
+            Icon(icon, color: p.bg),
             const SizedBox(width: 12),
             Expanded(
               child: Text(message, style: TextStyle(color: p.bg, fontSize: 14)),

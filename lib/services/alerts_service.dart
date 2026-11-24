@@ -171,6 +171,8 @@ class AlertsService {
       followed: app.followedStatuses,
       thresholdOf: app.thresholdOf,
       diaryDoneToday: diaryDone,
+      followingPlace: app.followLocation,
+      placeFixedAt: app.followFixAt,
     );
     try {
       final on = await enabled();

@@ -31,10 +31,12 @@ abstract final class Fmt {
 
   static String time(DateTime d) => '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
 
-  static String updated(DateTime at, DateTime now) {
-    if (at.isSameDay(now)) return 'dati controllati alle ${time(at)}';
-    if (at.isSameDay(now.plusDays(-1))) return 'dati controllati ieri alle ${time(at)}';
-    return 'dati controllati il ${shortDate(at)} alle ${time(at)}';
+  static String updated(DateTime at, DateTime now) => 'dati controllati ${moment(at, now)}';
+
+  static String moment(DateTime at, DateTime now) {
+    if (at.isSameDay(now)) return 'alle ${time(at)}';
+    if (at.isSameDay(now.plusDays(-1))) return 'ieri alle ${time(at)}';
+    return 'il ${shortDate(at)} alle ${time(at)}';
   }
 
   static String number(double v) {
