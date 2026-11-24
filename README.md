@@ -39,7 +39,7 @@ Serve Android 7.0 o successivo.
 - 📓 Diario dei sintomi da 10 secondi, con i farmaci più usati già in lista, sonno e ore all’aperto
 - 📈 Andamento su 30 giorni, 3 mesi o 1 anno (giorno, settimana o mese): per ogni allergene, se stai peggio nei giorni in cui è da tenere d’occhio, con un punteggio sintomi + farmaci adattato dal CSMS dell’EAACI; le misure ISPRA completano da sole i giorni passati
 - 🗓️ Calendario stagionale per **Nord**, **Centro** e **Sud e Isole**
-- 📍 Luogo dalla posizione approssimativa o dalla ricerca: tutti i comuni italiani sono inclusi nell’app, quindi i risultati compaiono mentre scrivi, anche senza rete; i luoghi scelti restano a portata di tocco, e con «Segui la mia posizione» il luogo si aggiorna quando apri l’app
+- 📍 Luogo dalla posizione approssimativa o dalla ricerca: tutti i comuni italiani sono inclusi nell’app, quindi i risultati compaiono mentre scrivi, anche senza rete; i luoghi scelti restano a portata di tocco, e con «Segui la mia posizione» il luogo si aggiorna quando apri l’app; se la posizione è ferma da più di 12 ore Oggi, widget e avvisi lo dicono
 - 📲 Widget Android per la schermata Home, con le pagine degli allergeni e il tasto per aggiornare
 - 🔔 Avvisi, proposti già al primo avvio, e l’elenco di quelli ricevuti, che cancelli con uno swipe o tutti insieme
 - 📄 PDF per l’allergologo, diario in CSV, backup e ripristino
