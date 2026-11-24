@@ -12,6 +12,7 @@ class OutdoorPlan {
     required this.peak,
     required this.good,
     required this.avoid,
+    this.rough = const {},
   });
 
   static const firstHour = 7;
@@ -25,8 +26,9 @@ class OutdoorPlan {
   final Level peak;
   final List<HourSpan> good;
   final HourSpan? avoid;
+  final Set<int> rough;
 
-  static OutdoorPlan? of(List<AllergenStatus> followed, DateTime now) {
+  static OutdoorPlan? of(List<AllergenStatus> followed, DateTime now, {Set<int> rough = const {}}) {
     final hourly = followed.where((s) => s.hourly.isNotEmpty).toList();
     if (hourly.isEmpty) return null;
     final others = [
@@ -52,9 +54,14 @@ class OutdoorPlan {
     final peak = ahead.fold(Level.none, (l, e) => l.max(e.$2));
     if (peak.index < Level.moderate.index) return null;
 
-    final best = ahead.fold(peak, (l, e) => e.$2.index < l.index ? e.$2 : l);
+    final calm = ahead.where((e) => !rough.contains(e.$1));
+    if (calm.isEmpty) return null;
+    final best = calm.fold(peak, (l, e) => e.$2.index < l.index ? e.$2 : l);
     if (best == peak) return null;
-    final good = _runs(ahead, (l) => l == best).where((r) => r.$2 - r.$1 + 1 >= minHours).take(2).toList();
+    final good = _runs(
+      ahead,
+      (h, l) => l == best && !rough.contains(h),
+    ).where((r) => r.$2 - r.$1 + 1 >= minHours).take(2).toList();
     if (good.isEmpty) return null;
     return OutdoorPlan(
       allergens: [for (final s in hourly) s.allergen.name],
@@ -63,20 +70,24 @@ class OutdoorPlan {
       nowHour: now.hour,
       peak: peak,
       good: good,
-      avoid: _runs(ahead, (l) => l == peak).firstOrNull,
+      avoid: _runs(ahead, (h, l) => l == peak).firstOrNull,
+      rough: {
+        for (final h in rough)
+          if (h >= firstHour && h <= lastHour) h,
+      },
     );
   }
 
-  static List<HourSpan> _runs(List<(int, Level)> hours, bool Function(Level) hit) {
+  static List<HourSpan> _runs(List<(int, Level)> hours, bool Function(int, Level) hit) {
     final out = <HourSpan>[];
     HourSpan? run;
     for (final (h, l) in hours) {
-      if (hit(l) && run != null && h == run.$2 + 1) {
+      if (hit(h, l) && run != null && h == run.$2 + 1) {
         run = (run.$1, h);
         continue;
       }
       if (run != null) out.add(run);
-      run = hit(l) ? (h, h) : null;
+      run = hit(h, l) ? (h, h) : null;
     }
     if (run != null) out.add(run);
     return out;

@@ -265,7 +265,7 @@ void main() {
             DayValue(day.add(Duration(hours: 7 + i)), 0, Level.fromIndex(grass[i])),
         ],
       );
-      final plan = OutdoorPlan.of([status], day.add(const Duration(hours: 8)))!;
+      final plan = OutdoorPlan.of([status], day.add(const Duration(hours: 8)), rough: {17, 18})!;
       await shot(
         tester,
         '02_ora_per_ora_$t',

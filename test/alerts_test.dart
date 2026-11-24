@@ -2,6 +2,7 @@ import 'package:allergy_radar/models/alert_settings.dart';
 import 'package:allergy_radar/models/allergen.dart';
 import 'package:allergy_radar/models/level.dart';
 import 'package:allergy_radar/models/pollen_snapshot.dart';
+import 'package:allergy_radar/models/weather.dart';
 import 'package:allergy_radar/services/alert_planner.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -26,6 +27,7 @@ void main() {
     bool diaryDone = false,
     bool following = false,
     DateTime? fixedAt,
+    HourlyWeather? weather,
   }) => planner.schedule(
     now: now,
     settings: settings,
@@ -35,6 +37,7 @@ void main() {
     diaryDoneToday: diaryDone,
     followingPlace: following,
     placeFixedAt: fixedAt,
+    weather: weather,
   );
 
   AlertMessage? of(List<AlertMessage> list, AlertKind k) => list.where((m) => m.kind == k).firstOrNull;
@@ -78,11 +81,11 @@ void main() {
     final now = DateTime(2026, 9, 30, 7);
     expect(
       of(schedule(now, followed: [grass(Level.low, Level.low, 1), old]), AlertKind.briefing)!.body,
-      'Oggi i tuoi allergeni con dati recenti restano sotto la soglia.',
+      'Nessun allergene da tenere d’occhio tra quelli con dati recenti.',
     );
     expect(
       of(schedule(now, followed: [grass(Level.low, Level.low, 1), recent]), AlertKind.briefing)!.body,
-      'Sopra la tua soglia: Parietaria (misura del 26 set). Gli altri restano sotto.',
+      'Parietaria alta (misura del 26 set). Gli altri sono più bassi.',
     );
   });
 
@@ -102,11 +105,11 @@ void main() {
   test('briefing: testo del giorno in cui arriva', () {
     final today = of(schedule(DateTime(2026, 9, 30, 7)), AlertKind.briefing)!;
     expect(today.title, 'Pollini di oggi a Lecce');
-    expect(today.body, 'Sopra la tua soglia: Parietaria (stima). Gli altri restano sotto.');
+    expect(today.body, 'Parietaria alta (stima). Gli altri sono più bassi.');
 
     final next = of(schedule(DateTime(2026, 9, 30, 9)), AlertKind.briefing)!;
     expect(next.at, DateTime(2026, 10, 1, 7, 30));
-    expect(next.body, 'Sopra la tua soglia: Graminacee e Parietaria (stima).');
+    expect(next.body, 'Graminacee moderate e Parietaria alta (stima).');
   });
 
   test('briefing solo sopra soglia', () {
@@ -125,7 +128,7 @@ void main() {
     final m = of(schedule(DateTime(2026, 9, 30, 12)), AlertKind.tomorrow)!;
     expect(m.at, DateTime(2026, 9, 30, 19));
     expect(m.title, 'Domani a Lecce');
-    expect(m.body, 'Sopra la tua soglia: Graminacee moderato (14 granuli/m³).');
+    expect(m.body, 'Graminacee moderate (14 granuli/m³).');
     expect(
       of(schedule(DateTime(2026, 9, 30, 12), followed: [grass(Level.none, Level.low, 3)]), AlertKind.tomorrow),
       isNull,
@@ -158,5 +161,36 @@ void main() {
     expect(b.tomorrow, isFalse);
     expect(b.diaryAt, 1320);
     expect(AlertSettings.fromJson(const {}).briefing, isTrue);
+  });
+
+  test('meteo negli avvisi: il mattino dice l’evento del giorno, la sera quello di domani', () {
+    final times = [for (var h = 0; h < 48; h++) day.add(Duration(hours: h))];
+    List<double?> hours(Map<int, double> m) => [for (var h = 0; h < 48; h++) m[h] ?? 0];
+    final weather = HourlyWeather(times, {
+      'weather_code': hours({17: 95}),
+      'precipitation': hours({}),
+      'wind_speed_10m': hours({35: 40}),
+    });
+    expect(
+      of(schedule(DateTime(2026, 9, 30, 7), weather: weather), AlertKind.briefing)!.body,
+      'Parietaria alta (stima). Gli altri sono più bassi. Temporale verso le 17: attenzione se hai l’asma.',
+    );
+    expect(
+      of(schedule(DateTime(2026, 9, 30, 12), weather: weather), AlertKind.tomorrow)!.body,
+      'Graminacee moderate (14 granuli/m³). Vento forte dalle 11: più pollini in aria.',
+    );
+    final calm = [grass(Level.none, Level.none, 0)];
+    expect(
+      of(schedule(DateTime(2026, 9, 30, 7), followed: calm, weather: weather), AlertKind.briefing)!.body,
+      'Nessun allergene da tenere d’occhio.',
+    );
+  });
+
+  test('il livello si accorda con il nome dell’allergene', () {
+    expect(Allergens.grass.at(Level.high), 'Graminacee alte');
+    expect(Allergens.parietaria.at(Level.moderate), 'Parietaria moderata');
+    expect(Allergens.olive.at(Level.veryHigh), 'Olivo molto alto');
+    expect(Allergens.birch.at(Level.low), 'Betulla e ontano bassi');
+    expect(Allergens.alternaria.at(Level.none), 'Alternaria assente');
   });
 }

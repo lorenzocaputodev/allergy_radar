@@ -116,7 +116,7 @@ class _Progress extends StatelessWidget {
     final String text;
     if (enough) {
       title = 'Servono giorni diversi';
-      text = 'Per il confronto servono giorni con $name sotto la tua soglia e altri sopra.';
+      text = 'Per il confronto servono giorni con $name da tenere d’occhio e altri no.';
     } else if (unmeasured && logged == 0) {
       title = 'Nessuna misura vicina';
       text = 'Nella tua zona $name non ha misure recenti: il confronto parte quando arrivano.';
@@ -210,9 +210,9 @@ class _Answer extends StatelessWidget {
             style: TextStyle(fontSize: 13, color: p.onHero.withValues(alpha: 0.85)),
           ),
           const SizedBox(height: 16),
-          bar('Giorni con ${a.name} sopra la tua soglia', insight.highMean, insight.highDays, p.fill(Level.high)),
+          bar('Giorni con ${a.name} da tenere d’occhio', insight.highMean, insight.highDays, p.fill(Level.high)),
           const SizedBox(height: 14),
-          bar('Giorni con ${a.name} sotto la tua soglia', insight.lowMean, insight.lowDays, p.fill(Level.low)),
+          bar('Altri giorni', insight.lowMean, insight.lowDays, p.fill(Level.low)),
         ],
       ),
     );

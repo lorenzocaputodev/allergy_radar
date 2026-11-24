@@ -39,7 +39,7 @@ class AllergensScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text('Soglia: ti dà fastidio da', style: TextStyle(fontSize: 13, color: p.ink2)),
+                  Text('Segnala da', style: TextStyle(fontSize: 13, color: p.ink2)),
                   const SizedBox(height: 6),
                   ThresholdPicker(allergen: a),
                 ],
@@ -57,7 +57,7 @@ class AllergensScreen extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(4, 4, 4, 0),
             child: Text(
-              'La soglia decide quando un allergene conta per la tua giornata e per gli avvisi.',
+              'Da quel livello in su un allergene è «da tenere d’occhio» in Oggi e negli avvisi. Moderato va bene quasi per tutti.',
               style: TextStyle(fontSize: 14, height: 1.4, color: p.ink2),
             ),
           ),

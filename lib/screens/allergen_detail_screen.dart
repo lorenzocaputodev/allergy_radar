@@ -197,10 +197,10 @@ class AllergenDetailScreen extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('La tua soglia', style: Theme.of(context).textTheme.titleLarge),
+                  Text('Segnala da', style: Theme.of(context).textTheme.titleLarge),
                   const SizedBox(height: 4),
                   Text(
-                    'Il livello da cui ${a.name} ti dà fastidio: conta per la tua giornata e per gli avvisi.',
+                    'Da questo livello in su ${a.name} è «da tenere d’occhio» in Oggi e negli avvisi.',
                     style: TextStyle(fontSize: 13, color: p.ink3),
                   ),
                 ],

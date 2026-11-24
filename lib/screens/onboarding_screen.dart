@@ -54,7 +54,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           const SizedBox(height: 4),
           const _Hint(
             icon: Icons.help_outline,
-            text: 'Non ne sei sicuro? Scegli quelli che sospetti: il diario ti aiuterà a capirlo.',
+            text: 'Non ne sei sicuro? Scegli quelli che sospetti: l’allergologo può confermarli con un test.',
           ),
         ],
       ),
@@ -401,8 +401,8 @@ class _Summary extends StatelessWidget {
         const _Hint(
           icon: Icons.book_outlined,
           text:
-              'Un consiglio: registra come stai ogni sera. Dopo due settimane vedrai a quale livello '
-              'di polline iniziano i tuoi sintomi.',
+              'Il diario è facoltativo: se la sera registri come stai, dopo due settimane vedi con quali '
+              'pollini stai peggio. Senza, l’app funziona lo stesso.',
         ),
       ],
     );

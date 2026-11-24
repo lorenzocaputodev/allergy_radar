@@ -203,7 +203,7 @@ class ReportPdf {
           if (insights.isEmpty)
             pw.Text(
               'Per un confronto servono almeno ${DiaryState.minDaysForInsight} giorni registrati, '
-              'con un livello del polline, di cui almeno 3 sopra la soglia personale e 3 sotto.',
+              'con un livello del polline, di cui almeno 3 al livello scelto dal paziente o sopra e 3 sotto.',
               style: pw.TextStyle(fontSize: 10, color: _muted),
             )
           else
@@ -221,7 +221,7 @@ class ReportPdf {
                       pw.TextSpan(
                         text:
                             'punteggio sintomi + farmaci ${Fmt.mean(i.highMean)} su ${DiaryInsight.maxScore} nei giorni '
-                            'sopra la soglia personale (${_days(i.highDays)}), ${Fmt.mean(i.lowMean)} negli altri '
+                            'al livello scelto o sopra (${_days(i.highDays)}), ${Fmt.mean(i.lowMean)} negli altri '
                             '(${_days(i.lowDays)}).',
                       ),
                     ],

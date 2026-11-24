@@ -23,6 +23,17 @@ DateTime at(int hour) => day.add(Duration(hours: hour, minutes: 20));
 void main() {
   const grass = [1, 1, 1, 2, 2, 3, 3, 3, 3, 3, 2, 2, 1, 1, 1];
 
+  test('temporale o vento forte: quelle ore non diventano «ora migliore»', () {
+    final plan = OutdoorPlan.of([hourly(Allergens.grass, grass)], at(7), rough: {8, 9, 23})!;
+    expect(plan.good, [(19, 21)]);
+    expect(plan.goodText(' o '), 'dopo le 19');
+    expect(plan.rough, {8, 9});
+    expect(OutdoorPlan.of([hourly(Allergens.grass, grass)], at(7), rough: {7, 8, 9, 19, 20, 21})!.good, [
+      (10, 11),
+      (17, 18),
+    ]);
+  });
+
   test('picco a metà giornata: meglio mattina e sera, evita il picco', () {
     final plan = OutdoorPlan.of([hourly(Allergens.grass, grass)], at(7))!;
     expect(plan.good, [(7, 9), (19, 21)]);

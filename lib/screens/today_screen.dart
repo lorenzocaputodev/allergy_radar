@@ -307,11 +307,11 @@ class _HeroState extends State<_Hero> {
         ? 'Scegli i tuoi allergeni da Profilo.'
         : above.isEmpty
         ? null
-        : 'Sopra la tua soglia: ${Fmt.list([for (final s in above) s.allergen.name])}.';
+        : 'Da tenere d’occhio: ${Fmt.list([for (final s in above) s.allergen.name])}.';
     final estimated = [for (final s in followed.where((s) => s.kind == DataKind.estimate)) s.allergen.name];
     final now = clock.now();
     final weather = level == Level.none ? null : state.snapshot?.weather?.hintAt(now);
-    final plan = OutdoorPlan.of(followed, now);
+    final plan = OutdoorPlan.of(followed, now, rough: state.snapshot?.weather?.roughHours(now) ?? const {});
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -388,16 +388,12 @@ class _WeatherLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final h = hint.ongoing ? null : '${hint.at.hour}';
-    final (icon, text) = switch (hint.event) {
-      WeatherEvent.storm => (
-        Icons.thunderstorm_outlined,
-        '${h == null ? 'Temporale in corso' : 'Temporale verso le $h'}: attenzione se hai l’asma',
-      ),
-      WeatherEvent.rain => (Icons.water_drop_outlined, '${h == null ? 'Piove' : 'Pioggia dalle $h'}: pollini in calo'),
-      WeatherEvent.wind => (Icons.air, 'Vento forte${h == null ? '' : ' dalle $h'}: più pollini in aria'),
+    final icon = switch (hint.event) {
+      WeatherEvent.storm => Icons.thunderstorm_outlined,
+      WeatherEvent.rain => Icons.water_drop_outlined,
+      WeatherEvent.wind => Icons.air,
     };
-    return _HeroLine(icon, text);
+    return _HeroLine(icon, hint.text);
   }
 }
 

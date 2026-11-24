@@ -14,6 +14,26 @@ enum Level {
   Level max(Level other) => index >= other.index ? this : other;
 
   static Level fromIndex(int i) => Level.values[i.clamp(0, 4)];
+
+  String adjective(Agreement a) {
+    if (this == none) return a.plural ? 'assenti' : 'assente';
+    final stem = switch (this) {
+      low => 'bass',
+      moderate => 'moderat',
+      high => 'alt',
+      _ => 'molto alt',
+    };
+    return '$stem${const ['o', 'a', 'i', 'e'][a.index]}';
+  }
+}
+
+enum Agreement {
+  ms,
+  fs,
+  mp,
+  fp;
+
+  bool get plural => this == mp || this == fp;
 }
 
 class Thresholds {

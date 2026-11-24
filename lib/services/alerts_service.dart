@@ -173,6 +173,7 @@ class AlertsService {
       diaryDoneToday: diaryDone,
       followingPlace: app.followLocation,
       placeFixedAt: app.followFixAt,
+      weather: app.snapshot?.weather,
     );
     try {
       final on = await enabled();

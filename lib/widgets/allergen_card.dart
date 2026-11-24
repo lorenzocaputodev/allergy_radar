@@ -80,7 +80,7 @@ class AllergenCard extends StatelessWidget {
                   SourceChip(status.kind, detail: Fmt.sourceDetail(status, clock.now())),
                   if (aboveThreshold)
                     Text(
-                      'Sopra la tua soglia',
+                      'Da tenere d’occhio',
                       style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: p.text(status.level)),
                     ),
                 ],

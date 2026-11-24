@@ -28,6 +28,7 @@ class Allergen {
     required this.calendar,
     this.openMeteoKeys = const [],
     this.inkPlate = false,
+    this.agreement = Agreement.ms,
   });
 
   final String id;
@@ -49,6 +50,10 @@ class Allergen {
 
   final bool inkPlate;
 
+  final Agreement agreement;
+
+  String at(Level l) => '$name ${l.adjective(agreement)}';
+
   String get plate => 'assets/images/plants/$id.webp';
 
   bool get hasForecast => openMeteoKeys.isNotEmpty;
@@ -58,6 +63,7 @@ abstract final class Allergens {
   static const grass = Allergen(
     id: 'grass',
     name: 'Graminacee',
+    agreement: Agreement.fp,
     family: 'Poacee',
     habitat: 'Prati, campi incolti e bordi delle strade.',
     crossReactions: 'Tra tutte le graminacee; a volte pomodoro, melone, anguria, kiwi e arancia.',
@@ -75,6 +81,7 @@ abstract final class Allergens {
   static const parietaria = Allergen(
     id: 'parietaria',
     name: 'Parietaria',
+    agreement: Agreement.fs,
     family: 'Urticacee',
     habitat: 'Muri, ruderi e bordi delle strade, anche in città.',
     crossReactions: 'Rare con altri pollini e con i cibi.',
@@ -124,6 +131,7 @@ abstract final class Allergens {
   static const oak = Allergen(
     id: 'oak',
     name: 'Quercia',
+    agreement: Agreement.fs,
     family: 'Fagacee',
     habitat: 'Boschi di collina e parchi; il leccio anche in città e sulle coste.',
     crossReactions: 'Betulla, nocciolo e castagno.',
@@ -140,6 +148,7 @@ abstract final class Allergens {
   static const plantago = Allergen(
     id: 'plantago',
     name: 'Piantaggine',
+    agreement: Agreement.fs,
     family: 'Plantaginacee',
     habitat: 'Prati, bordi delle strade e terreni calpestati.',
     crossReactions: 'A volte melone.',
@@ -156,6 +165,7 @@ abstract final class Allergens {
   static const mugwort = Allergen(
     id: 'mugwort',
     name: 'Artemisia',
+    agreement: Agreement.fs,
     family: 'Composite',
     habitat: 'Incolti, bordi delle strade e massicciate.',
     crossReactions: 'Ambrosia; sedano, carota, finocchio e alcune spezie.',
@@ -173,6 +183,7 @@ abstract final class Allergens {
   static const ragweed = Allergen(
     id: 'ragweed',
     name: 'Ambrosia',
+    agreement: Agreement.fs,
     family: 'Composite',
     habitat: 'Campi incolti e cantieri, soprattutto in Lombardia e Piemonte.',
     crossReactions: 'Artemisia; melone, anguria, banana e zucchina.',
@@ -190,6 +201,7 @@ abstract final class Allergens {
   static const birch = Allergen(
     id: 'birch',
     name: 'Betulla e ontano',
+    agreement: Agreement.mp,
     family: 'Betulacee',
     habitat: 'Betulla in parchi e montagna al Nord; ontano lungo i fiumi.',
     crossReactions: 'Nocciolo, carpino e quercia; mela, pera, pesca, ciliegia, nocciola, carota e sedano crudi.',
@@ -207,6 +219,7 @@ abstract final class Allergens {
   static const hazel = Allergen(
     id: 'hazel',
     name: 'Nocciolo e carpino',
+    agreement: Agreement.mp,
     family: 'Corilacee',
     habitat: 'Noccioleti, siepi e boschi; il carpino nero in collina.',
     crossReactions: 'Betulla e ontano; nocciola e mela.',
@@ -287,6 +300,7 @@ abstract final class Allergens {
   static const alternaria = Allergen(
     id: 'alternaria',
     name: 'Alternaria',
+    agreement: Agreement.fs,
     family: 'Muffa',
     habitat: 'Terreno e piante in decomposizione; spore nell’aria nei giorni caldi e ventosi.',
     crossReactions: 'Altre muffe, come il Cladosporium.',

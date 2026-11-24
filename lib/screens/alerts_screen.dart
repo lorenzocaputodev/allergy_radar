@@ -100,7 +100,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
           ? 'In attesa dei dati del luogo.'
           : app.followedStatuses.isEmpty
           ? 'Niente in programma: scegli i tuoi allergeni.'
-          : 'Niente in programma: ${day(nextAt(app.alerts.briefingAt))} i tuoi allergeni restano sotto la soglia.',
+          : 'Niente in programma: ${day(nextAt(app.alerts.briefingAt))} nessun allergene da tenere d’occhio.',
       AlertKind.tomorrow: tomorrow != null
           ? 'Prossimo: ${next(tomorrow)}'
           : noData
@@ -109,7 +109,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
           ? 'Niente in programma: scegli i tuoi allergeni.'
           : app.followedStatuses.any((s) => s.kind == DataKind.forecast)
           ? 'Niente in programma: per ${day(nextAt(app.alerts.tomorrowAt).plusDays(1))} '
-                'la previsione resta sotto la soglia.'
+                'la previsione non ha allergeni da tenere d’occhio.'
           : 'Non disponibile: i tuoi allergeni non hanno una previsione.',
       if (reminder != null)
         AlertKind.diary: diaryDone && DiaryEntry.day(reminder) != DiaryEntry.day(now)
@@ -205,7 +205,7 @@ class AlertSettingsEditor extends StatelessWidget {
             note: notes[AlertKind.briefing],
             extra: SwitchListTile(
               secondary: const SizedBox(width: 24),
-              title: Text('Solo nei giorni sopra soglia', style: TextStyle(fontSize: 15, color: p.ink2)),
+              title: Text('Solo nei giorni da tenere d’occhio', style: TextStyle(fontSize: 15, color: p.ink2)),
               value: value.briefingOnlyAbove,
               onChanged: (v) => onChanged(value.copyWith(briefingOnlyAbove: v)),
             ),
@@ -214,7 +214,7 @@ class AlertSettingsEditor extends StatelessWidget {
           block(
             icon: Icons.trending_up,
             title: 'Allerta per domani',
-            subtitle: 'Il giorno prima, se domani un tuo allergene supera la soglia.',
+            subtitle: 'La sera prima, se domani un tuo allergene è da tenere d’occhio.',
             on: value.tomorrow,
             toggle: (v) => onChanged(value.copyWith(tomorrow: v)),
             at: value.tomorrowAt,

@@ -2,6 +2,7 @@ import '../models/alert_settings.dart';
 import '../models/allergen.dart';
 import '../models/level.dart';
 import '../models/pollen_snapshot.dart';
+import '../models/weather.dart';
 import '../utils/days.dart';
 import '../utils/format.dart';
 
@@ -35,6 +36,7 @@ class AlertPlanner {
     required bool diaryDoneToday,
     bool followingPlace = false,
     DateTime? placeFixedAt,
+    HourlyWeather? weather,
   }) {
     final today = now.dateOnly;
     final tomorrow = today.plusDays(1);
@@ -56,13 +58,22 @@ class AlertPlanner {
       final current = followed.where((s) => s.isCurrent(when)).toList();
       final over = current.where((s) => above(s.allergen, levels[s.allergen]!)).toList();
       if (!settings.briefingOnlyAbove || over.isNotEmpty) {
-        final others = over.length < current.length ? ' Gli altri restano sotto.' : '';
+        final others = over.length < current.length ? ' Gli altri sono più bassi.' : '';
         final body = over.isEmpty
             ? current.length < followed.length
-                  ? 'Oggi i tuoi allergeni con dati recenti restano sotto la soglia.'
-                  : 'Oggi i tuoi allergeni restano sotto la soglia.'
-            : 'Sopra la tua soglia: ${Fmt.list([for (final s in over) _named(s, when)])}.$others';
-        out.add(AlertMessage(AlertKind.briefing, when, 'Pollini di oggi a $placeName', '$body${where(when)}'));
+                  ? 'Nessun allergene da tenere d’occhio tra quelli con dati recenti.'
+                  : 'Nessun allergene da tenere d’occhio.'
+            : '${Fmt.list([for (final s in over) _named(s, levels[s.allergen]!, when)])}.$others';
+        final pollen = current.any((s) => levels[s.allergen] != Level.none);
+        final sky = pollen ? weather?.hintAt(when) : null;
+        out.add(
+          AlertMessage(
+            AlertKind.briefing,
+            when,
+            'Pollini di oggi a $placeName',
+            '$body${sky == null ? '' : ' ${sky.text}.'}${where(when)}',
+          ),
+        );
       }
     }
 
@@ -73,16 +84,17 @@ class AlertPlanner {
       for (final s in followed.where((s) => s.kind == DataKind.forecast)) {
         final v = _dayValue(s, target);
         if (v != null && above(s.allergen, v.level)) {
-          bothering.add('${s.allergen.name} ${v.level.label.toLowerCase()} (${Fmt.grains(v.value)})');
+          bothering.add('${s.allergen.at(v.level)} (${Fmt.grains(v.value)})');
         }
       }
       if (bothering.isNotEmpty) {
+        final sky = weather?.hintOn(target);
         out.add(
           AlertMessage(
             AlertKind.tomorrow,
             when,
             'Domani a $placeName',
-            'Sopra la tua soglia: ${Fmt.list(bothering)}.${where(when)}',
+            '${Fmt.list(bothering)}.${sky == null ? '' : ' ${sky.text}.'}${where(when)}',
           ),
         );
       }
@@ -102,9 +114,9 @@ class AlertPlanner {
     return out;
   }
 
-  static String _named(AllergenStatus s, DateTime now) {
-    if (s.kind == DataKind.forecast) return s.allergen.name;
-    return '${s.allergen.name} (${Fmt.sourceOf(s, now: now)})';
+  static String _named(AllergenStatus s, Level level, DateTime now) {
+    if (s.kind == DataKind.forecast) return s.allergen.at(level);
+    return '${s.allergen.at(level)} (${Fmt.sourceOf(s, now: now)})';
   }
 
   static DayValue? _dayValue(AllergenStatus s, DateTime day) => s.series.where((d) => d.date == day).firstOrNull;

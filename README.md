@@ -31,13 +31,13 @@ Serve Android 7.0 o successivo.
 ## ✨ Funzionalità principali
 
 - 🧭 Oggi: livello della giornata, i tuoi allergeni, i prossimi giorni, l’aria e gli altri pollini in zona
-- 🌦️ Una riga sola quando serve: pioggia, vento o temporale in arrivo, e l’ora migliore per uscire con il dettaglio ora per ora
+- 🌦️ Una riga sola quando serve: pioggia, vento o temporale in arrivo, e l’ora migliore per uscire (mai sotto un temporale) con il dettaglio ora per ora
 - 🌫️ Aria: ozono, polveri fini e sabbia del deserto, con cosa sono e cosa fare toccando ogni riquadro
 - 🏷️ Ogni valore dice se è una **previsione**, una **misura** o una **stima**
 - ⚡ Le previsioni arrivano in un secondo, senza aspettare le misure; se una fonte non risponde restano gli ultimi dati o le stime, sempre dichiarati
-- 🔎 Dettaglio di ogni allergene: ora per ora, prossimi giorni, stagione, la tua soglia e una tavola botanica d’epoca con dove cresce e le reazioni crociate
+- 🔎 Dettaglio di ogni allergene: ora per ora, prossimi giorni, stagione, da che livello segnalarlo e una tavola botanica d’epoca con dove cresce e le reazioni crociate
 - 📓 Diario dei sintomi da 10 secondi, con i farmaci più usati già in lista, sonno e ore all’aperto
-- 📈 Andamento su 30 giorni, 3 mesi o 1 anno (giorno, settimana o mese): per ogni allergene, se stai peggio nei giorni sopra la tua soglia, con un punteggio sintomi + farmaci adattato dal CSMS dell’EAACI; le misure ISPRA completano da sole i giorni passati
+- 📈 Andamento su 30 giorni, 3 mesi o 1 anno (giorno, settimana o mese): per ogni allergene, se stai peggio nei giorni in cui è da tenere d’occhio, con un punteggio sintomi + farmaci adattato dal CSMS dell’EAACI; le misure ISPRA completano da sole i giorni passati
 - 🗓️ Calendario stagionale per **Nord**, **Centro** e **Sud e Isole**
 - 📍 Luogo dalla posizione approssimativa o dalla ricerca: tutti i comuni italiani sono inclusi nell’app, quindi i risultati compaiono mentre scrivi, anche senza rete; i luoghi scelti restano a portata di tocco, e con «Segui la mia posizione» il luogo si aggiorna quando apri l’app
 - 📲 Widget Android per la schermata Home, con le pagine degli allergeni e il tasto per aggiornare
@@ -53,11 +53,11 @@ Serve Android 7.0 o successivo.
 
 L’app può mandare tre avvisi, ognuno con il suo orario, anche ad app chiusa:
 
-- ☀️ **Pollini di oggi**: cosa c’è nell’aria oggi per i tuoi allergeni, anche solo nei giorni sopra la tua soglia
-- 📈 **Allerta per domani**: il giorno prima, se domani un tuo allergene supera la soglia
+- ☀️ **Pollini di oggi**: cosa c’è nell’aria oggi per i tuoi allergeni, con pioggia, vento o temporale in arrivo; anche solo nei giorni da tenere d’occhio
+- 📈 **Allerta per domani**: la sera prima, se domani un tuo allergene è da tenere d’occhio, con il meteo di domani
 - 📓 **Promemoria diario**: se oggi non hai ancora registrato i sintomi; con «Nessun sintomo» registri la giornata direttamente dalla notifica
 
-La soglia è il livello da cui un allergene ti dà fastidio: la scegli per ognuno in «I miei allergeni».
+Un allergene è «da tenere d’occhio» quando arriva al livello che scegli in «Segnala da» (di base Moderato), per ognuno in «I miei allergeni». Il diario è facoltativo: gli avvisi funzionano anche senza.
 
 Con «Orario esatto» attivo (permesso Android «Sveglie e promemoria») arrivano all’ora scelta; senza, possono tardare fino a un’ora. L’interruttore compare già al primo avvio.
 

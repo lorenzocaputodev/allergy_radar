@@ -60,7 +60,12 @@ class OutdoorSheet extends StatelessWidget {
                     Expanded(
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 2),
-                        child: _Bar(level: plan.levels[h], now: h == plan.nowHour, past: h < plan.nowHour),
+                        child: _Bar(
+                          level: plan.levels[h],
+                          now: h == plan.nowHour,
+                          past: h < plan.nowHour,
+                          rough: plan.rough.contains(h),
+                        ),
                       ),
                     ),
                 ],
@@ -85,6 +90,21 @@ class OutdoorSheet extends StatelessWidget {
               const SizedBox(height: 10),
               verdict(Icons.do_not_disturb_on_outlined, p.text(plan.peak), 'Evita: ${plan.avoidSpan(a)}'),
             ],
+            if (plan.rough.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Icon(Icons.bolt, size: 20, color: p.ink3),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Temporale o vento forte: ore escluse dal consiglio',
+                      style: TextStyle(fontSize: 14, color: p.ink2),
+                    ),
+                  ),
+                ],
+              ),
+            ],
             const SizedBox(height: 18),
             Wrap(
               spacing: 8,
@@ -106,11 +126,12 @@ class OutdoorSheet extends StatelessWidget {
 }
 
 class _Bar extends StatelessWidget {
-  const _Bar({required this.level, required this.now, required this.past});
+  const _Bar({required this.level, required this.now, required this.past, required this.rough});
 
   final Level? level;
   final bool now;
   final bool past;
+  final bool rough;
 
   @override
   Widget build(BuildContext context) {
@@ -124,6 +145,8 @@ class _Bar extends StatelessWidget {
             'ora',
             style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: p.ink),
           )
+        else if (rough)
+          Icon(Icons.bolt, size: 15, color: p.ink3)
         else
           const SizedBox(height: 15),
         const SizedBox(height: 4),
