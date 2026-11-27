@@ -202,8 +202,8 @@ class ReportPdf {
           heading('Cosa emerge'),
           if (insights.isEmpty)
             pw.Text(
-              'Per un confronto servono almeno ${DiaryState.minDaysForInsight} giorni registrati, '
-              'con un livello del polline, di cui almeno 3 al livello scelto dal paziente o sopra e 3 sotto.',
+              'Per un confronto servono almeno ${DiaryState.minDaysForInsight} giorni registrati con un valore del '
+              'polline: almeno 3 al livello scelto dal paziente o sopra e 3 sotto.',
               style: pw.TextStyle(fontSize: 10, color: _muted),
             )
           else

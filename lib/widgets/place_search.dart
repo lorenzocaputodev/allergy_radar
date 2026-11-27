@@ -239,8 +239,8 @@ class PlacePrivacyNote extends StatelessWidget {
           Expanded(
             child: Text(
               'Per i pollini usiamo solo la zona, arrotondata a circa 1 km. Se usi la tua posizione, il nome del comune lo '
-              'trova il servizio di localizzazione di Android, che può inviare le coordinate a Google; se tarda, l’elenco dei '
-              'comuni incluso nell’app.',
+              'trova il servizio di localizzazione di Android, che può inviare le coordinate a Google; se tarda, l’app lo '
+              'cerca nel suo elenco dei comuni.',
               style: TextStyle(fontSize: 13, height: 1.45, color: p.ink2),
             ),
           ),
